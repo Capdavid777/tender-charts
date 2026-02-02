@@ -1,0 +1,133 @@
+import { ReactNode } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { 
+  LayoutDashboard, 
+  BedDouble, 
+  TrendingUp, 
+  Upload, 
+  LogOut,
+  Building2,
+  Clock
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface DashboardLayoutProps {
+  children: ReactNode;
+  lastUpdated?: string;
+}
+
+const navItems = [
+  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { href: '/room-types', label: 'Room Types', icon: BedDouble },
+  { href: '/historical', label: 'Historical', icon: TrendingUp },
+  { href: '/upload', label: 'Upload Data', icon: Upload },
+];
+
+export default function DashboardLayout({ children, lastUpdated }: DashboardLayoutProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b bg-card shadow-sm">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
+                <Building2 className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="font-semibold text-foreground">Reserved Suites Illovo</h1>
+                <p className="text-xs text-muted-foreground">Revenue Dashboard</p>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <nav className="hidden md:flex items-center gap-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link key={item.href} to={item.href}>
+                    <Button
+                      variant={isActive ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className={cn(
+                        'gap-2',
+                        isActive && 'bg-secondary font-medium'
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {item.label}
+                    </Button>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Right side */}
+            <div className="flex items-center gap-4">
+              {lastUpdated && (
+                <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>Updated: {lastUpdated}</span>
+                </div>
+              )}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleLogout}
+                className="gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile navigation */}
+        <div className="md:hidden border-t">
+          <div className="container mx-auto px-4">
+            <nav className="flex items-center gap-1 py-2 overflow-x-auto">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link key={item.href} to={item.href}>
+                    <Button
+                      variant={isActive ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className={cn(
+                        'gap-2 shrink-0',
+                        isActive && 'bg-secondary font-medium'
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {item.label}
+                    </Button>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="container mx-auto px-4 py-6">
+        {children}
+      </main>
+    </div>
+  );
+}
