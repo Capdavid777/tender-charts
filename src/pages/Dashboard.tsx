@@ -6,35 +6,35 @@ import RevenueChart from '@/components/dashboard/RevenueChart';
 import { DollarSign, Percent, TrendingUp, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
-// Sample data - will be replaced with real data from database
-const sampleDailyData = [
-  { date: 'Jan 1', revenue: 15000, target: 12000 },
-  { date: 'Jan 2', revenue: 8500, target: 12000 },
-  { date: 'Jan 3', revenue: 14200, target: 12000 },
-  { date: 'Jan 4', revenue: 11800, target: 12000 },
-  { date: 'Jan 5', revenue: 16500, target: 12000 },
-  { date: 'Jan 6', revenue: 9200, target: 12000 },
-  { date: 'Jan 7', revenue: 13400, target: 12000 },
-  { date: 'Jan 8', revenue: 7800, target: 12000 },
-  { date: 'Jan 9', revenue: 15800, target: 12000 },
-  { date: 'Jan 10', revenue: 12100, target: 12000 },
-];
+interface DailyData {
+  date: string;
+  revenue: number;
+  target: number;
+}
 
 export default function Dashboard() {
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
   const [lastUpdated, setLastUpdated] = useState('');
+  const [dailyData, setDailyData] = useState<DailyData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [occupancy, setOccupancy] = useState(0);
+  const [targetOccupancy] = useState(80);
+  const [adr, setAdr] = useState(0);
+  const [breakevenAdr] = useState(800);
 
   useEffect(() => {
-    // Fetch last upload timestamp
-    const fetchLastUpload = async () => {
-      const { data } = await supabase
+    const fetchData = async () => {
+      setLoading(true);
+      
+      // Fetch last upload timestamp
+      const { data: uploads } = await supabase
         .from('data_uploads')
         .select('uploaded_at')
         .order('uploaded_at', { ascending: false })
         .limit(1);
       
-      if (data && data.length > 0) {
-        const date = new Date(data[0].uploaded_at);
+      if (uploads && uploads.length > 0) {
+        const date = new Date(uploads[0].uploaded_at);
         setLastUpdated(date.toLocaleDateString('en-ZA', { 
           day: 'numeric', 
           month: 'short', 
@@ -45,22 +45,48 @@ export default function Dashboard() {
       } else {
         setLastUpdated('No data uploaded yet');
       }
+
+      // Fetch daily revenue data
+      const { data: revenueData } = await supabase
+        .from('daily_revenue')
+        .select('*')
+        .order('date', { ascending: true });
+      
+      if (revenueData && revenueData.length > 0) {
+        // Calculate target per day (monthly target / days in month)
+        const dailyTarget = 43853.72; // From the Excel file
+        
+        const formattedData = revenueData.map(d => {
+          const date = new Date(d.date);
+          return {
+            date: date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }),
+            revenue: Number(d.revenue),
+            target: dailyTarget,
+          };
+        });
+        setDailyData(formattedData);
+
+        // Calculate average occupancy and ADR
+        const totalRooms = revenueData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
+        const totalRevenue = revenueData.reduce((sum, d) => sum + Number(d.revenue), 0);
+        const avgRate = revenueData.reduce((sum, d) => sum + Number(d.average_rate || 0), 0) / revenueData.length;
+        const avgOccupancy = (totalRooms / (63 * revenueData.length)) * 100; // 63 total rooms
+        
+        setOccupancy(Math.round(avgOccupancy));
+        setAdr(Math.round(avgRate));
+      }
+      
+      setLoading(false);
     };
 
-    fetchLastUpload();
+    fetchData();
   }, []);
 
-  // Calculate KPIs from sample data
-  const totalRevenue = sampleDailyData.reduce((sum, d) => sum + d.revenue, 0);
-  const targetRevenue = sampleDailyData.reduce((sum, d) => sum + d.target, 0);
-  const revenueProgress = (totalRevenue / targetRevenue) * 100;
-  const variance = ((totalRevenue - targetRevenue) / targetRevenue) * 100;
-
-  // Sample occupancy data
-  const occupancy = 72;
-  const targetOccupancy = 80;
-  const adr = 1450;
-  const breakevenAdr = 1200;
+  // Calculate KPIs from data
+  const totalRevenue = dailyData.reduce((sum, d) => sum + d.revenue, 0);
+  const targetRevenue = dailyData.reduce((sum, d) => sum + d.target, 0);
+  const revenueProgress = targetRevenue > 0 ? (totalRevenue / targetRevenue) * 100 : 0;
+  const variance = targetRevenue > 0 ? ((totalRevenue - targetRevenue) / targetRevenue) * 100 : 0;
 
   // Generate alerts based on thresholds
   const alerts = [];
@@ -136,7 +162,13 @@ export default function Dashboard() {
         </div>
 
         {/* Revenue Chart */}
-        <RevenueChart data={sampleDailyData} dailyTarget={12000} />
+        {dailyData.length > 0 ? (
+          <RevenueChart data={dailyData} dailyTarget={43853.72} />
+        ) : !loading && (
+          <div className="text-center py-12 text-muted-foreground">
+            No revenue data available. Upload an Excel file to see your dashboard.
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
