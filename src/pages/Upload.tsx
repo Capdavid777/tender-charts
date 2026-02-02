@@ -14,12 +14,43 @@ import {
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import * as XLSX from 'xlsx';
+
+interface DailyData {
+  date: string;
+  revenue: number;
+  target: number;
+  occupancy: number;
+  arr: number;
+}
+
+interface RoomTypeData {
+  name: string;
+  totalRooms: number;
+  roomsSold: number;
+  revenue: number;
+  avgRate: number;
+}
+
+interface AnnualData {
+  year: number;
+  roomsSold: number;
+  occupancy: number;
+  revenue: number;
+  avgRate: number;
+}
+
+interface ParsedData {
+  daily: DailyData[];
+  roomTypes: RoomTypeData[];
+  annual: AnnualData[];
+}
 
 interface UploadState {
   status: 'idle' | 'dragging' | 'validating' | 'preview' | 'uploading' | 'success' | 'error';
   file: File | null;
   error: string | null;
-  previewData: any[] | null;
+  parsedData: ParsedData | null;
   recordsImported: number;
 }
 
@@ -28,7 +59,7 @@ export default function Upload() {
     status: 'idle',
     file: null,
     error: null,
-    previewData: null,
+    parsedData: null,
     recordsImported: 0,
   });
   const { toast } = useToast();
@@ -71,26 +102,93 @@ export default function Upload() {
     return true;
   };
 
+  const parseExcelDate = (serial: number): string => {
+    // Excel dates start from Jan 1, 1900
+    const date = new Date((serial - 25569) * 86400 * 1000);
+    return date.toISOString().split('T')[0];
+  };
+
+  const parseExcelFile = async (file: File): Promise<ParsedData> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    
+    const parsed: ParsedData = {
+      daily: [],
+      roomTypes: [],
+      annual: [],
+    };
+
+    // Parse Sheet 1 - Daily Data
+    const dailySheet = workbook.Sheets[workbook.SheetNames[0]];
+    if (dailySheet) {
+      const dailyRows = XLSX.utils.sheet_to_json<any>(dailySheet);
+      parsed.daily = dailyRows.map(row => ({
+        date: typeof row.Date === 'number' ? parseExcelDate(row.Date) : row.Date,
+        revenue: Number(row.Revenue) || 0,
+        target: Number(row.Target) || 0,
+        occupancy: Number(row.Occupancy) || 0,
+        arr: Number(row.ARR) || 0,
+      }));
+    }
+
+    // Parse Sheet 2 - Room Types
+    const roomSheet = workbook.Sheets[workbook.SheetNames[1]];
+    if (roomSheet) {
+      const roomRows = XLSX.utils.sheet_to_json<any>(roomSheet);
+      parsed.roomTypes = roomRows.map(row => ({
+        name: row.Type || '',
+        totalRooms: Number(row.Rooms) || 0,
+        roomsSold: Number(row.Sold) || 0,
+        revenue: Number(row.Revenue) || 0,
+        avgRate: Number(row.Rate) || 0,
+      }));
+    }
+
+    // Parse Sheet 3 - Historical/Annual
+    const annualSheet = workbook.Sheets[workbook.SheetNames[2]];
+    if (annualSheet) {
+      const annualRows = XLSX.utils.sheet_to_json<any>(annualSheet);
+      parsed.annual = annualRows.map(row => {
+        const occupancyVal = row.Occupancy;
+        let occupancy = 0;
+        if (typeof occupancyVal === 'string' && occupancyVal.includes('%')) {
+          occupancy = parseFloat(occupancyVal) / 100;
+        } else {
+          occupancy = Number(occupancyVal) || 0;
+        }
+        return {
+          year: Number(row.Year) || 0,
+          roomsSold: Number(row.RoomsSold) || 0,
+          occupancy,
+          revenue: Number(row.Revenue) || 0,
+          avgRate: Number(row.Rate) || 0,
+        };
+      });
+    }
+
+    return parsed;
+  };
+
   const processFile = async (file: File) => {
     setState(prev => ({ ...prev, status: 'validating', file }));
     
     if (!validateFile(file)) return;
     
-    // Simulate file parsing preview
-    // In real implementation, this would parse the Excel file
-    setTimeout(() => {
+    try {
+      const parsedData = await parseExcelFile(file);
       setState(prev => ({
         ...prev,
         status: 'preview',
-        previewData: [
-          { date: '2025-02-01', roomType: 'Deluxe 1 Bedroom', roomsSold: 6, revenue: 9900, avgRate: 1650 },
-          { date: '2025-02-01', roomType: 'Standard 1 Bedroom', roomsSold: 4, revenue: 5400, avgRate: 1350 },
-          { date: '2025-02-01', roomType: 'Studio', roomsSold: 3, revenue: 2850, avgRate: 950 },
-          { date: '2025-02-02', roomType: 'Deluxe 1 Bedroom', roomsSold: 7, revenue: 11550, avgRate: 1650 },
-          { date: '2025-02-02', roomType: 'Penthouse', roomsSold: 1, revenue: 2800, avgRate: 2800 },
-        ],
+        parsedData,
       }));
-    }, 1000);
+    } catch (error) {
+      console.error('Error parsing Excel file:', error);
+      setState(prev => ({
+        ...prev,
+        status: 'error',
+        error: 'Failed to parse Excel file. Please check the format matches the expected structure.',
+      }));
+    }
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -111,30 +209,86 @@ export default function Upload() {
   const handleConfirmUpload = async () => {
     setState(prev => ({ ...prev, status: 'uploading' }));
     
+    if (!state.parsedData) {
+      setState(prev => ({ ...prev, status: 'error', error: 'No data to import' }));
+      return;
+    }
+
     try {
-      // Record the upload in database
-      const { error } = await supabase.from('data_uploads').insert({
+      let totalRecords = 0;
+
+      // Import daily revenue data
+      if (state.parsedData.daily.length > 0) {
+        const dailyRecords = state.parsedData.daily.map(d => ({
+          date: d.date,
+          revenue: d.revenue,
+          rooms_sold: Math.round(d.occupancy * 63), // Approximate rooms sold based on occupancy
+          average_rate: d.arr,
+        }));
+        
+        const { error: dailyError } = await supabase
+          .from('daily_revenue')
+          .upsert(dailyRecords, { onConflict: 'date' });
+        
+        if (dailyError) throw dailyError;
+        totalRecords += dailyRecords.length;
+      }
+
+      // Import room types data
+      if (state.parsedData.roomTypes.length > 0) {
+        for (const rt of state.parsedData.roomTypes) {
+          const { error: roomError } = await supabase
+            .from('room_types')
+            .upsert({
+              name: rt.name,
+              total_rooms: rt.totalRooms,
+              breakeven_rate: rt.avgRate * 0.6, // Estimate breakeven as 60% of avg rate
+            }, { onConflict: 'name' });
+          
+          if (roomError) throw roomError;
+        }
+        totalRecords += state.parsedData.roomTypes.length;
+      }
+
+      // Import annual summary data
+      if (state.parsedData.annual.length > 0) {
+        const annualRecords = state.parsedData.annual.map(a => ({
+          year: a.year,
+          total_rooms_sold: a.roomsSold,
+          occupancy_percentage: a.occupancy * 100,
+          total_revenue: a.revenue,
+          average_rate: a.avgRate,
+        }));
+        
+        const { error: annualError } = await supabase
+          .from('annual_summary')
+          .upsert(annualRecords, { onConflict: 'year' });
+        
+        if (annualError) throw annualError;
+        totalRecords += annualRecords.length;
+      }
+
+      // Record the upload
+      const { error: uploadError } = await supabase.from('data_uploads').insert({
         filename: state.file?.name || 'unknown',
-        records_imported: state.previewData?.length || 0,
+        records_imported: totalRecords,
         status: 'completed',
       });
       
-      if (error) throw error;
-      
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (uploadError) throw uploadError;
       
       setState(prev => ({
         ...prev,
         status: 'success',
-        recordsImported: state.previewData?.length || 0,
+        recordsImported: totalRecords,
       }));
       
       toast({
         title: 'Upload Successful',
-        description: `${state.previewData?.length || 0} records imported successfully.`,
+        description: `${totalRecords} records imported successfully.`,
       });
     } catch (error) {
+      console.error('Upload error:', error);
       setState(prev => ({
         ...prev,
         status: 'error',
@@ -148,7 +302,7 @@ export default function Upload() {
       status: 'idle',
       file: null,
       error: null,
-      previewData: null,
+      parsedData: null,
       recordsImported: 0,
     });
   };
@@ -255,8 +409,8 @@ export default function Upload() {
                   <div className="text-sm">
                     <p className="font-medium text-foreground">Expected Format</p>
                     <p className="text-muted-foreground mt-1">
-                      Your spreadsheet should include columns for: Date, Room Type, Rooms Sold, Revenue, and Average Rate.
-                      The first row should contain column headers.
+                      Your spreadsheet should have 3 sheets: Daily Data (Date, Revenue, Target, Occupancy, ARR), 
+                      Room Types (Type, Rooms, Sold, Revenue, Rate), and Historical (Year, RoomsSold, Occupancy, Revenue, Rate).
                     </p>
                   </div>
                 </div>
@@ -266,7 +420,7 @@ export default function Upload() {
         )}
 
         {/* Preview State */}
-        {state.status === 'preview' && state.previewData && (
+        {state.status === 'preview' && state.parsedData && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -276,7 +430,7 @@ export default function Upload() {
                     File Validated
                   </CardTitle>
                   <CardDescription>
-                    {state.file?.name} • {state.previewData.length} records found
+                    {state.file?.name} • {state.parsedData.daily.length} daily records, {state.parsedData.roomTypes.length} room types, {state.parsedData.annual.length} annual records
                   </CardDescription>
                 </div>
                 <Button variant="ghost" size="sm" onClick={handleReset}>
@@ -284,36 +438,101 @@ export default function Upload() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Preview of first {Math.min(5, state.previewData.length)} records:
-              </p>
-              <div className="overflow-x-auto border rounded-lg">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-muted">
-                      <th className="text-left py-2 px-3 font-medium">Date</th>
-                      <th className="text-left py-2 px-3 font-medium">Room Type</th>
-                      <th className="text-right py-2 px-3 font-medium">Rooms Sold</th>
-                      <th className="text-right py-2 px-3 font-medium">Revenue</th>
-                      <th className="text-right py-2 px-3 font-medium">Avg Rate</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {state.previewData.slice(0, 5).map((row, index) => (
-                      <tr key={index} className="border-t">
-                        <td className="py-2 px-3">{row.date}</td>
-                        <td className="py-2 px-3">{row.roomType}</td>
-                        <td className="py-2 px-3 text-right">{row.roomsSold}</td>
-                        <td className="py-2 px-3 text-right">R{row.revenue.toLocaleString()}</td>
-                        <td className="py-2 px-3 text-right">R{row.avgRate.toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <CardContent className="space-y-6">
+              {/* Daily Data Preview */}
+              {state.parsedData.daily.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2">Daily Revenue (first 5 rows)</p>
+                  <div className="overflow-x-auto border rounded-lg">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-muted">
+                          <th className="text-left py-2 px-3 font-medium">Date</th>
+                          <th className="text-right py-2 px-3 font-medium">Revenue</th>
+                          <th className="text-right py-2 px-3 font-medium">Target</th>
+                          <th className="text-right py-2 px-3 font-medium">Occupancy</th>
+                          <th className="text-right py-2 px-3 font-medium">ARR</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {state.parsedData.daily.slice(0, 5).map((row, index) => (
+                          <tr key={index} className="border-t">
+                            <td className="py-2 px-3">{row.date}</td>
+                            <td className="py-2 px-3 text-right">R{row.revenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td className="py-2 px-3 text-right">R{row.target.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td className="py-2 px-3 text-right">{(row.occupancy * 100).toFixed(1)}%</td>
+                            <td className="py-2 px-3 text-right">R{row.arr.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Room Types Preview */}
+              {state.parsedData.roomTypes.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2">Room Types</p>
+                  <div className="overflow-x-auto border rounded-lg">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-muted">
+                          <th className="text-left py-2 px-3 font-medium">Type</th>
+                          <th className="text-right py-2 px-3 font-medium">Rooms</th>
+                          <th className="text-right py-2 px-3 font-medium">Sold</th>
+                          <th className="text-right py-2 px-3 font-medium">Revenue</th>
+                          <th className="text-right py-2 px-3 font-medium">Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {state.parsedData.roomTypes.map((row, index) => (
+                          <tr key={index} className="border-t">
+                            <td className="py-2 px-3">{row.name}</td>
+                            <td className="py-2 px-3 text-right">{row.totalRooms}</td>
+                            <td className="py-2 px-3 text-right">{row.roomsSold}</td>
+                            <td className="py-2 px-3 text-right">R{row.revenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td className="py-2 px-3 text-right">R{row.avgRate.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Annual Summary Preview */}
+              {state.parsedData.annual.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2">Annual Summary</p>
+                  <div className="overflow-x-auto border rounded-lg">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-muted">
+                          <th className="text-left py-2 px-3 font-medium">Year</th>
+                          <th className="text-right py-2 px-3 font-medium">Rooms Sold</th>
+                          <th className="text-right py-2 px-3 font-medium">Occupancy</th>
+                          <th className="text-right py-2 px-3 font-medium">Revenue</th>
+                          <th className="text-right py-2 px-3 font-medium">Avg Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {state.parsedData.annual.map((row, index) => (
+                          <tr key={index} className="border-t">
+                            <td className="py-2 px-3">{row.year}</td>
+                            <td className="py-2 px-3 text-right">{row.roomsSold.toLocaleString()}</td>
+                            <td className="py-2 px-3 text-right">{(row.occupancy * 100).toFixed(0)}%</td>
+                            <td className="py-2 px-3 text-right">R{row.revenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td className="py-2 px-3 text-right">R{row.avgRate.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
               
-              <div className="flex gap-3 mt-6">
+              <div className="flex gap-3">
                 <Button onClick={handleConfirmUpload} className="gap-2">
                   <UploadIcon className="w-4 h-4" />
                   Confirm & Import
