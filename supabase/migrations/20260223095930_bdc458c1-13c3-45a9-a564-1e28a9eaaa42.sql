@@ -1,0 +1,1 @@
+ALTER TABLE public.monthly_targets ADD COLUMN available_rooms integer NOT NULL DEFAULT 0;

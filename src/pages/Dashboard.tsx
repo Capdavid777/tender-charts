@@ -23,8 +23,8 @@ interface RawDailyData {
 interface MonthlyTarget {
   target_revenue: number;
   target_occupancy: number | null;
+  available_rooms: number;
 }
-
 export default function Dashboard() {
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
   const [lastUpdated, setLastUpdated] = useState('');
@@ -37,10 +37,11 @@ export default function Dashboard() {
 
   // Get target for selected month
   const currentTarget = useMemo(() => {
-    return monthlyTargets[selectedMonth] || { target_revenue: 0, target_occupancy: 80 };
-  }, [monthlyTargets, selectedMonth]);
+    return monthlyTargets[selectedMonth] || { target_revenue: 0, target_occupancy: 80, available_rooms: totalRooms };
+  }, [monthlyTargets, selectedMonth, totalRooms]);
 
   const targetOccupancy = currentTarget.target_occupancy || 80;
+  const availableRooms = currentTarget.available_rooms || totalRooms;
 
   // Derive available months from data
   const availableMonths = useMemo(() => {
@@ -90,13 +91,12 @@ export default function Dashboard() {
   }, [filteredData, selectedMonth, currentTarget]);
 
   const occupancy = useMemo(() => {
-    if (filteredData.length === 0 || totalRooms === 0) return 0;
-    // Only count days that have actual data (rooms_sold > 0)
+    if (filteredData.length === 0 || availableRooms === 0) return 0;
     const daysWithData = filteredData.filter(d => (d.rooms_sold || 0) > 0);
     if (daysWithData.length === 0) return 0;
     const totalRoomsSold = daysWithData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
-    return Number(((totalRoomsSold / (totalRooms * daysWithData.length)) * 100).toFixed(2));
-  }, [filteredData, totalRooms]);
+    return Number(((totalRoomsSold / (availableRooms * daysWithData.length)) * 100).toFixed(2));
+  }, [filteredData, availableRooms]);
 
   const adr = useMemo(() => {
     if (filteredData.length === 0) return 0;
@@ -138,7 +138,7 @@ export default function Dashboard() {
         const map: Record<string, MonthlyTarget> = {};
         targetsRes.data.forEach(t => {
           const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
-          map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy) };
+          map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy), available_rooms: Number((t as any).available_rooms || 0) };
         });
         setMonthlyTargets(map);
       }

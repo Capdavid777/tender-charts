@@ -132,6 +132,7 @@ export type Database = {
       }
       monthly_targets: {
         Row: {
+          available_rooms: number
           created_at: string
           id: string
           month: number
@@ -140,6 +141,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          available_rooms?: number
           created_at?: string
           id?: string
           month: number
@@ -148,6 +150,7 @@ export type Database = {
           year: number
         }
         Update: {
+          available_rooms?: number
           created_at?: string
           id?: string
           month?: number
