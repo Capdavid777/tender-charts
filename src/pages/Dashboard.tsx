@@ -20,14 +20,27 @@ interface RawDailyData {
   average_rate: number | null;
 }
 
+interface MonthlyTarget {
+  target_revenue: number;
+  target_occupancy: number | null;
+}
+
 export default function Dashboard() {
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
   const [lastUpdated, setLastUpdated] = useState('');
   const [allData, setAllData] = useState<RawDailyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<string>('');
-  const [targetOccupancy] = useState(80);
+  const [totalRooms, setTotalRooms] = useState(80);
+  const [monthlyTargets, setMonthlyTargets] = useState<Record<string, MonthlyTarget>>({});
   const [breakevenAdr] = useState(800);
+
+  // Get target for selected month
+  const currentTarget = useMemo(() => {
+    return monthlyTargets[selectedMonth] || { target_revenue: 0, target_occupancy: 80 };
+  }, [monthlyTargets, selectedMonth]);
+
+  const targetOccupancy = currentTarget.target_occupancy || 80;
 
   // Derive available months from data
   const availableMonths = useMemo(() => {
@@ -59,7 +72,13 @@ export default function Dashboard() {
 
   // Calculate display data
   const dailyData: DailyData[] = useMemo(() => {
-    const dailyTarget = 50265.22929;
+    if (!selectedMonth || !currentTarget.target_revenue) return filteredData.map(d => {
+      const date = new Date(d.date);
+      return { date: date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }), revenue: Number(d.revenue), target: 0 };
+    });
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const dailyTarget = currentTarget.target_revenue / daysInMonth;
     return filteredData.map(d => {
       const date = new Date(d.date);
       return {
@@ -68,13 +87,16 @@ export default function Dashboard() {
         target: dailyTarget,
       };
     });
-  }, [filteredData]);
+  }, [filteredData, selectedMonth, currentTarget]);
 
   const occupancy = useMemo(() => {
-    if (filteredData.length === 0) return 0;
-    const totalRooms = filteredData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
-    return Math.round((totalRooms / (63 * filteredData.length)) * 100);
-  }, [filteredData]);
+    if (filteredData.length === 0 || totalRooms === 0) return 0;
+    // Only count days that have actual data (rooms_sold > 0)
+    const daysWithData = filteredData.filter(d => (d.rooms_sold || 0) > 0);
+    if (daysWithData.length === 0) return 0;
+    const totalRoomsSold = daysWithData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
+    return Number(((totalRoomsSold / (totalRooms * daysWithData.length)) * 100).toFixed(2));
+  }, [filteredData, totalRooms]);
 
   const adr = useMemo(() => {
     if (filteredData.length === 0) return 0;
@@ -86,14 +108,15 @@ export default function Dashboard() {
     const fetchData = async () => {
       setLoading(true);
 
-      const { data: uploads } = await supabase
-        .from('data_uploads')
-        .select('uploaded_at')
-        .order('uploaded_at', { ascending: false })
-        .limit(1);
+      const [uploadsRes, revenueRes, roomTypesRes, targetsRes] = await Promise.all([
+        supabase.from('data_uploads').select('uploaded_at').order('uploaded_at', { ascending: false }).limit(1),
+        supabase.from('daily_revenue').select('*').order('date', { ascending: true }),
+        supabase.from('room_types').select('total_rooms'),
+        supabase.from('monthly_targets').select('*'),
+      ]);
 
-      if (uploads && uploads.length > 0) {
-        const date = new Date(uploads[0].uploaded_at);
+      if (uploadsRes.data && uploadsRes.data.length > 0) {
+        const date = new Date(uploadsRes.data[0].uploaded_at);
         setLastUpdated(date.toLocaleDateString('en-ZA', {
           day: 'numeric', month: 'short', year: 'numeric',
           hour: '2-digit', minute: '2-digit'
@@ -102,13 +125,22 @@ export default function Dashboard() {
         setLastUpdated('No data uploaded yet');
       }
 
-      const { data: revenueData } = await supabase
-        .from('daily_revenue')
-        .select('*')
-        .order('date', { ascending: true });
+      if (revenueRes.data && revenueRes.data.length > 0) {
+        setAllData(revenueRes.data as RawDailyData[]);
+      }
 
-      if (revenueData && revenueData.length > 0) {
-        setAllData(revenueData as RawDailyData[]);
+      if (roomTypesRes.data) {
+        const total = roomTypesRes.data.reduce((sum, rt) => sum + (rt.total_rooms || 0), 0);
+        setTotalRooms(total);
+      }
+
+      if (targetsRes.data) {
+        const map: Record<string, MonthlyTarget> = {};
+        targetsRes.data.forEach(t => {
+          const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
+          map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy) };
+        });
+        setMonthlyTargets(map);
       }
 
       setLoading(false);
@@ -214,7 +246,7 @@ export default function Dashboard() {
 
         {/* Revenue Chart */}
         {dailyData.length > 0 ? (
-          <RevenueChart data={dailyData} dailyTarget={50265.22929} />
+          <RevenueChart data={dailyData} dailyTarget={dailyData[0]?.target || 0} />
         ) : !loading && (
           <div className="text-center py-12 text-muted-foreground">
             No revenue data available. Upload an Excel file to see your dashboard.
