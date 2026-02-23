@@ -59,7 +59,7 @@ export default function Dashboard() {
 
   // Calculate display data
   const dailyData: DailyData[] = useMemo(() => {
-    const dailyTarget = 43853.72;
+    const dailyTarget = 50265.22929;
     return filteredData.map(d => {
       const date = new Date(d.date);
       return {
@@ -214,7 +214,7 @@ export default function Dashboard() {
 
         {/* Revenue Chart */}
         {dailyData.length > 0 ? (
-          <RevenueChart data={dailyData} dailyTarget={43853.72} />
+          <RevenueChart data={dailyData} dailyTarget={50265.22929} />
         ) : !loading && (
           <div className="text-center py-12 text-muted-foreground">
             No revenue data available. Upload an Excel file to see your dashboard.
