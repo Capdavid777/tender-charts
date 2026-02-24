@@ -6,6 +6,7 @@ import RevenueChart from '@/components/dashboard/RevenueChart';
 import { DollarSign, Percent, TrendingUp, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatCurrency, formatPercent } from '@/lib/format';
 
 interface DailyData {
   date: string;
@@ -189,7 +190,7 @@ export default function Dashboard() {
       id: 'revenue-warning',
       type: 'revenue' as const,
       title: 'Revenue Behind Target',
-      message: `Current revenue is ${Math.abs(variance).toFixed(1)}% below the monthly target. Consider reviewing pricing strategy.`,
+      message: `Current revenue is ${Math.abs(variance).toFixed(2)}% below the monthly target. Consider reviewing pricing strategy.`,
       severity: revenueProgress < 60 ? 'critical' as const : 'warning' as const,
     });
   }
@@ -198,7 +199,7 @@ export default function Dashboard() {
       id: 'occupancy-warning',
       type: 'occupancy' as const,
       title: 'Low Occupancy Alert',
-      message: `Occupancy has dropped to ${occupancy}%. This is below the 50% threshold.`,
+      message: `Occupancy has dropped to ${formatPercent(occupancy)}. This is below the 50% threshold.`,
       severity: 'warning' as const,
     });
   }
@@ -241,30 +242,30 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
             title="Revenue to Date"
-            value={`R${totalRevenue.toLocaleString()}`}
-            subtitle={`Target: R${targetRevenue.toLocaleString()}`}
+            value={formatCurrency(totalRevenue)}
+            subtitle={`Target: ${formatCurrency(targetRevenue)}`}
             icon={<DollarSign className="w-5 h-5 text-primary" />}
             progress={revenueProgress}
             variant={revenueProgress >= 80 ? 'success' : revenueProgress >= 60 ? 'warning' : 'danger'}
           />
           <KPICard
             title="Occupancy Rate"
-            value={`${occupancy}%`}
-            subtitle={`Target: ${targetOccupancy}%`}
+            value={formatPercent(occupancy)}
+            subtitle={`Target: ${formatPercent(targetOccupancy)}`}
             icon={<Percent className="w-5 h-5 text-primary" />}
             trend={occupancyTrend || undefined}
             variant={occupancy >= targetOccupancy ? 'success' : 'default'}
           />
           <KPICard
             title="Average Daily Rate"
-            value={`R${adr.toLocaleString()}`}
-            subtitle={`Breakeven: R${breakevenAdr.toLocaleString()}`}
+            value={formatCurrency(adr)}
+            subtitle={`Breakeven: ${formatCurrency(breakevenAdr)}`}
             icon={<TrendingUp className="w-5 h-5 text-primary" />}
             variant={adr >= breakevenAdr ? 'success' : 'danger'}
           />
           <KPICard
             title="Target Variance"
-            value={`${variance >= 0 ? '+' : ''}${variance.toFixed(1)}%`}
+            value={`${variance >= 0 ? '+' : ''}${variance.toFixed(2)}%`}
             subtitle={variance >= 0 ? 'Ahead of target' : 'Behind target'}
             icon={<Target className="w-5 h-5 text-primary" />}
             variant={variance >= 0 ? 'success' : variance >= -20 ? 'warning' : 'danger'}

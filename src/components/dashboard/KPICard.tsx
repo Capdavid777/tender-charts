@@ -48,7 +48,7 @@ export default function KPICard({
             )}
             {trend && (
               <p className={cn('text-sm font-medium', trendColor)}>
-                {trend.value >= 0 ? '+' : ''}{trend.value}% {trend.label}
+                {trend.value >= 0 ? '+' : ''}{trend.value.toFixed(2)}% {trend.label}
               </p>
             )}
           </div>
@@ -61,7 +61,7 @@ export default function KPICard({
           <div className="mt-4">
             <div className="flex items-center justify-between text-sm mb-1">
               <span className="text-muted-foreground">Progress to target</span>
-              <span className="font-medium">{Math.round(progress)}%</span>
+              <span className="font-medium">{progress.toFixed(2)}%</span>
             </div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
               <div 
