@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/format';
 import { 
   BarChart, 
   Bar, 
@@ -23,9 +24,6 @@ interface RevenueChartProps {
 }
 
 export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
-  const formatCurrency = (value: number) => {
-    return `R${value.toLocaleString()}`;
-  };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {

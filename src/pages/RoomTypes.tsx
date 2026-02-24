@@ -3,6 +3,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import KPICard from '@/components/dashboard/KPICard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BedDouble, DollarSign, Percent, TrendingUp } from 'lucide-react';
+import { formatCurrency, formatPercent } from '@/lib/format';
 import { supabase } from '@/integrations/supabase/client';
 import {
   PieChart,
@@ -69,11 +70,11 @@ export default function RoomTypes() {
         <div className="bg-card border rounded-lg shadow-lg p-3">
           <p className="font-medium text-foreground">{payload[0].name}</p>
           <p className="text-sm text-muted-foreground">
-            Revenue: <span className="font-semibold">R{payload[0].value.toLocaleString()}</span>
+            Revenue: <span className="font-semibold">{formatCurrency(payload[0].value)}</span>
           </p>
           <p className="text-sm text-muted-foreground">
             Share: <span className="font-semibold">
-              {((payload[0].value / totalRevenue) * 100).toFixed(1)}%
+              {((payload[0].value / totalRevenue) * 100).toFixed(2)}%
             </span>
           </p>
         </div>
@@ -101,20 +102,20 @@ export default function RoomTypes() {
           />
           <KPICard
             title="Revenue MTD"
-            value={`R${totalRevenue.toLocaleString()}`}
+            value={formatCurrency(totalRevenue)}
             subtitle="All room types"
             icon={<DollarSign className="w-5 h-5 text-primary" />}
             variant="success"
           />
           <KPICard
             title="Weighted ADR"
-            value={`R${Math.round(weightedAdr).toLocaleString()}`}
+            value={formatCurrency(weightedAdr)}
             subtitle="Across all rooms"
             icon={<TrendingUp className="w-5 h-5 text-primary" />}
           />
           <KPICard
             title="Avg Occupancy"
-            value={`${avgOccupancy.toFixed(1)}%`}
+            value={formatPercent(avgOccupancy)}
             subtitle="All room types"
             icon={<Percent className="w-5 h-5 text-primary" />}
           />
@@ -216,9 +217,9 @@ export default function RoomTypes() {
                     <tr key={index} className="border-b last:border-0 hover:bg-muted/50">
                       <td className="py-3 px-4 font-medium">{room.name}</td>
                       <td className="py-3 px-4 text-right">{room.rooms}</td>
-                      <td className="py-3 px-4 text-right">R{room.revenue.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-right">{room.occupancy}%</td>
-                      <td className="py-3 px-4 text-right">R{room.adr.toLocaleString()}</td>
+                      <td className="py-3 px-4 text-right">{formatCurrency(room.revenue)}</td>
+                      <td className="py-3 px-4 text-right">{formatPercent(room.occupancy)}</td>
+                      <td className="py-3 px-4 text-right">{formatCurrency(room.adr)}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -3,6 +3,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, TrendingUp, TrendingDown } from 'lucide-react';
+import { formatCurrency, formatPercent } from '@/lib/format';
 import {
   LineChart,
   Line,
@@ -79,8 +80,8 @@ export default function Historical() {
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: {entry.name.includes('Revenue') 
-                ? `R${entry.value.toLocaleString()}` 
-                : `${entry.value}%`}
+                ? formatCurrency(entry.value) 
+                : formatPercent(entry.value)}
             </p>
           ))}
         </div>
@@ -232,9 +233,9 @@ export default function Historical() {
                     <tr key={index} className="border-b last:border-0 hover:bg-muted/50">
                       <td className="py-3 px-4 font-medium">{row.year}</td>
                       <td className="py-3 px-4">{row.roomsSold.toLocaleString()}</td>
-                      <td className="py-3 px-4">{row.occupancy}%</td>
-                      <td className="py-3 px-4">R{row.revenue.toLocaleString()}</td>
-                      <td className="py-3 px-4">R{row.avgRate.toLocaleString()}</td>
+                      <td className="py-3 px-4">{formatPercent(row.occupancy)}</td>
+                      <td className="py-3 px-4">{formatCurrency(row.revenue)}</td>
+                      <td className="py-3 px-4">{formatCurrency(row.avgRate)}</td>
                     </tr>
                   ))}
                 </tbody>
