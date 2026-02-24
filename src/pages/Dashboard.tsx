@@ -33,7 +33,7 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [totalRooms, setTotalRooms] = useState(80);
   const [monthlyTargets, setMonthlyTargets] = useState<Record<string, MonthlyTarget>>({});
-  const [breakevenAdr] = useState(800);
+  const [breakevenAdr] = useState(1308.99);
 
   // Get target for selected month
   const currentTarget = useMemo(() => {
@@ -125,9 +125,10 @@ export default function Dashboard() {
   }, [selectedMonth, filteredData, allData, monthlyTargets, totalRooms, occupancy]);
 
   const adr = useMemo(() => {
-    if (filteredData.length === 0) return 0;
-    const avg = filteredData.reduce((sum, d) => sum + Number(d.average_rate || 0), 0) / filteredData.length;
-    return Math.round(avg);
+    const totalRoomsSold = filteredData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
+    if (totalRoomsSold === 0) return 0;
+    const totalRev = filteredData.reduce((sum, d) => sum + Number(d.revenue || 0), 0);
+    return Math.round(totalRev / totalRoomsSold);
   }, [filteredData]);
 
   useEffect(() => {
