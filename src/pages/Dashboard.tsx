@@ -98,6 +98,32 @@ export default function Dashboard() {
     return Number(((totalRoomsSold / (availableRooms * daysWithData.length)) * 100).toFixed(2));
   }, [filteredData, availableRooms]);
 
+  // Compare occupancy to the same date range in the previous month
+  const occupancyTrend = useMemo(() => {
+    if (!selectedMonth || filteredData.length === 0) return null;
+    const [year, month] = selectedMonth.split('-').map(Number);
+    // Get the max day of current filtered data
+    const maxDay = Math.max(...filteredData.map(d => new Date(d.date).getDate()));
+    // Calculate previous month
+    const prevMonth = month === 1 ? 12 : month - 1;
+    const prevYear = month === 1 ? year - 1 : year;
+    // Get previous month's available rooms
+    const prevKey = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+    const prevTarget = monthlyTargets[prevKey];
+    const prevAvailableRooms = prevTarget?.available_rooms || totalRooms;
+    if (prevAvailableRooms === 0) return null;
+    // Filter previous month data up to the same day
+    const prevData = allData.filter(d => {
+      const date = new Date(d.date);
+      return date.getFullYear() === prevYear && date.getMonth() + 1 === prevMonth && date.getDate() <= maxDay && (d.rooms_sold || 0) > 0;
+    });
+    if (prevData.length === 0) return null;
+    const prevRoomsSold = prevData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
+    const prevOccupancy = (prevRoomsSold / (prevAvailableRooms * prevData.length)) * 100;
+    const diff = Number((occupancy - prevOccupancy).toFixed(1));
+    return { value: diff, label: 'vs last month (same period)' };
+  }, [selectedMonth, filteredData, allData, monthlyTargets, totalRooms, occupancy]);
+
   const adr = useMemo(() => {
     if (filteredData.length === 0) return 0;
     const avg = filteredData.reduce((sum, d) => sum + Number(d.average_rate || 0), 0) / filteredData.length;
@@ -225,7 +251,7 @@ export default function Dashboard() {
             value={`${occupancy}%`}
             subtitle={`Target: ${targetOccupancy}%`}
             icon={<Percent className="w-5 h-5 text-primary" />}
-            trend={{ value: 5, label: 'vs last month' }}
+            trend={occupancyTrend || undefined}
             variant={occupancy >= targetOccupancy ? 'success' : 'default'}
           />
           <KPICard
