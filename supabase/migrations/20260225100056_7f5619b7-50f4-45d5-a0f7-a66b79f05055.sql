@@ -1,0 +1,1 @@
+ALTER TABLE public.daily_revenue ADD COLUMN IF NOT EXISTS occupancy double precision;

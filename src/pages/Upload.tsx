@@ -222,8 +222,9 @@ export default function Upload() {
         const dailyRecords = state.parsedData.daily.map(d => ({
           date: d.date,
           revenue: d.revenue,
-          rooms_sold: Math.round(d.occupancy * 63), // Approximate rooms sold based on occupancy
+          rooms_sold: Math.round(d.occupancy * 60),
           average_rate: d.arr,
+          occupancy: d.occupancy,
         }));
         
         const { error: dailyError } = await supabase
