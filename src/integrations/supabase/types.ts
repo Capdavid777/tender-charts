@@ -74,6 +74,7 @@ export type Database = {
           created_at: string
           date: string
           id: string
+          occupancy: number | null
           revenue: number
           room_type_id: string | null
           rooms_sold: number
@@ -83,6 +84,7 @@ export type Database = {
           created_at?: string
           date: string
           id?: string
+          occupancy?: number | null
           revenue?: number
           room_type_id?: string | null
           rooms_sold?: number
@@ -92,6 +94,7 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          occupancy?: number | null
           revenue?: number
           room_type_id?: string | null
           rooms_sold?: number

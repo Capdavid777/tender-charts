@@ -19,6 +19,7 @@ interface RawDailyData {
   revenue: number;
   rooms_sold: number | null;
   average_rate: number | null;
+  occupancy: number | null;
 }
 
 interface MonthlyTarget {
@@ -92,9 +93,17 @@ export default function Dashboard() {
   }, [filteredData, selectedMonth, currentTarget]);
 
   const occupancy = useMemo(() => {
-    if (filteredData.length === 0 || availableRooms === 0) return 0;
-    const daysWithData = filteredData.filter(d => (d.rooms_sold || 0) > 0);
+    if (filteredData.length === 0) return 0;
+    const daysWithData = filteredData.filter(d => (d.occupancy ?? 0) > 0 || (d.rooms_sold ?? 0) > 0);
     if (daysWithData.length === 0) return 0;
+    // Use stored occupancy rates (average of daily rates) for accuracy
+    const hasOccupancy = daysWithData.some(d => d.occupancy != null && d.occupancy > 0);
+    if (hasOccupancy) {
+      const avgOccupancy = daysWithData.reduce((sum, d) => sum + (d.occupancy || 0), 0) / daysWithData.length;
+      return Number((avgOccupancy * 100).toFixed(2));
+    }
+    // Fallback to rooms_sold calculation
+    if (availableRooms === 0) return 0;
     const totalRoomsSold = daysWithData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
     return Number(((totalRoomsSold / (availableRooms * daysWithData.length)) * 100).toFixed(2));
   }, [filteredData, availableRooms]);
@@ -112,15 +121,22 @@ export default function Dashboard() {
     const prevKey = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
     const prevTarget = monthlyTargets[prevKey];
     const prevAvailableRooms = prevTarget?.available_rooms || totalRooms;
-    if (prevAvailableRooms === 0) return null;
     // Filter previous month data up to the same day
     const prevData = allData.filter(d => {
       const date = new Date(d.date);
-      return date.getFullYear() === prevYear && date.getMonth() + 1 === prevMonth && date.getDate() <= maxDay && (d.rooms_sold || 0) > 0;
+      return date.getFullYear() === prevYear && date.getMonth() + 1 === prevMonth && date.getDate() <= maxDay && ((d.occupancy ?? 0) > 0 || (d.rooms_sold ?? 0) > 0);
     });
     if (prevData.length === 0) return null;
-    const prevRoomsSold = prevData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
-    const prevOccupancy = (prevRoomsSold / (prevAvailableRooms * prevData.length)) * 100;
+    // Use stored occupancy if available
+    const hasOccupancy = prevData.some(d => d.occupancy != null && d.occupancy > 0);
+    let prevOccupancy: number;
+    if (hasOccupancy) {
+      prevOccupancy = (prevData.reduce((sum, d) => sum + (d.occupancy || 0), 0) / prevData.length) * 100;
+    } else {
+      if (prevAvailableRooms === 0) return null;
+      const prevRoomsSold = prevData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
+      prevOccupancy = (prevRoomsSold / (prevAvailableRooms * prevData.length)) * 100;
+    }
     const diff = Number((occupancy - prevOccupancy).toFixed(1));
     return { value: diff, label: 'vs last month (same period)' };
   }, [selectedMonth, filteredData, allData, monthlyTargets, totalRooms, occupancy]);
