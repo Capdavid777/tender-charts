@@ -241,9 +241,9 @@ export default function Dashboard() {
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
-            title="Revenue to Date"
+            title="Revenue MTD"
             value={formatCurrency(totalRevenue)}
-            subtitle={`Target: ${formatCurrency(targetRevenue)}`}
+            subtitle="All room types"
             icon={<DollarSign className="w-5 h-5 text-primary" />}
             progress={revenueProgress}
             variant={revenueProgress >= 80 ? 'success' : revenueProgress >= 60 ? 'warning' : 'danger'}
