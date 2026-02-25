@@ -19,14 +19,6 @@ import {
   CartesianGrid,
 } from 'recharts';
 
-// Sample data - will be populated from database
-const sampleRoomData = [
-  { name: 'Deluxe 1 Bedroom', revenue: 145000, occupancy: 78, adr: 1650, rooms: 8 },
-  { name: 'Standard 1 Bedroom', revenue: 95000, occupancy: 72, adr: 1350, rooms: 6 },
-  { name: 'Studio', revenue: 48000, occupancy: 85, adr: 950, rooms: 4 },
-  { name: 'Penthouse', revenue: 62000, occupancy: 65, adr: 2800, rooms: 2 },
-];
-
 const COLORS = [
   'hsl(222, 47%, 20%)',
   'hsl(38, 92%, 50%)',
@@ -34,30 +26,61 @@ const COLORS = [
   'hsl(199, 89%, 48%)',
 ];
 
+interface RoomTypeData {
+  name: string;
+  revenue: number;
+  occupancy: number;
+  adr: number;
+  rooms: number;
+}
+
 export default function RoomTypes() {
-  const [roomTypes, setRoomTypes] = useState(sampleRoomData);
+  const [roomTypes, setRoomTypes] = useState<RoomTypeData[]>([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
 
   useEffect(() => {
-    const fetchRoomTypes = async () => {
-      const { data } = await supabase
+    const fetchData = async () => {
+      const { data: rtData } = await supabase
         .from('room_types')
         .select('*')
         .order('name');
-      
-      if (data && data.length > 0) {
-        // For now, use sample data with room type names from DB
-        // Real implementation would join with daily_revenue
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const startDate = `${year}-${month}-01`;
+      const endDate = `${year}-${month}-${new Date(year, now.getMonth() + 1, 0).getDate()}`;
+
+      const { data: revenueData } = await supabase
+        .from('daily_revenue')
+        .select('revenue, rooms_sold')
+        .gte('date', startDate)
+        .lte('date', endDate);
+
+      const totalRev = revenueData?.reduce((sum, d) => sum + Number(d.revenue || 0), 0) || 0;
+      setTotalRevenue(totalRev);
+
+      if (rtData && rtData.length > 0) {
+        setRoomTypes(rtData.map(rt => ({
+          name: rt.name,
+          revenue: 0,
+          occupancy: 0,
+          adr: 0,
+          rooms: rt.total_rooms,
+        })));
       }
     };
 
-    fetchRoomTypes();
+    fetchData();
   }, []);
 
   const totalRoomTypes = roomTypes.length;
-  const totalRevenue = roomTypes.reduce((sum, r) => sum + r.revenue, 0);
-  const weightedAdr = roomTypes.reduce((sum, r) => sum + (r.adr * r.rooms), 0) / 
-                      roomTypes.reduce((sum, r) => sum + r.rooms, 0);
-  const avgOccupancy = roomTypes.reduce((sum, r) => sum + r.occupancy, 0) / roomTypes.length;
+  const weightedAdr = roomTypes.reduce((sum, r) => sum + r.rooms, 0) > 0
+    ? roomTypes.reduce((sum, r) => sum + (r.adr * r.rooms), 0) / roomTypes.reduce((sum, r) => sum + r.rooms, 0)
+    : 0;
+  const avgOccupancy = roomTypes.length > 0
+    ? roomTypes.reduce((sum, r) => sum + r.occupancy, 0) / roomTypes.length
+    : 0;
 
   const pieData = roomTypes.map(r => ({
     name: r.name,
