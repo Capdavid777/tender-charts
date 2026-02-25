@@ -137,8 +137,9 @@ export default function Dashboard() {
       const prevRoomsSold = prevData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
       prevOccupancy = (prevRoomsSold / (prevAvailableRooms * prevData.length)) * 100;
     }
-    const diff = Number((occupancy - prevOccupancy).toFixed(1));
-    return { value: diff, label: 'vs last month (same period)' };
+    const pctChange = prevOccupancy > 0 ? Number(((occupancy - prevOccupancy) / prevOccupancy * 100).toFixed(1)) : null;
+    if (pctChange === null) return null;
+    return { value: pctChange, label: 'vs last month (same period)' };
   }, [selectedMonth, filteredData, allData, monthlyTargets, totalRooms, occupancy]);
 
   const adr = useMemo(() => {
