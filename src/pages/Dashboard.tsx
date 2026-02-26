@@ -143,10 +143,10 @@ export default function Dashboard() {
   }, [selectedMonth, filteredData, allData, monthlyTargets, totalRooms, occupancy]);
 
   const adr = useMemo(() => {
-    const totalRoomsSold = filteredData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
-    if (totalRoomsSold === 0) return 0;
-    const totalRev = filteredData.reduce((sum, d) => sum + Number(d.revenue || 0), 0);
-    return Math.round(totalRev / totalRoomsSold);
+    const daysWithRates = filteredData.filter(d => (d.average_rate ?? 0) > 0);
+    if (daysWithRates.length === 0) return 0;
+    const avgRate = daysWithRates.reduce((sum, d) => sum + (d.average_rate || 0), 0) / daysWithRates.length;
+    return Math.round(avgRate);
   }, [filteredData]);
 
   useEffect(() => {
