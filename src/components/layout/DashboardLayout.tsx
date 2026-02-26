@@ -8,9 +8,9 @@ import {
   TrendingUp, 
   Upload, 
   LogOut,
-  Building2,
   Clock
 } from 'lucide-react';
+import rsLogo from '@/assets/rs-logo.png';
 import { cn } from '@/lib/utils';
 
 interface DashboardLayoutProps {
@@ -43,8 +43,8 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
-                <Building2 className="w-5 h-5 text-primary-foreground" />
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg overflow-hidden">
+                <img src={rsLogo} alt="Reserved Suites logo" className="w-10 h-10 object-contain" />
               </div>
               <div>
                 <h1 className="font-semibold text-foreground">Reserved Suites Illovo</h1>
