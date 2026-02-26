@@ -234,7 +234,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="text-2xl font-bold text-foreground">Dashboard Overview</h2>
-            <p className="text-muted-foreground">Monitor your property performance at a glance</p>
+            <p className="text-muted-foreground">Monitor our performance at a glance</p>
           </div>
           {availableMonths.length > 0 && (
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
