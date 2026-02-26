@@ -1,113 +1,30 @@
 
-# Reserved Suites Illovo - Enhanced Revenue Dashboard
 
-## Overview
-A professional, corporate-styled revenue dashboard for Reserved Suites Illovo that improves upon the current Excel-upload workflow with better visuals, alerts, and a simple authentication layer.
+## Desktop App Options
 
----
+There are two approaches to make your dashboard installable on Windows and Mac desktops:
 
-## Core Features
+### Option 1: Installable Web App (PWA) — Recommended
+- Users can install the app directly from the browser to their desktop (like a real app)
+- Works on both Windows and Mac
+- No app store submission needed
+- Opens in its own window with your RS logo as the app icon
+- Works offline and loads quickly
+- I can set this up for you right now
 
-### 1. Simple Authentication
-- **Single shared login page** with password protection
-- Clean professional login screen with your company branding
-- Session persistence so staff stay logged in
+### Option 2: True Native Desktop App (Electron/Tauri)
+- A standalone `.exe` (Windows) or `.app` (Mac) file
+- Requires significant local development setup (Node.js, build tools)
+- Needs manual packaging and distribution
+- Cannot be built within Lovable — you'd need to export to GitHub and set it up locally
 
-### 2. Dashboard Overview (Home Page)
-**Enhanced KPI Cards** showing:
-- Revenue to Date (with progress ring toward target)
-- Occupancy Rate (percentage with target comparison)
-- Average Room Rate (ADR with breakeven indicator)
-- Target Variance (how far from goal)
+### Recommendation
 
-**Daily Revenue Chart** - Interactive bar chart showing:
-- Daily revenue vs daily target line
-- Color-coded bars (green when above target, red when below)
-- Hover tooltips with exact figures
+The **PWA approach** gives you an installable desktop app experience with minimal effort. Once set up, anyone visiting your dashboard can click "Install" in their browser (or a button we add to the app) and it appears as a standalone app on their desktop with your RS logo.
 
-**Alert Banner** - Prominent notification when:
-- Revenue is more than 20% behind target
-- Occupancy drops below threshold
-- Customizable alert thresholds
-
-### 3. Room Types Page
-**Summary Cards:**
-- Number of active room types
-- Revenue month-to-date
-- Weighted ADR
-- Average occupancy
-
-**Interactive Charts:**
-- Revenue breakdown by room type (pie/donut chart)
-- Occupancy vs ADR comparison (grouped bar chart)
-- Click on room type for detailed breakdown
-
-### 4. Historical Trends Page
-**Trend Charts:**
-- Annual revenue trend (line chart with data points)
-- Occupancy trend over years
-- Interactive - hover for exact values
-
-**Data Table:**
-- Year-by-year summary (Rooms Sold, Occupancy %, Revenue, Avg Rate)
-- Sortable columns
-- Export to CSV option
-
-### 5. Excel Upload (Improved)
-**Enhanced Upload Experience:**
-- Drag-and-drop file upload zone
-- File format validation before processing
-- Preview of data before confirming import
-- Clear error messages if format issues detected
-- Success confirmation with summary of imported data
-
----
-
-## Design & User Experience
-
-### Visual Style
-- **Professional corporate theme** with clean layout
-- Consistent color palette (matching your brand - navy/dark tones with gold/amber accents for highlights)
-- Clear typography and generous whitespace
-- Responsive design for desktop and tablet viewing
-
-### Navigation
-- Clean top navigation with Overview, Room Types, Historical tabs
-- Month/year selector for date range filtering
-- "Last Updated" timestamp always visible
-- Logout option in header
-
----
-
-## Technical Approach
-
-### Backend (Lovable Cloud)
-- **Database** to store uploaded revenue data, targets, and room information
-- **Authentication** using single shared password
-- **File processing** for Excel uploads
-
-### What Staff Will Experience
-1. Log in with shared password
-2. See current month's performance at a glance with alerts
-3. Navigate between views for detailed analysis
-4. Upload new Excel data when needed with clear feedback
-5. Data automatically populates all charts and KPIs
-
----
-
-## Alerts System
-Configurable alerts that appear on dashboard when:
-- Revenue falls below X% of target
-- Occupancy drops below threshold
-- Performance significantly worse than same period last year
-
----
-
-## Summary
-This enhanced dashboard keeps your familiar Excel workflow while adding:
-- ✅ Professional, polished visual design
-- ✅ Simple password protection
-- ✅ Automated alerts for staff awareness
-- ✅ Better data visualization
-- ✅ Improved upload experience with validation
+### Implementation Steps (PWA)
+1. Install and configure `vite-plugin-pwa` with a manifest including your app name and RS logo icons
+2. Add mobile/desktop meta tags to `index.html`
+3. Generate PWA icon sizes from your RS logo
+4. Add an install prompt or `/install` page so users can easily install the app
 
