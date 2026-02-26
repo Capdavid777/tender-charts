@@ -11,6 +11,7 @@ import RoomTypes from "./pages/RoomTypes";
 import Historical from "./pages/Historical";
 import Upload from "./pages/Upload";
 import NotFound from "./pages/NotFound";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <PWAInstallPrompt />
       <BrowserRouter>
         <AuthProvider>
           <Routes>
