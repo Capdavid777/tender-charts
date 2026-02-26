@@ -283,7 +283,7 @@ export default function Dashboard() {
           <KPICard
             title="Target Variance"
             value={`${variance >= 0 ? '+' : ''}${variance.toFixed(2)}%`}
-            subtitle={variance >= 0 ? 'Ahead of target' : 'Behind target'}
+            subtitle={`${variance >= 0 ? 'Ahead' : 'Behind'} by ${formatCurrency(Math.abs(totalRevenue - targetRevenue))}`}
             icon={<Target className="w-5 h-5 text-primary" />}
             variant={variance >= 0 ? 'success' : variance >= -20 ? 'warning' : 'danger'}
           />
