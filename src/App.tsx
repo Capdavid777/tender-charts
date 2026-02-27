@@ -53,22 +53,22 @@ const App = () => (
             {/* Protected routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
-                <Dashboard />
+                <Dashboard key="dashboard" />
               </ProtectedRoute>
             } />
             <Route path="/room-types" element={
               <ProtectedRoute>
-                <RoomTypes />
+                <RoomTypes key="room-types" />
               </ProtectedRoute>
             } />
             <Route path="/historical" element={
               <ProtectedRoute>
-                <Historical />
+                <Historical key="historical" />
               </ProtectedRoute>
             } />
             <Route path="/upload" element={
               <ProtectedRoute>
-                <Upload />
+                <Upload key="upload" />
               </ProtectedRoute>
             } />
             
