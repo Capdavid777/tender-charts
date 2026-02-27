@@ -276,7 +276,7 @@ export default function Dashboard() {
           <KPICard
             title="Average Daily Rate"
             value={formatCurrency(adr)}
-            subtitle={`Breakeven: ${formatCurrency(breakevenAdr)}`}
+            subtitle="Simple avg across days"
             icon={<TrendingUp className="w-5 h-5 text-primary" />}
             variant={adr >= breakevenAdr ? 'success' : 'danger'}
           />
