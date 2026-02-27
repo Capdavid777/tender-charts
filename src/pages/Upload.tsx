@@ -219,18 +219,25 @@ export default function Upload() {
 
       // Import daily revenue data (aggregate records with room_type_id = null)
       if (state.parsedData.daily.length > 0) {
+        // Delete existing aggregate records for these dates then re-insert
+        const dates = state.parsedData.daily.map(d => d.date);
+        await supabase
+          .from('daily_revenue')
+          .delete()
+          .is('room_type_id', null)
+          .in('date', dates);
+
         const dailyRecords = state.parsedData.daily.map(d => ({
           date: d.date,
           revenue: d.revenue,
           rooms_sold: Math.round(d.occupancy * 60),
           average_rate: d.arr,
           occupancy: d.occupancy,
-          room_type_id: null,
         }));
         
         const { error: dailyError } = await supabase
           .from('daily_revenue')
-          .upsert(dailyRecords, { onConflict: 'date,room_type_id' });
+          .insert(dailyRecords);
         
         if (dailyError) throw dailyError;
         totalRecords += dailyRecords.length;
