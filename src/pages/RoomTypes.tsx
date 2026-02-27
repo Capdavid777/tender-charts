@@ -38,6 +38,7 @@ export default function RoomTypes() {
   const [roomTypes, setRoomTypes] = useState<RoomTypeData[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [weightedAdr, setWeightedAdr] = useState(0);
+  const [avgOccupancy, setAvgOccupancy] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,7 +55,7 @@ export default function RoomTypes() {
 
       const { data: revenueData } = await supabase
         .from('daily_revenue')
-        .select('revenue, rooms_sold, average_rate')
+        .select('revenue, rooms_sold, average_rate, occupancy')
         .gte('date', startDate)
         .lte('date', endDate);
 
@@ -66,6 +67,12 @@ export default function RoomTypes() {
       const calculatedWeightedAdr = totalRoomsSold > 0 ? totalRev / totalRoomsSold : 0;
       setWeightedAdr(calculatedWeightedAdr);
 
+      // Calculate avg occupancy from daily data
+      const daysWithOccupancy = revenueData?.filter(d => (d.occupancy ?? 0) > 0) || [];
+      if (daysWithOccupancy.length > 0) {
+        const avg = daysWithOccupancy.reduce((sum, d) => sum + Number(d.occupancy || 0), 0) / daysWithOccupancy.length;
+        setAvgOccupancy(Number((avg * 100).toFixed(2)));
+      }
       if (rtData && rtData.length > 0) {
         setRoomTypes(rtData.map(rt => ({
           name: rt.name,
@@ -81,9 +88,6 @@ export default function RoomTypes() {
   }, []);
 
   const totalRoomTypes = roomTypes.length;
-  const avgOccupancy = roomTypes.length > 0
-    ? roomTypes.reduce((sum, r) => sum + r.occupancy, 0) / roomTypes.length
-    : 0;
 
   const pieData = roomTypes.map(r => ({
     name: r.name,
