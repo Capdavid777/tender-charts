@@ -6,6 +6,8 @@ interface KPICardProps {
   title: string;
   value: string;
   subtitle?: string;
+  secondarySubtitle?: string;
+  secondarySubtitleClassName?: string;
   icon: ReactNode;
   trend?: {
     value: number;
@@ -19,6 +21,8 @@ export default function KPICard({
   title, 
   value, 
   subtitle, 
+  secondarySubtitle,
+  secondarySubtitleClassName,
   icon, 
   trend, 
   progress,
@@ -45,6 +49,9 @@ export default function KPICard({
             <p className="text-2xl font-bold text-foreground">{value}</p>
             {subtitle && (
               <p className="text-sm text-muted-foreground">{subtitle}</p>
+            )}
+            {secondarySubtitle && (
+              <p className={cn('text-sm font-medium', secondarySubtitleClassName || 'text-muted-foreground')}>{secondarySubtitle}</p>
             )}
             {trend && (
               <p className={cn('text-sm font-medium', trendColor)}>
