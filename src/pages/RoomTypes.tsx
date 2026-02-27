@@ -100,7 +100,7 @@ export default function RoomTypes() {
           return {
             name: rt.name,
             revenue: data?.revenue || 0,
-            occupancy: data ? data.occupancy * 100 : 0,
+            occupancy: data ? Number((data.occupancy * 100).toFixed(2)) : 0,
             adr: data && data.roomsSold > 0 ? data.revenue / data.roomsSold : 0,
             rooms: rt.total_rooms,
           };
