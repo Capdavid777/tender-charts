@@ -136,7 +136,7 @@ export default function RoomTypes() {
           <KPICard
             title="Weighted ADR"
             value={formatCurrency(weightedAdr)}
-            subtitle="Across all rooms"
+            subtitle="Revenue ÷ rooms sold"
             icon={<TrendingUp className="w-5 h-5 text-primary" />}
           />
           <KPICard
