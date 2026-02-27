@@ -155,7 +155,7 @@ export default function Dashboard() {
 
       const [uploadsRes, revenueRes, roomTypesRes, targetsRes] = await Promise.all([
         supabase.from('data_uploads').select('uploaded_at').order('uploaded_at', { ascending: false }).limit(1),
-        supabase.from('daily_revenue').select('*').order('date', { ascending: true }),
+        supabase.from('daily_revenue').select('*').is('room_type_id', null).order('date', { ascending: true }),
         supabase.from('room_types').select('total_rooms'),
         supabase.from('monthly_targets').select('*'),
       ]);
