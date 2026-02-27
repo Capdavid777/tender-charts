@@ -243,9 +243,10 @@ export default function Upload() {
         totalRecords += dailyRecords.length;
       }
 
-      // Import room types data
-      if (state.parsedData.roomTypes.length > 0) {
-        for (const rt of state.parsedData.roomTypes) {
+      // Import room types data (skip entries with empty names)
+      const validRoomTypes = state.parsedData.roomTypes.filter(rt => rt.name && rt.name.trim() !== '');
+      if (validRoomTypes.length > 0) {
+        for (const rt of validRoomTypes) {
           const { error: roomError } = await supabase
             .from('room_types')
             .upsert({
@@ -256,7 +257,7 @@ export default function Upload() {
           
           if (roomError) throw roomError;
         }
-        totalRecords += state.parsedData.roomTypes.length;
+        totalRecords += validRoomTypes.length;
 
         // Now fetch room type IDs and insert per-room-type revenue records
         const { data: roomTypesFromDb } = await supabase
@@ -271,7 +272,7 @@ export default function Upload() {
           const monthStart = firstDate.substring(0, 8) + '01'; // YYYY-MM-01
           
           // Create one summary record per room type for this month
-          const roomTypeRecords = state.parsedData.roomTypes
+          const roomTypeRecords = validRoomTypes
             .filter(rt => roomTypeMap.has(rt.name))
             .map(rt => ({
               date: monthStart,
