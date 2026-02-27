@@ -37,6 +37,7 @@ interface RoomTypeData {
 export default function RoomTypes() {
   const [roomTypes, setRoomTypes] = useState<RoomTypeData[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
+  const [weightedAdr, setWeightedAdr] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,12 +54,17 @@ export default function RoomTypes() {
 
       const { data: revenueData } = await supabase
         .from('daily_revenue')
-        .select('revenue, rooms_sold')
+        .select('revenue, rooms_sold, average_rate')
         .gte('date', startDate)
         .lte('date', endDate);
 
       const totalRev = revenueData?.reduce((sum, d) => sum + Number(d.revenue || 0), 0) || 0;
       setTotalRevenue(totalRev);
+
+      // Calculate weighted ADR from daily data (revenue / rooms sold)
+      const totalRoomsSold = revenueData?.reduce((sum, d) => sum + Number(d.rooms_sold || 0), 0) || 0;
+      const calculatedWeightedAdr = totalRoomsSold > 0 ? totalRev / totalRoomsSold : 0;
+      setWeightedAdr(calculatedWeightedAdr);
 
       if (rtData && rtData.length > 0) {
         setRoomTypes(rtData.map(rt => ({
@@ -75,9 +81,6 @@ export default function RoomTypes() {
   }, []);
 
   const totalRoomTypes = roomTypes.length;
-  const weightedAdr = roomTypes.reduce((sum, r) => sum + r.rooms, 0) > 0
-    ? roomTypes.reduce((sum, r) => sum + (r.adr * r.rooms), 0) / roomTypes.reduce((sum, r) => sum + r.rooms, 0)
-    : 0;
   const avgOccupancy = roomTypes.length > 0
     ? roomTypes.reduce((sum, r) => sum + r.occupancy, 0) / roomTypes.length
     : 0;
