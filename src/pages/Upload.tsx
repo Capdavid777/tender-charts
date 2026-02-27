@@ -217,7 +217,7 @@ export default function Upload() {
     try {
       let totalRecords = 0;
 
-      // Import daily revenue data
+      // Import daily revenue data (aggregate records with room_type_id = null)
       if (state.parsedData.daily.length > 0) {
         const dailyRecords = state.parsedData.daily.map(d => ({
           date: d.date,
@@ -225,11 +225,12 @@ export default function Upload() {
           rooms_sold: Math.round(d.occupancy * 60),
           average_rate: d.arr,
           occupancy: d.occupancy,
+          room_type_id: null,
         }));
         
         const { error: dailyError } = await supabase
           .from('daily_revenue')
-          .upsert(dailyRecords, { onConflict: 'date' });
+          .upsert(dailyRecords, { onConflict: 'date,room_type_id' });
         
         if (dailyError) throw dailyError;
         totalRecords += dailyRecords.length;
@@ -243,12 +244,46 @@ export default function Upload() {
             .upsert({
               name: rt.name,
               total_rooms: rt.totalRooms,
-              breakeven_rate: rt.avgRate * 0.6, // Estimate breakeven as 60% of avg rate
+              breakeven_rate: rt.avgRate * 0.6,
             }, { onConflict: 'name' });
           
           if (roomError) throw roomError;
         }
         totalRecords += state.parsedData.roomTypes.length;
+
+        // Now fetch room type IDs and insert per-room-type revenue records
+        const { data: roomTypesFromDb } = await supabase
+          .from('room_types')
+          .select('id, name');
+        
+        if (roomTypesFromDb && state.parsedData.daily.length > 0) {
+          const roomTypeMap = new Map(roomTypesFromDb.map(rt => [rt.name, rt.id]));
+          
+          // Determine the month from daily data (use first record's date)
+          const firstDate = state.parsedData.daily[0].date;
+          const monthStart = firstDate.substring(0, 8) + '01'; // YYYY-MM-01
+          
+          // Create one summary record per room type for this month
+          const roomTypeRecords = state.parsedData.roomTypes
+            .filter(rt => roomTypeMap.has(rt.name))
+            .map(rt => ({
+              date: monthStart,
+              room_type_id: roomTypeMap.get(rt.name)!,
+              revenue: rt.revenue,
+              rooms_sold: rt.roomsSold,
+              average_rate: rt.avgRate,
+              occupancy: rt.totalRooms > 0 ? rt.roomsSold / (rt.totalRooms * 30) : 0,
+            }));
+          
+          if (roomTypeRecords.length > 0) {
+            const { error: rtRevenueError } = await supabase
+              .from('daily_revenue')
+              .upsert(roomTypeRecords, { onConflict: 'date,room_type_id' });
+            
+            if (rtRevenueError) throw rtRevenueError;
+            totalRecords += roomTypeRecords.length;
+          }
+        }
       }
 
       // Import annual summary data

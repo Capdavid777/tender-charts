@@ -53,34 +53,57 @@ export default function RoomTypes() {
       const startDate = `${year}-${month}-01`;
       const endDate = `${year}-${month}-${new Date(year, now.getMonth() + 1, 0).getDate()}`;
 
+      // Fetch aggregate daily data (room_type_id is null)
       const { data: revenueData } = await supabase
         .from('daily_revenue')
         .select('revenue, rooms_sold, average_rate, occupancy')
+        .is('room_type_id', null)
         .gte('date', startDate)
         .lte('date', endDate);
 
       const totalRev = revenueData?.reduce((sum, d) => sum + Number(d.revenue || 0), 0) || 0;
       setTotalRevenue(totalRev);
 
-      // Calculate weighted ADR from daily data (revenue / rooms sold)
       const totalRoomsSold = revenueData?.reduce((sum, d) => sum + Number(d.rooms_sold || 0), 0) || 0;
       const calculatedWeightedAdr = totalRoomsSold > 0 ? totalRev / totalRoomsSold : 0;
       setWeightedAdr(calculatedWeightedAdr);
 
-      // Calculate avg occupancy from daily data
       const daysWithOccupancy = revenueData?.filter(d => (d.occupancy ?? 0) > 0) || [];
       if (daysWithOccupancy.length > 0) {
         const avg = daysWithOccupancy.reduce((sum, d) => sum + Number(d.occupancy || 0), 0) / daysWithOccupancy.length;
         setAvgOccupancy(Number((avg * 100).toFixed(2)));
       }
+
+      // Fetch per-room-type revenue data
+      const { data: rtRevenueData } = await supabase
+        .from('daily_revenue')
+        .select('room_type_id, revenue, rooms_sold, average_rate, occupancy')
+        .not('room_type_id', 'is', null)
+        .gte('date', startDate)
+        .lte('date', endDate);
+
       if (rtData && rtData.length > 0) {
-        setRoomTypes(rtData.map(rt => ({
-          name: rt.name,
-          revenue: 0,
-          occupancy: 0,
-          adr: 0,
-          rooms: rt.total_rooms,
-        })));
+        // Build a map of room_type_id -> aggregated data
+        const rtRevenueMap = new Map<string, { revenue: number; roomsSold: number; occupancy: number }>();
+        rtRevenueData?.forEach(d => {
+          const id = d.room_type_id!;
+          const existing = rtRevenueMap.get(id) || { revenue: 0, roomsSold: 0, occupancy: 0 };
+          existing.revenue += Number(d.revenue || 0);
+          existing.roomsSold += Number(d.rooms_sold || 0);
+          existing.occupancy += Number(d.occupancy || 0);
+          rtRevenueMap.set(id, existing);
+        });
+
+        setRoomTypes(rtData.map(rt => {
+          const data = rtRevenueMap.get(rt.id);
+          return {
+            name: rt.name,
+            revenue: data?.revenue || 0,
+            occupancy: data ? data.occupancy * 100 : 0,
+            adr: data && data.roomsSold > 0 ? data.revenue / data.roomsSold : 0,
+            rooms: rt.total_rooms,
+          };
+        }));
       }
     };
 
