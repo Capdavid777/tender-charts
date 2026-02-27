@@ -83,6 +83,7 @@ export default function RoomTypes() {
         .lte('date', endDate);
 
       if (rtData && rtData.length > 0) {
+        const validRtData = rtData.filter(rt => rt.name && rt.name.trim() !== '');
         // Build a map of room_type_id -> aggregated data
         const rtRevenueMap = new Map<string, { revenue: number; roomsSold: number; occupancy: number }>();
         rtRevenueData?.forEach(d => {
@@ -94,7 +95,7 @@ export default function RoomTypes() {
           rtRevenueMap.set(id, existing);
         });
 
-        setRoomTypes(rtData.map(rt => {
+        setRoomTypes(validRtData.map(rt => {
           const data = rtRevenueMap.get(rt.id);
           return {
             name: rt.name,
