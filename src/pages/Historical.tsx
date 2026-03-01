@@ -108,7 +108,9 @@ export default function Historical() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-foreground">Historical Trends</h2>
-            <p className="text-muted-foreground">Year-over-year performance analysis</p>
+            <p className="text-muted-foreground">
+              Year-over-year performance analysis — <span className="font-medium text-foreground">February</span>
+            </p>
           </div>
           <Button onClick={exportToCSV} variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
