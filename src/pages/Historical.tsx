@@ -99,8 +99,7 @@ export default function Historical() {
     return null;
   };
 
-  const currentYear = new Date().getFullYear().toString();
-  const trendData = historicalData.filter(d => d.year !== currentYear);
+  const trendData = historicalData;
 
   return (
     <DashboardLayout>
