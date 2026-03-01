@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, TrendingUp, TrendingDown } from 'lucide-react';
 import { formatCurrency, formatPercent } from '@/lib/format';
+import { supabase } from '@/integrations/supabase/client';
 import {
   LineChart,
   Line,
@@ -15,20 +17,27 @@ import {
   Legend,
 } from 'recharts';
 
-// Sample historical data
-const historicalData = [
-  { year: '2019', revenue: 3200000, occupancy: 72, roomsSold: 2190, avgRate: 1461 },
-  { year: '2020', revenue: 1800000, occupancy: 45, roomsSold: 1314, avgRate: 1370 },
-  { year: '2021', revenue: 2400000, occupancy: 58, roomsSold: 1693, avgRate: 1418 },
-  { year: '2022', revenue: 3100000, occupancy: 70, roomsSold: 2044, avgRate: 1517 },
-  { year: '2023', revenue: 3500000, occupancy: 75, roomsSold: 2190, avgRate: 1598 },
-  { year: '2024', revenue: 3800000, occupancy: 78, roomsSold: 2336, avgRate: 1627 },
-  { year: '2025', revenue: 350000, occupancy: 72, roomsSold: 215, avgRate: 1628 },
-];
-
 export default function Historical() {
   const [sortColumn, setSortColumn] = useState<string>('year');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const { data: historicalData = [] } = useQuery({
+    queryKey: ['annual-summary'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('annual_summary')
+        .select('*')
+        .order('year', { ascending: true });
+      if (error) throw error;
+      return data.map(row => ({
+        year: String(row.year),
+        revenue: row.total_revenue,
+        occupancy: Number((row.occupancy_percentage ?? 0).toFixed(2)),
+        roomsSold: row.total_rooms_sold,
+        avgRate: Number((row.average_rate ?? 0).toFixed(2)),
+      }));
+    },
+  });
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -90,8 +99,8 @@ export default function Historical() {
     return null;
   };
 
-  // Filter out current incomplete year for trend charts
-  const trendData = historicalData.filter(d => d.year !== '2025');
+  const currentYear = new Date().getFullYear().toString();
+  const trendData = historicalData.filter(d => d.year !== currentYear);
 
   return (
     <DashboardLayout>
