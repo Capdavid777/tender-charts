@@ -10,8 +10,15 @@ interface MonthContextType {
 const MonthContext = createContext<MonthContextType | undefined>(undefined);
 
 export function MonthProvider({ children }: { children: ReactNode }) {
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
+  const [selectedMonth, setSelectedMonthState] = useState<string>(() => {
+    return sessionStorage.getItem('selectedMonth') || '';
+  });
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+
+  const setSelectedMonth = (month: string) => {
+    setSelectedMonthState(month);
+    sessionStorage.setItem('selectedMonth', month);
+  };
 
   useEffect(() => {
     const fetchMonths = async () => {
@@ -30,7 +37,7 @@ export function MonthProvider({ children }: { children: ReactNode }) {
         });
         const sorted = Array.from(months).sort().reverse();
         setAvailableMonths(sorted);
-        if (!selectedMonth) {
+        if (!selectedMonth || !sorted.includes(selectedMonth)) {
           setSelectedMonth(sorted[0]);
         }
       }
