@@ -10,7 +10,7 @@ import {
   LogOut,
   Clock
 } from 'lucide-react';
-import rsLogo from '@/assets/rs-logo.png';
+
 import { cn } from '@/lib/utils';
 
 interface DashboardLayoutProps {
@@ -45,11 +45,11 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-10 h-10 rounded-lg overflow-hidden bg-muted">
                 <img 
-                  src={rsLogo} 
+                  src="/rs-logo.png" 
                   alt="Reserved Suites logo" 
                   className="w-10 h-10 object-contain" 
                   onError={(e) => {
-                    console.error('Logo failed to load:', rsLogo);
+                    console.error('Logo failed to load');
                   }}
                 />
               </div>
