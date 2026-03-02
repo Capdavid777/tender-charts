@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import MonthSelector from '@/components/MonthSelector';
@@ -8,11 +8,48 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { FileText, Edit3, Save, X, Eye } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { FileText, Edit3, Save, X, Eye, ChevronRight, Calendar } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
 
 const MONTH_NAMES = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/** Split markdown content by ## headings into titled sections */
+function splitIntoSections(markdown: string): { title: string; body: string }[] {
+  const lines = markdown.split('\n');
+  const sections: { title: string; body: string }[] = [];
+  let currentTitle = '';
+  let currentBody: string[] = [];
+
+  for (const line of lines) {
+    const h2Match = line.match(/^## (.+)/);
+    if (h2Match) {
+      if (currentTitle || currentBody.length > 0) {
+        sections.push({ title: currentTitle, body: currentBody.join('\n').trim() });
+      }
+      currentTitle = h2Match[1].trim();
+      currentBody = [];
+    } else {
+      currentBody.push(line);
+    }
+  }
+  if (currentTitle || currentBody.length > 0) {
+    sections.push({ title: currentTitle, body: currentBody.join('\n').trim() });
+  }
+
+  return sections.filter(s => s.title || s.body);
+}
+
+/** Icon color per section index */
+const sectionColors = [
+  'text-primary',
+  'text-accent',
+  'text-[hsl(var(--success))]',
+  'text-[hsl(var(--chart-4))]',
+  'text-[hsl(var(--chart-5))]',
+  'text-destructive',
+];
 
 export default function Analysis() {
   const { selectedMonth } = useMonth();
@@ -39,6 +76,11 @@ export default function Analysis() {
       return data;
     },
   });
+
+  const sections = useMemo(() => {
+    if (!analysis?.content) return [];
+    return splitIntoSections(analysis.content);
+  }, [analysis?.content]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -70,6 +112,7 @@ export default function Analysis() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="text-2xl font-bold text-foreground">Monthly Analysis</h2>
@@ -86,6 +129,7 @@ export default function Analysis() {
           </div>
         </div>
 
+        {/* Editor */}
         {editing ? (
           <Card>
             <CardHeader className="pb-4">
@@ -115,14 +159,14 @@ export default function Analysis() {
               </div>
               <div>
                 <label className="text-sm font-medium text-foreground mb-1 block">
-                  Full Analysis <span className="text-muted-foreground font-normal">(Markdown supported)</span>
+                  Full Analysis <span className="text-muted-foreground font-normal">(Markdown supported — use ## for section headings)</span>
                 </label>
                 {preview ? (
                   <div className="prose prose-sm max-w-none border rounded-md p-4 bg-muted/30 min-h-[300px]">
                     <ReactMarkdown>{content}</ReactMarkdown>
                   </div>
                 ) : (
-                  <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Paste your full analysis here. Markdown formatting is supported..." rows={20} className="font-mono text-sm" />
+                  <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Paste your full analysis here. Use ## headings to create collapsible sections..." rows={20} className="font-mono text-sm" />
                 )}
               </div>
               <div className="flex justify-end gap-2 pt-2">
@@ -137,22 +181,64 @@ export default function Analysis() {
         ) : isLoading ? (
           <Card><CardContent className="py-12 text-center text-muted-foreground">Loading...</CardContent></Card>
         ) : analysis ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" />
-                {analysis.title}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Last updated: {new Date(analysis.updated_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-a:text-primary">
-                <ReactMarkdown>{analysis.content}</ReactMarkdown>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            {/* Title card */}
+            <Card>
+              <CardContent className="py-5 px-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <FileText className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">{analysis.title}</h3>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <Calendar className="w-3 h-3" />
+                        Last updated {new Date(analysis.updated_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                {analysis.summary && (
+                  <p className="text-sm text-muted-foreground mt-3 leading-relaxed border-l-2 border-accent pl-3">
+                    {analysis.summary}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Sections as accordions */}
+            <Accordion type="multiple" defaultValue={sections.map((_, i) => `section-${i}`)} className="space-y-3">
+              {sections.map((section, i) => (
+                <AccordionItem key={i} value={`section-${i}`} className="border-0">
+                  <Card>
+                    <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                      <div className="flex items-center gap-3 text-left">
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${sectionColors[i % sectionColors.length].replace('text-', 'bg-')}`} />
+                        <span className="font-semibold text-foreground text-[15px]">{section.title || 'Introduction'}</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 pb-5 pt-0">
+                      <div className="prose prose-sm max-w-none
+                        prose-headings:text-foreground prose-headings:font-semibold prose-headings:mt-4 prose-headings:mb-2
+                        prose-h3:text-sm prose-h3:uppercase prose-h3:tracking-wide prose-h3:text-muted-foreground
+                        prose-p:text-foreground prose-p:leading-relaxed prose-p:my-2
+                        prose-li:text-foreground prose-li:my-0.5
+                        prose-strong:text-foreground
+                        prose-a:text-primary
+                        prose-table:text-sm
+                        prose-th:text-left prose-th:text-muted-foreground prose-th:font-medium prose-th:py-2 prose-th:px-3 prose-th:border-b prose-th:border-border
+                        prose-td:py-2 prose-td:px-3 prose-td:border-b prose-td:border-border prose-td:text-foreground
+                        prose-hr:hidden
+                      ">
+                        <ReactMarkdown>{section.body}</ReactMarkdown>
+                      </div>
+                    </AccordionContent>
+                  </Card>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
         ) : (
           <Card>
             <CardContent className="py-12 text-center">
