@@ -7,6 +7,7 @@ import {
   BedDouble, 
   TrendingUp, 
   Upload, 
+  FileText,
   LogOut,
   Clock
 } from 'lucide-react';
@@ -22,6 +23,7 @@ const navItems = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/room-types', label: 'Room Types', icon: BedDouble },
   { href: '/historical', label: 'Historical', icon: TrendingUp },
+  { href: '/analysis', label: 'Analysis', icon: FileText },
   { href: '/upload', label: 'Upload Data', icon: Upload },
 ];
 
