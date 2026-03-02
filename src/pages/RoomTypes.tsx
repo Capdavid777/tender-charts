@@ -47,11 +47,21 @@ export default function RoomTypes() {
         .select('*')
         .order('name');
 
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
+      // Find the most recent month with data
+      const { data: latestRecord } = await supabase
+        .from('daily_revenue')
+        .select('date')
+        .is('room_type_id', null)
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const refDate = latestRecord ? new Date(latestRecord.date + 'T00:00:00') : new Date();
+      const year = refDate.getFullYear();
+      const monthIdx = refDate.getMonth();
+      const month = String(monthIdx + 1).padStart(2, '0');
       const startDate = `${year}-${month}-01`;
-      const endDate = `${year}-${month}-${new Date(year, now.getMonth() + 1, 0).getDate()}`;
+      const endDate = `${year}-${month}-${new Date(year, monthIdx + 1, 0).getDate()}`;
 
       // Fetch aggregate daily data (room_type_id is null)
       const { data: revenueData } = await supabase
