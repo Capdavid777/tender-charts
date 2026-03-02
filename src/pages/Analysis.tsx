@@ -5,6 +5,7 @@ import MonthSelector from '@/components/MonthSelector';
 import { useMonth } from '@/contexts/MonthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,6 +22,7 @@ export default function Analysis() {
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState('');
   const queryClient = useQueryClient();
+  const { isAdmin } = useAuth();
 
   const [year, month] = selectedMonth.split('-').map(Number);
   const monthLabel = `${MONTH_NAMES[month]} ${year}`;
@@ -76,7 +78,7 @@ export default function Analysis() {
           </div>
           <div className="flex items-center gap-2">
             <MonthSelector />
-            {!editing && (
+            {!editing && isAdmin && (
               <Button onClick={startEditing} variant="outline" size="sm" className="gap-2">
                 <Edit3 className="w-4 h-4" />
                 {analysis ? 'Edit' : 'Add Analysis'}
@@ -157,11 +159,15 @@ export default function Analysis() {
             <CardContent className="py-12 text-center">
               <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-1">No analysis for {monthLabel}</h3>
-              <p className="text-muted-foreground mb-4">Add a monthly performance review to share insights with the team.</p>
-              <Button onClick={startEditing} className="gap-2">
-                <Edit3 className="w-4 h-4" />
-                Add Analysis
-              </Button>
+              <p className="text-muted-foreground mb-4">
+                {isAdmin ? 'Add a monthly performance review to share insights with the team.' : 'No analysis has been added for this month yet.'}
+              </p>
+              {isAdmin && (
+                <Button onClick={startEditing} className="gap-2">
+                  <Edit3 className="w-4 h-4" />
+                  Add Analysis
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
