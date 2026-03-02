@@ -37,25 +37,29 @@ export default function Historical() {
     ? new Date(2000, monthNum - 1).toLocaleDateString('en-ZA', { month: 'long' })
     : '';
 
-  // Fetch daily_revenue for the selected month across ALL years
+  // Fetch daily_revenue for the selected month across ALL years, plus annual_summary fallback
   const { data: historicalData = [] } = useQuery<YearData[]>({
     queryKey: ['historical-by-month', monthNum],
     enabled: monthNum !== null,
     queryFn: async () => {
-      // Get all daily_revenue aggregate records (room_type_id is null)
-      const { data, error } = await supabase
-        .from('daily_revenue')
-        .select('date, revenue, rooms_sold, average_rate, occupancy')
-        .is('room_type_id', null)
-        .order('date', { ascending: true });
+      const [dailyRes, annualRes] = await Promise.all([
+        supabase
+          .from('daily_revenue')
+          .select('date, revenue, rooms_sold, average_rate, occupancy')
+          .is('room_type_id', null)
+          .order('date', { ascending: true }),
+        supabase
+          .from('annual_summary')
+          .select('*')
+          .order('year', { ascending: true }),
+      ]);
 
-      if (error) throw error;
-      if (!data) return [];
+      if (dailyRes.error) throw dailyRes.error;
 
-      // Group by year, filtering to only the selected month
+      // Group daily data by year for the selected month
       const yearMap = new Map<number, { revenue: number; roomsSold: number; rates: number[]; occupancies: number[] }>();
 
-      data.forEach(row => {
+      (dailyRes.data || []).forEach(row => {
         const d = new Date(row.date);
         if (d.getMonth() + 1 !== monthNum) return;
         const year = d.getFullYear();
@@ -66,6 +70,20 @@ export default function Historical() {
         if (row.occupancy && Number(row.occupancy) > 0) existing.occupancies.push(Number(row.occupancy));
         yearMap.set(year, existing);
       });
+
+      // For years without daily data, fall back to annual_summary
+      if (annualRes.data) {
+        annualRes.data.forEach(row => {
+          if (!yearMap.has(row.year)) {
+            yearMap.set(row.year, {
+              revenue: Number(row.total_revenue),
+              roomsSold: Number(row.total_rooms_sold),
+              rates: row.average_rate ? [Number(row.average_rate)] : [],
+              occupancies: row.occupancy_percentage ? [Number(row.occupancy_percentage) / 100] : [],
+            });
+          }
+        });
+      }
 
       return Array.from(yearMap.entries())
         .sort(([a], [b]) => a - b)
