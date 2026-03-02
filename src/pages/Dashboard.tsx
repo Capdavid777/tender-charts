@@ -7,6 +7,7 @@ import { DollarSign, Percent, TrendingUp, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency, formatPercent } from '@/lib/format';
+import { useMonth } from '@/contexts/MonthContext';
 
 interface DailyData {
   date: string;
@@ -32,7 +33,7 @@ export default function Dashboard() {
   const [lastUpdated, setLastUpdated] = useState('');
   const [allData, setAllData] = useState<RawDailyData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
+  const { selectedMonth, setSelectedMonth } = useMonth();
   const [totalRooms, setTotalRooms] = useState(80);
   const [monthlyTargets, setMonthlyTargets] = useState<Record<string, MonthlyTarget>>({});
   const [breakevenAdr] = useState(1308.99);

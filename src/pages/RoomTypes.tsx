@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BedDouble, DollarSign, Percent, TrendingUp } from 'lucide-react';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { supabase } from '@/integrations/supabase/client';
+import { useMonth } from '@/contexts/MonthContext';
 import {
   PieChart,
   Pie,
@@ -39,6 +40,7 @@ export default function RoomTypes() {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [weightedAdr, setWeightedAdr] = useState(0);
   const [avgOccupancy, setAvgOccupancy] = useState(0);
+  const { selectedMonth } = useMonth();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -47,18 +49,28 @@ export default function RoomTypes() {
         .select('*')
         .order('name');
 
-      // Find the most recent month with data
-      const { data: latestRecord } = await supabase
-        .from('daily_revenue')
-        .select('date')
-        .is('room_type_id', null)
-        .order('date', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Use shared selectedMonth or fall back to latest month with data
+      let year: number, monthIdx: number;
+      
+      if (selectedMonth) {
+        const parts = selectedMonth.split('-').map(Number);
+        year = parts[0];
+        monthIdx = parts[1] - 1;
+      } else {
+        // Fallback: find most recent month with data
+        const { data: latestRecord } = await supabase
+          .from('daily_revenue')
+          .select('date')
+          .is('room_type_id', null)
+          .order('date', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      const refDate = latestRecord ? new Date(latestRecord.date + 'T00:00:00') : new Date();
-      const year = refDate.getFullYear();
-      const monthIdx = refDate.getMonth();
+        const refDate = latestRecord ? new Date(latestRecord.date + 'T00:00:00') : new Date();
+        year = refDate.getFullYear();
+        monthIdx = refDate.getMonth();
+      }
+
       const month = String(monthIdx + 1).padStart(2, '0');
       const startDate = `${year}-${month}-01`;
       const endDate = `${year}-${month}-${new Date(year, monthIdx + 1, 0).getDate()}`;
@@ -119,7 +131,7 @@ export default function RoomTypes() {
     };
 
     fetchData();
-  }, []);
+  }, [selectedMonth]);
 
   const totalRoomTypes = roomTypes.length;
 
