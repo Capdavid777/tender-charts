@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Download, TrendingUp, TrendingDown } from 'lucide-react';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { supabase } from '@/integrations/supabase/client';
+import MonthSelector from '@/components/MonthSelector';
 import {
   LineChart,
   Line,
@@ -105,17 +106,18 @@ export default function Historical() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Page title */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="text-2xl font-bold text-foreground">Historical Trends</h2>
-            <p className="text-muted-foreground">
-              Year-over-year performance analysis — <span className="font-medium text-foreground">February</span>
-            </p>
+            <p className="text-muted-foreground">Year-over-year performance analysis</p>
           </div>
-          <Button onClick={exportToCSV} variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            Export CSV
-          </Button>
+          <div className="flex items-center gap-2">
+            <MonthSelector />
+            <Button onClick={exportToCSV} variant="outline" className="gap-2">
+              <Download className="w-4 h-4" />
+              Export CSV
+            </Button>
+          </div>
         </div>
 
         {/* Trend Charts */}
