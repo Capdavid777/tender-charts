@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { Download, TrendingUp, TrendingDown } from 'lucide-react';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { supabase } from '@/integrations/supabase/client';
 import MonthSelector from '@/components/MonthSelector';
+import { useMonth } from '@/contexts/MonthContext';
 import {
   LineChart,
   Line,
@@ -15,28 +16,70 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from 'recharts';
+
+interface YearData {
+  year: string;
+  revenue: number;
+  occupancy: number;
+  roomsSold: number;
+  avgRate: number;
+}
 
 export default function Historical() {
   const [sortColumn, setSortColumn] = useState<string>('year');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const { selectedMonth } = useMonth();
 
-  const { data: historicalData = [] } = useQuery({
-    queryKey: ['annual-summary'],
+  // Extract the month number from selectedMonth (e.g. "2026-01" -> 1)
+  const monthNum = selectedMonth ? Number(selectedMonth.split('-')[1]) : null;
+  const monthName = monthNum
+    ? new Date(2000, monthNum - 1).toLocaleDateString('en-ZA', { month: 'long' })
+    : '';
+
+  // Fetch daily_revenue for the selected month across ALL years
+  const { data: historicalData = [] } = useQuery<YearData[]>({
+    queryKey: ['historical-by-month', monthNum],
+    enabled: monthNum !== null,
     queryFn: async () => {
+      // Get all daily_revenue aggregate records (room_type_id is null)
       const { data, error } = await supabase
-        .from('annual_summary')
-        .select('*')
-        .order('year', { ascending: true });
+        .from('daily_revenue')
+        .select('date, revenue, rooms_sold, average_rate, occupancy')
+        .is('room_type_id', null)
+        .order('date', { ascending: true });
+
       if (error) throw error;
-      return data.map(row => ({
-        year: String(row.year),
-        revenue: row.total_revenue,
-        occupancy: Number((row.occupancy_percentage ?? 0).toFixed(2)),
-        roomsSold: row.total_rooms_sold,
-        avgRate: Number((row.average_rate ?? 0).toFixed(2)),
-      }));
+      if (!data) return [];
+
+      // Group by year, filtering to only the selected month
+      const yearMap = new Map<number, { revenue: number; roomsSold: number; rates: number[]; occupancies: number[] }>();
+
+      data.forEach(row => {
+        const d = new Date(row.date);
+        if (d.getMonth() + 1 !== monthNum) return;
+        const year = d.getFullYear();
+        const existing = yearMap.get(year) || { revenue: 0, roomsSold: 0, rates: [], occupancies: [] };
+        existing.revenue += Number(row.revenue || 0);
+        existing.roomsSold += Number(row.rooms_sold || 0);
+        if (row.average_rate && Number(row.average_rate) > 0) existing.rates.push(Number(row.average_rate));
+        if (row.occupancy && Number(row.occupancy) > 0) existing.occupancies.push(Number(row.occupancy));
+        yearMap.set(year, existing);
+      });
+
+      return Array.from(yearMap.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([year, d]) => ({
+          year: String(year),
+          revenue: d.revenue,
+          roomsSold: d.roomsSold,
+          occupancy: d.occupancies.length > 0
+            ? Number(((d.occupancies.reduce((s, v) => s + v, 0) / d.occupancies.length) * 100).toFixed(2))
+            : 0,
+          avgRate: d.rates.length > 0
+            ? Number((d.rates.reduce((s, v) => s + v, 0) / d.rates.length).toFixed(2))
+            : 0,
+        }));
     },
   });
 
@@ -49,36 +92,22 @@ export default function Historical() {
     }
   };
 
-  const sortedData = [...historicalData].sort((a, b) => {
+  const sortedData = useMemo(() => [...historicalData].sort((a, b) => {
     const aValue = a[sortColumn as keyof typeof a];
     const bValue = b[sortColumn as keyof typeof b];
     const multiplier = sortDirection === 'asc' ? 1 : -1;
-    
-    if (typeof aValue === 'string') {
-      return aValue.localeCompare(bValue as string) * multiplier;
-    }
+    if (typeof aValue === 'string') return aValue.localeCompare(bValue as string) * multiplier;
     return ((aValue as number) - (bValue as number)) * multiplier;
-  });
+  }), [historicalData, sortColumn, sortDirection]);
 
   const exportToCSV = () => {
     const headers = ['Year', 'Rooms Sold', 'Occupancy %', 'Revenue', 'Avg Rate'];
-    const rows = historicalData.map(d => [
-      d.year,
-      d.roomsSold,
-      d.occupancy,
-      d.revenue,
-      d.avgRate,
-    ]);
-    
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(',')),
-    ].join('\n');
-    
+    const rows = historicalData.map(d => [d.year, d.roomsSold, d.occupancy, d.revenue, d.avgRate]);
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'historical_data.csv';
+    link.download = `historical_${monthName.toLowerCase()}_data.csv`;
     link.click();
   };
 
@@ -89,8 +118,8 @@ export default function Historical() {
           <p className="font-medium text-foreground mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
-              {entry.name}: {entry.name.includes('Revenue') 
-                ? formatCurrency(entry.value) 
+              {entry.name}: {entry.name.includes('Revenue')
+                ? formatCurrency(entry.value)
                 : formatPercent(entry.value)}
             </p>
           ))}
@@ -100,8 +129,6 @@ export default function Historical() {
     return null;
   };
 
-  const trendData = historicalData;
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -109,7 +136,10 @@ export default function Historical() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="text-2xl font-bold text-foreground">Historical Trends</h2>
-            <p className="text-muted-foreground">Year-over-year performance analysis</p>
+            <p className="text-muted-foreground">
+              Year-over-year performance analysis
+              {monthName && <> — <span className="font-medium text-foreground">{monthName}</span></>}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <MonthSelector />
@@ -122,40 +152,27 @@ export default function Historical() {
 
         {/* Trend Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Revenue Trend */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-success" />
-                Annual Revenue Trend
+                {monthName} Revenue Trend
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trendData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
+                  <LineChart data={historicalData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis 
-                      dataKey="year" 
-                      tick={{ fontSize: 12 }}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis 
+                    <XAxis dataKey="year" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                    <YAxis
                       tickFormatter={(value) => `R${(value / 1000000).toFixed(1)}M`}
-                      tick={{ fontSize: 12 }}
-                      tickLine={false}
-                      axisLine={false}
+                      tick={{ fontSize: 12 }} tickLine={false} axisLine={false}
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      name="Revenue"
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={3}
-                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }}
-                      activeDot={{ r: 6 }}
+                    <Line type="monotone" dataKey="revenue" name="Revenue"
+                      stroke="hsl(var(--primary))" strokeWidth={3}
+                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }} activeDot={{ r: 6 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -163,41 +180,27 @@ export default function Historical() {
             </CardContent>
           </Card>
 
-          {/* Occupancy Trend */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-accent" />
-                Annual Occupancy Trend
+                {monthName} Occupancy Trend
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trendData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
+                  <LineChart data={historicalData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis 
-                      dataKey="year" 
-                      tick={{ fontSize: 12 }}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis 
+                    <XAxis dataKey="year" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                    <YAxis
                       tickFormatter={(value) => `${value}%`}
-                      tick={{ fontSize: 12 }}
-                      tickLine={false}
-                      axisLine={false}
-                      domain={[0, 100]}
+                      tick={{ fontSize: 12 }} tickLine={false} axisLine={false} domain={[0, 100]}
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="occupancy" 
-                      name="Occupancy"
-                      stroke="hsl(var(--accent))" 
-                      strokeWidth={3}
-                      dot={{ fill: 'hsl(var(--accent))', strokeWidth: 2 }}
-                      activeDot={{ r: 6 }}
+                    <Line type="monotone" dataKey="occupancy" name="Occupancy"
+                      stroke="hsl(var(--accent))" strokeWidth={3}
+                      dot={{ fill: 'hsl(var(--accent))', strokeWidth: 2 }} activeDot={{ r: 6 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -209,7 +212,7 @@ export default function Historical() {
         {/* Historical Data Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Year-by-Year Summary</CardTitle>
+            <CardTitle>Year-by-Year {monthName} Summary</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -223,7 +226,7 @@ export default function Historical() {
                       { key: 'revenue', label: 'Revenue' },
                       { key: 'avgRate', label: 'Avg Rate' },
                     ].map(({ key, label }) => (
-                      <th 
+                      <th
                         key={key}
                         className="text-left py-3 px-4 font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
                         onClick={() => handleSort(key)}
@@ -231,7 +234,7 @@ export default function Historical() {
                         <div className="flex items-center gap-1">
                           {label}
                           {sortColumn === key && (
-                            sortDirection === 'asc' 
+                            sortDirection === 'asc'
                               ? <TrendingUp className="w-3 h-3" />
                               : <TrendingDown className="w-3 h-3" />
                           )}
