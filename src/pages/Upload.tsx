@@ -249,13 +249,12 @@ export default function Upload() {
           const targetYear = firstDate.getFullYear();
           const targetMonth = firstDate.getMonth() + 1;
           
-          // Calculate available rooms from occupancy data
-          const firstWithOccupancy = state.parsedData.daily.find(d => d.occupancy > 0);
+          // Calculate available rooms from room types sheet
           let availRooms = 60; // default
-          if (firstWithOccupancy && firstWithOccupancy.occupancy > 0) {
-            const roomsSold = Math.round(firstWithOccupancy.occupancy * 60);
-            // Try to infer from rooms_sold / occupancy
-            availRooms = Math.round(roomsSold / firstWithOccupancy.occupancy);
+          if (state.parsedData.roomTypes.length > 0) {
+            availRooms = state.parsedData.roomTypes
+              .filter(rt => rt.name && rt.name.trim() !== '')
+              .reduce((sum, rt) => sum + rt.totalRooms, 0);
           }
 
           await supabase
@@ -272,13 +271,24 @@ export default function Upload() {
       // Import room types data (skip entries with empty names)
       const validRoomTypes = state.parsedData.roomTypes.filter(rt => rt.name && rt.name.trim() !== '');
       if (validRoomTypes.length > 0) {
+        // Name mapping: normalize short names to canonical names
+        const nameMap: Record<string, string> = {
+          'Queen': 'Queen Room',
+          'queen': 'Queen Room',
+          '1 Bed': '1 Bed Apartment',
+          '1 bed': '1 Bed Apartment',
+          '2 Bed': '2 Bed Apartment',
+          '2 bed': '2 Bed Apartment',
+        };
+        
         for (const rt of validRoomTypes) {
+          const canonicalName = nameMap[rt.name] || rt.name;
+          rt.name = canonicalName; // update in-place for downstream usage
           const { error: roomError } = await supabase
             .from('room_types')
             .upsert({
-              name: rt.name,
+              name: canonicalName,
               total_rooms: rt.totalRooms,
-              breakeven_rate: rt.avgRate * 0.6,
             }, { onConflict: 'name' });
           
           if (roomError) throw roomError;
