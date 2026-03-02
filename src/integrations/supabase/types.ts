@@ -136,6 +136,8 @@ export type Database = {
       monthly_targets: {
         Row: {
           available_rooms: number
+          breakeven_occupancy: number | null
+          breakeven_rate: number | null
           created_at: string
           id: string
           month: number
@@ -145,6 +147,8 @@ export type Database = {
         }
         Insert: {
           available_rooms?: number
+          breakeven_occupancy?: number | null
+          breakeven_rate?: number | null
           created_at?: string
           id?: string
           month: number
@@ -154,6 +158,8 @@ export type Database = {
         }
         Update: {
           available_rooms?: number
+          breakeven_occupancy?: number | null
+          breakeven_rate?: number | null
           created_at?: string
           id?: string
           month?: number
