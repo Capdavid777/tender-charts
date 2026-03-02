@@ -43,8 +43,15 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg overflow-hidden">
-                <img src={rsLogo} alt="Reserved Suites logo" className="w-10 h-10 object-contain" />
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg overflow-hidden bg-muted">
+                <img 
+                  src={rsLogo} 
+                  alt="Reserved Suites logo" 
+                  className="w-10 h-10 object-contain" 
+                  onError={(e) => {
+                    console.error('Logo failed to load:', rsLogo);
+                  }}
+                />
               </div>
               <div>
                 <h1 className="font-semibold text-foreground">Reserved Suites Illovo</h1>
