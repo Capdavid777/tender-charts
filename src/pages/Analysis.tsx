@@ -147,7 +147,7 @@ export default function Analysis() {
                 </p>
               )}
               <div
-                className="prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-td:text-foreground prose-th:text-foreground prose-a:text-primary prose-table:text-sm prose-th:text-left prose-th:py-2 prose-th:px-3 prose-th:border-b prose-th:border-border prose-td:py-2 prose-td:px-3 prose-td:border-b prose-td:border-border"
+                className="prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-td:text-foreground prose-th:text-foreground prose-a:text-primary prose-table:text-sm prose-th:text-left prose-th:py-2 prose-th:px-3 prose-th:border-b prose-th:border-border prose-td:py-2 prose-td:px-3 prose-td:border-b prose-td:border-border [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1"
                 dangerouslySetInnerHTML={{ __html: analysis.content }}
               />
             </CardContent>
