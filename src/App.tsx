@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import RoomTypes from "./pages/RoomTypes";
 import Historical from "./pages/Historical";
 import Upload from "./pages/Upload";
+import Analysis from "./pages/Analysis";
 import NotFound from "./pages/NotFound";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
@@ -71,6 +72,11 @@ const App = () => (
             <Route path="/upload" element={
               <ProtectedRoute>
                 <Upload key="upload" />
+              </ProtectedRoute>
+            } />
+            <Route path="/analysis" element={
+              <ProtectedRoute>
+                <Analysis key="analysis" />
               </ProtectedRoute>
             } />
             

@@ -133,6 +133,39 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_analyses: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          month: number
+          summary: string
+          title: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          month: number
+          summary?: string
+          title?: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          month?: number
+          summary?: string
+          title?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       monthly_targets: {
         Row: {
           available_rooms: number

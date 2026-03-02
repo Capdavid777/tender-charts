@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { useMonth } from '@/contexts/MonthContext';
 import MonthSelector from '@/components/MonthSelector';
+import AnalysisSummary from '@/components/dashboard/AnalysisSummary';
 
 interface DailyData {
   date: string;
@@ -275,6 +276,9 @@ export default function Dashboard() {
             variant={variance >= 0 ? 'success' : variance >= -20 ? 'warning' : 'danger'}
           />
         </div>
+
+        {/* Monthly Analysis Summary */}
+        <AnalysisSummary />
 
         {/* Revenue Chart */}
         {dailyData.length > 0 ? (
