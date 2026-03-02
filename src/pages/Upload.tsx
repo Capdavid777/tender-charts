@@ -241,6 +241,32 @@ export default function Upload() {
         
         if (dailyError) throw dailyError;
         totalRecords += dailyRecords.length;
+
+        // Extract and save monthly target from daily Target column
+        const totalTarget = state.parsedData.daily.reduce((sum, d) => sum + d.target, 0);
+        if (totalTarget > 0) {
+          const firstDate = new Date(state.parsedData.daily[0].date);
+          const targetYear = firstDate.getFullYear();
+          const targetMonth = firstDate.getMonth() + 1;
+          
+          // Calculate available rooms from occupancy data
+          const firstWithOccupancy = state.parsedData.daily.find(d => d.occupancy > 0);
+          let availRooms = 60; // default
+          if (firstWithOccupancy && firstWithOccupancy.occupancy > 0) {
+            const roomsSold = Math.round(firstWithOccupancy.occupancy * 60);
+            // Try to infer from rooms_sold / occupancy
+            availRooms = Math.round(roomsSold / firstWithOccupancy.occupancy);
+          }
+
+          await supabase
+            .from('monthly_targets')
+            .upsert({
+              year: targetYear,
+              month: targetMonth,
+              target_revenue: totalTarget,
+              available_rooms: availRooms,
+            }, { onConflict: 'year,month' });
+        }
       }
 
       // Import room types data (skip entries with empty names)

@@ -27,6 +27,8 @@ interface MonthlyTarget {
   target_revenue: number;
   target_occupancy: number | null;
   available_rooms: number;
+  breakeven_rate: number;
+  breakeven_occupancy: number;
 }
 export default function Dashboard() {
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
@@ -36,15 +38,17 @@ export default function Dashboard() {
   const { selectedMonth, setSelectedMonth } = useMonth();
   const [totalRooms, setTotalRooms] = useState(80);
   const [monthlyTargets, setMonthlyTargets] = useState<Record<string, MonthlyTarget>>({});
-  const [breakevenAdr] = useState(1308.99);
+  
 
   // Get target for selected month
   const currentTarget = useMemo(() => {
-    return monthlyTargets[selectedMonth] || { target_revenue: 0, target_occupancy: 80, available_rooms: totalRooms };
+    return monthlyTargets[selectedMonth] || { target_revenue: 0, target_occupancy: 80, available_rooms: totalRooms, breakeven_rate: 0, breakeven_occupancy: 0 };
   }, [monthlyTargets, selectedMonth, totalRooms]);
 
   const targetOccupancy = currentTarget.target_occupancy || 80;
   const availableRooms = currentTarget.available_rooms || totalRooms;
+  const breakevenAdr = currentTarget.breakeven_rate || 0;
+  const breakevenOccupancy = currentTarget.breakeven_occupancy || 0;
 
   // Derive available months from data (for filtering)
   const availableMonths = useMemo(() => {
@@ -177,7 +181,7 @@ export default function Dashboard() {
         const map: Record<string, MonthlyTarget> = {};
         targetsRes.data.forEach(t => {
           const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
-          map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy), available_rooms: Number((t as any).available_rooms || 0) };
+          map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy), available_rooms: Number((t as any).available_rooms || 0), breakeven_rate: Number((t as any).breakeven_rate || 0), breakeven_occupancy: Number((t as any).breakeven_occupancy || 0) };
         });
         setMonthlyTargets(map);
       }
