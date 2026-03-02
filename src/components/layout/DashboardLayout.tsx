@@ -20,17 +20,17 @@ interface DashboardLayoutProps {
 }
 
 const navItems = [
-  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { href: '/room-types', label: 'Room Types', icon: BedDouble },
-  { href: '/historical', label: 'Historical', icon: TrendingUp },
-  { href: '/analysis', label: 'Analysis', icon: FileText },
-  { href: '/upload', label: 'Upload Data', icon: Upload },
+  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: false },
+  { href: '/room-types', label: 'Room Types', icon: BedDouble, adminOnly: false },
+  { href: '/historical', label: 'Historical', icon: TrendingUp, adminOnly: false },
+  { href: '/analysis', label: 'Analysis', icon: FileText, adminOnly: false },
+  { href: '/upload', label: 'Upload Data', icon: Upload, adminOnly: true },
 ];
 
 export default function DashboardLayout({ children, lastUpdated }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -63,7 +63,7 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center gap-1">
-              {navItems.map((item) => {
+              {navItems.filter(item => !item.adminOnly || isAdmin).map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
                 return (
@@ -109,7 +109,7 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
         <div className="md:hidden border-t">
           <div className="container mx-auto px-4">
             <nav className="flex items-center gap-1 py-2 overflow-x-auto">
-              {navItems.map((item) => {
+              {navItems.filter(item => !item.adminOnly || isAdmin).map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
                 return (

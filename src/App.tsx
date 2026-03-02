@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import AdminRoute from "@/components/auth/AdminRoute";
 import { MonthProvider } from "@/contexts/MonthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Login from "./pages/Login";
@@ -70,9 +71,9 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/upload" element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <Upload key="upload" />
-              </ProtectedRoute>
+              </AdminRoute>
             } />
             <Route path="/analysis" element={
               <ProtectedRoute>
