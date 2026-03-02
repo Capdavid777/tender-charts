@@ -6,6 +6,7 @@ import { BedDouble, DollarSign, Percent, TrendingUp } from 'lucide-react';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { supabase } from '@/integrations/supabase/client';
 import { useMonth } from '@/contexts/MonthContext';
+import MonthSelector from '@/components/MonthSelector';
 import {
   PieChart,
   Pie,
@@ -162,10 +163,13 @@ export default function RoomTypes() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Page title */}
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Room Types</h2>
-          <p className="text-muted-foreground">Performance breakdown by room category</p>
+        {/* Page title + Month selector */}
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Room Types</h2>
+            <p className="text-muted-foreground">Performance breakdown by room category</p>
+          </div>
+          <MonthSelector />
         </div>
 
         {/* Summary KPIs */}

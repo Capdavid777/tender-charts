@@ -5,9 +5,9 @@ import AlertBanner from '@/components/dashboard/AlertBanner';
 import RevenueChart from '@/components/dashboard/RevenueChart';
 import { DollarSign, Percent, TrendingUp, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { useMonth } from '@/contexts/MonthContext';
+import MonthSelector from '@/components/MonthSelector';
 
 interface DailyData {
   date: string;
@@ -46,7 +46,7 @@ export default function Dashboard() {
   const targetOccupancy = currentTarget.target_occupancy || 80;
   const availableRooms = currentTarget.available_rooms || totalRooms;
 
-  // Derive available months from data
+  // Derive available months from data (for filtering)
   const availableMonths = useMemo(() => {
     const months = new Set<string>();
     allData.forEach(d => {
@@ -56,13 +56,6 @@ export default function Dashboard() {
     });
     return Array.from(months).sort().reverse();
   }, [allData]);
-
-  // Auto-select latest month
-  useEffect(() => {
-    if (availableMonths.length > 0 && !selectedMonth) {
-      setSelectedMonth(availableMonths[0]);
-    }
-  }, [availableMonths, selectedMonth]);
 
   // Filter data by selected month
   const filteredData = useMemo(() => {
@@ -237,20 +230,7 @@ export default function Dashboard() {
             <h2 className="text-2xl font-bold text-foreground">Dashboard Overview</h2>
             <p className="text-muted-foreground">Monitor our performance at a glance</p>
           </div>
-          {availableMonths.length > 0 && (
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select month" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableMonths.map(m => {
-                  const [year, month] = m.split('-').map(Number);
-                  const label = new Date(year, month - 1).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' });
-                  return <SelectItem key={m} value={m}>{label}</SelectItem>;
-                })}
-              </SelectContent>
-            </Select>
-          )}
+          <MonthSelector />
         </div>
 
         {/* Alerts */}
