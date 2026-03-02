@@ -154,10 +154,7 @@ export default function Historical() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="text-2xl font-bold text-foreground">Historical Trends</h2>
-            <p className="text-muted-foreground">
-              Year-over-year performance analysis
-              {monthName && <> — <span className="font-medium text-foreground">{monthName}</span></>}
-            </p>
+            <p className="text-muted-foreground">Year-over-year performance analysis</p>
           </div>
           <div className="flex items-center gap-2">
             <MonthSelector />
