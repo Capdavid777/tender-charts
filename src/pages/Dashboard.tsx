@@ -112,8 +112,10 @@ export default function Dashboard() {
   const occupancyTrend = useMemo(() => {
     if (!selectedMonth || filteredData.length === 0) return null;
     const [year, month] = selectedMonth.split('-').map(Number);
-    // Get the max day of current filtered data
-    const maxDay = Math.max(...filteredData.map(d => new Date(d.date).getDate()));
+    // Get the max day of current filtered data (only days with actual data)
+    const daysWithActualData = filteredData.filter(d => (d.occupancy ?? 0) > 0 || (d.rooms_sold ?? 0) > 0);
+    if (daysWithActualData.length === 0) return null;
+    const maxDay = Math.max(...daysWithActualData.map(d => new Date(d.date).getDate()));
     // Calculate previous month
     const prevMonth = month === 1 ? 12 : month - 1;
     const prevYear = month === 1 ? year - 1 : year;
