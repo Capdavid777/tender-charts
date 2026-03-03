@@ -23,6 +23,13 @@ interface RevenueChartProps {
   dailyTarget: number;
 }
 
+// Ensure Y-axis includes the target line
+function getYDomain(data: DailyData[], dailyTarget: number): [number, number] {
+  const maxRevenue = Math.max(...data.map(d => d.revenue), 0);
+  const upper = Math.max(maxRevenue, dailyTarget) * 1.1; // 10% padding
+  return [0, upper];
+}
+
 export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -79,6 +86,7 @@ export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
                 className="text-muted-foreground"
               />
               <YAxis 
+                domain={dailyTarget > 0 ? getYDomain(data, dailyTarget) : undefined}
                 tickFormatter={(value) => `R${(value / 1000).toFixed(0)}k`}
                 tick={{ fontSize: 12 }}
                 tickLine={false}
