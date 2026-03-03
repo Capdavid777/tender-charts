@@ -294,7 +294,7 @@ export default function Dashboard() {
 
         {/* Daily Breakdown Table */}
         {filteredData.length > 0 && (
-          <DailyDataTable data={filteredData} />
+          <DailyDataTable data={filteredData} dailyTarget={dailyData[0]?.target || 0} />
         )}
       </div>
     </DashboardLayout>

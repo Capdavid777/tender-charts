@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { CalendarDays } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface DailyRecord {
   date: string;
@@ -13,9 +14,10 @@ interface DailyRecord {
 
 interface DailyDataTableProps {
   data: DailyRecord[];
+  dailyTarget?: number;
 }
 
-export default function DailyDataTable({ data }: DailyDataTableProps) {
+export default function DailyDataTable({ data, dailyTarget = 0 }: DailyDataTableProps) {
   if (data.length === 0) return null;
 
   // Only show days with actual data, sorted ascending
@@ -53,6 +55,9 @@ export default function DailyDataTable({ data }: DailyDataTableProps) {
                 <TableHead className="text-right">Rooms Sold</TableHead>
                 <TableHead className="text-right">Occupancy</TableHead>
                 <TableHead className="text-right">ADR</TableHead>
+                {dailyTarget > 0 && (
+                  <TableHead className="text-center min-w-[180px]">Daily Target Progress</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -63,6 +68,8 @@ export default function DailyDataTable({ data }: DailyDataTableProps) {
                   month: 'short',
                 });
                 const occ = d.occupancy != null && d.occupancy > 0 ? d.occupancy * 100 : null;
+                const progress = dailyTarget > 0 ? Math.min((d.revenue / dailyTarget) * 100, 100) : 0;
+                const progressPct = dailyTarget > 0 ? (d.revenue / dailyTarget) * 100 : 0;
 
                 return (
                   <TableRow key={d.date}>
@@ -75,6 +82,24 @@ export default function DailyDataTable({ data }: DailyDataTableProps) {
                     <TableCell className="text-right">
                       {(d.average_rate ?? 0) > 0 ? formatCurrency(d.average_rate!) : '—'}
                     </TableCell>
+                    {dailyTarget > 0 && (
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-5 bg-secondary rounded-full overflow-hidden">
+                            <div
+                              className={cn(
+                                'h-full rounded-full transition-all duration-500',
+                                progressPct >= 100 ? 'bg-success' : progressPct >= 80 ? 'bg-accent' : 'bg-warning'
+                              )}
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground w-10 text-right">
+                            {Math.round(progressPct)}%
+                          </span>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}
@@ -89,6 +114,7 @@ export default function DailyDataTable({ data }: DailyDataTableProps) {
                 <TableCell className="text-right">
                   {avgRate > 0 ? formatCurrency(Math.round(avgRate)) : '—'}
                 </TableCell>
+                {dailyTarget > 0 && <TableCell />}
               </TableRow>
             </TableBody>
           </Table>
