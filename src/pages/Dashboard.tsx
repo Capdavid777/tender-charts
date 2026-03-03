@@ -9,6 +9,7 @@ import { formatCurrency, formatPercent } from '@/lib/format';
 import { useMonth } from '@/contexts/MonthContext';
 import MonthSelector from '@/components/MonthSelector';
 import AnalysisSummary from '@/components/dashboard/AnalysisSummary';
+import DailyDataTable from '@/components/dashboard/DailyDataTable';
 
 interface DailyData {
   date: string;
@@ -287,6 +288,11 @@ export default function Dashboard() {
           <div className="text-center py-12 text-muted-foreground">
             No revenue data available. Upload an Excel file to see your dashboard.
           </div>
+        )}
+
+        {/* Daily Breakdown Table */}
+        {filteredData.length > 0 && (
+          <DailyDataTable data={filteredData} />
         )}
       </div>
     </DashboardLayout>
