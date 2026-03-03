@@ -1,0 +1,1 @@
+UPDATE monthly_targets SET target_occupancy = 0.60 WHERE year = 2026 AND month = 3;
