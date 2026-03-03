@@ -10,6 +10,7 @@ import { useMonth } from '@/contexts/MonthContext';
 import MonthSelector from '@/components/MonthSelector';
 import AnalysisSummary from '@/components/dashboard/AnalysisSummary';
 import DailyDataTable from '@/components/dashboard/DailyDataTable';
+import MonthProjectionSummary from '@/components/dashboard/MonthProjectionSummary';
 
 interface DailyData {
   date: string;
@@ -308,6 +309,16 @@ export default function Dashboard() {
           });
           return (
             <>
+              {/* Month-End Projection Summary */}
+              {(actualData.length > 0 || forecastData.length > 0) && (
+                <MonthProjectionSummary
+                  actualData={actualData}
+                  forecastData={forecastData}
+                  targetRevenue={currentTarget.target_revenue}
+                  targetOccupancy={targetOccupancy}
+                  availableRooms={availableRooms}
+                />
+              )}
               {actualData.length > 0 && (
                 <DailyDataTable data={actualData} dailyTarget={dailyData[0]?.target || 0} title="Daily Breakdown" />
               )}
