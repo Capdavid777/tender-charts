@@ -59,9 +59,15 @@ export default function Historical() {
       // Group daily data by year for the selected month
       const yearMap = new Map<number, { revenue: number; roomsSold: number; rates: number[]; occupancies: number[] }>();
 
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       (dailyRes.data || []).forEach(row => {
         const d = new Date(row.date);
+        d.setHours(0, 0, 0, 0);
         if (d.getMonth() + 1 !== monthNum) return;
+        // Exclude forecast data (today and future dates)
+        if (d >= today) return;
         const year = d.getFullYear();
         const existing = yearMap.get(year) || { revenue: 0, roomsSold: 0, rates: [], occupancies: [] };
         existing.revenue += Number(row.revenue || 0);
