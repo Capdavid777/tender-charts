@@ -33,32 +33,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (password: string): Promise<boolean> => {
-    // Fetch both passwords from app_settings
-    const { data: settings } = await supabase
-      .from('app_settings')
-      .select('setting_key, setting_value')
-      .in('setting_key', ['shared_password', 'staff_password']);
+    try {
+      const { data, error } = await supabase.functions.invoke('login', {
+        body: { password },
+      });
 
-    const adminPwd = settings?.find(s => s.setting_key === 'shared_password')?.setting_value;
-    const staffPwd = settings?.find(s => s.setting_key === 'staff_password')?.setting_value;
+      if (error || !data?.authenticated) {
+        return false;
+      }
 
-    if (password === adminPwd) {
+      const userRole = data.role as UserRole;
       localStorage.setItem(AUTH_KEY, 'true');
-      localStorage.setItem(ROLE_KEY, 'admin');
+      localStorage.setItem(ROLE_KEY, userRole);
       setIsAuthenticated(true);
-      setRole('admin');
+      setRole(userRole);
       return true;
+    } catch {
+      return false;
     }
-
-    if (password === staffPwd) {
-      localStorage.setItem(AUTH_KEY, 'true');
-      localStorage.setItem(ROLE_KEY, 'viewer');
-      setIsAuthenticated(true);
-      setRole('viewer');
-      return true;
-    }
-
-    return false;
   };
 
   const logout = () => {
