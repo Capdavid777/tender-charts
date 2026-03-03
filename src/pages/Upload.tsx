@@ -36,6 +36,7 @@ const DailyRowSchema = z.object({
   Target: z.preprocess(Number, z.number().min(0).max(100_000_000)),
   Occupancy: z.preprocess(Number, z.number().min(0).max(1)),
   ARR: z.preprocess(Number, z.number().min(0).max(1_000_000)),
+  'Rooms Sold': z.preprocess(Number, z.number().int().min(0).max(100_000)).optional(),
 });
 
 const RoomTypeRowSchema = z.object({
@@ -63,6 +64,7 @@ interface DailyData {
   target: number;
   occupancy: number;
   arr: number;
+  roomsSold: number | null;
 }
 
 interface RoomTypeData {
@@ -175,12 +177,14 @@ export default function Upload() {
         if (!result.success) {
           throw new Error(`Invalid data in Daily sheet row ${index + 2}: ${result.error.issues[0]?.message || 'validation failed'}`);
         }
+        const roomsSoldVal = result.data['Rooms Sold'];
         return {
           date: typeof result.data.Date === 'number' ? parseExcelDate(result.data.Date) : String(result.data.Date),
           revenue: Number(result.data.Revenue) || 0,
           target: Number(result.data.Target) || 0,
           occupancy: Number(result.data.Occupancy) || 0,
           arr: Number(result.data.ARR) || 0,
+          roomsSold: roomsSoldVal != null ? Number(roomsSoldVal) : null,
         };
       });
     }
@@ -294,10 +298,13 @@ export default function Upload() {
           .is('room_type_id', null)
           .in('date', dates);
 
+        const availRoomsForCalc = state.parsedData.roomTypes.length > 0
+          ? state.parsedData.roomTypes.filter(rt => rt.name && rt.name.trim() !== '').reduce((sum, rt) => sum + rt.totalRooms, 0)
+          : 60;
         const dailyRecords = state.parsedData.daily.map(d => ({
           date: d.date,
           revenue: d.revenue,
-          rooms_sold: Math.round(d.occupancy * 60),
+          rooms_sold: d.roomsSold != null ? d.roomsSold : Math.round(d.occupancy * availRoomsForCalc),
           average_rate: d.arr,
           occupancy: d.occupancy,
         }));
