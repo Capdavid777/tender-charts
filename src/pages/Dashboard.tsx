@@ -3,7 +3,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import KPICard from '@/components/dashboard/KPICard';
 import AlertBanner from '@/components/dashboard/AlertBanner';
 import RevenueChart from '@/components/dashboard/RevenueChart';
-import { DollarSign, Percent, TrendingUp, Target } from 'lucide-react';
+import { DollarSign, Percent, TrendingUp, Target, TrendingUpDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { useMonth } from '@/contexts/MonthContext';
@@ -292,10 +292,31 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Daily Breakdown Table */}
-        {filteredData.length > 0 && (
-          <DailyDataTable data={filteredData} dailyTarget={dailyData[0]?.target || 0} />
-        )}
+        {/* Daily Breakdown Table (Actual - up to yesterday) */}
+        {(() => {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const actualData = filteredData.filter(d => {
+            const date = new Date(d.date);
+            date.setHours(0, 0, 0, 0);
+            return date < today;
+          });
+          const forecastData = filteredData.filter(d => {
+            const date = new Date(d.date);
+            date.setHours(0, 0, 0, 0);
+            return date >= today;
+          });
+          return (
+            <>
+              {actualData.length > 0 && (
+                <DailyDataTable data={actualData} dailyTarget={dailyData[0]?.target || 0} title="Daily Breakdown" />
+              )}
+              {forecastData.length > 0 && (
+                <DailyDataTable data={forecastData} dailyTarget={dailyData[0]?.target || 0} title="Forecast" icon={<TrendingUpDown className="w-5 h-5 text-primary" />} />
+              )}
+            </>
+          );
+        })()}
       </div>
     </DashboardLayout>
   );

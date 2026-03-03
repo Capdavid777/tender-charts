@@ -15,9 +15,11 @@ interface DailyRecord {
 interface DailyDataTableProps {
   data: DailyRecord[];
   dailyTarget?: number;
+  title?: string;
+  icon?: React.ReactNode;
 }
 
-export default function DailyDataTable({ data, dailyTarget = 0 }: DailyDataTableProps) {
+export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily Breakdown', icon }: DailyDataTableProps) {
   if (data.length === 0) return null;
 
   // Only show days with actual data, sorted ascending
@@ -41,8 +43,8 @@ export default function DailyDataTable({ data, dailyTarget = 0 }: DailyDataTable
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CalendarDays className="w-5 h-5 text-primary" />
-          Daily Breakdown
+          {icon || <CalendarDays className="w-5 h-5 text-primary" />}
+          {title}
         </CardTitle>
       </CardHeader>
       <CardContent>
