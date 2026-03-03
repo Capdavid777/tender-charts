@@ -312,7 +312,7 @@ export default function Dashboard() {
                 <DailyDataTable data={actualData} dailyTarget={dailyData[0]?.target || 0} title="Daily Breakdown" />
               )}
               {forecastData.length > 0 && (
-                <DailyDataTable data={forecastData} dailyTarget={dailyData[0]?.target || 0} title="Forecast" icon={<TrendingUpDown className="w-5 h-5 text-primary" />} />
+                <DailyDataTable data={forecastData} dailyTarget={dailyData[0]?.target || 0} title="Forecast" icon={<TrendingUpDown className="w-5 h-5 text-primary" />} variant="forecast" />
               )}
             </>
           );
