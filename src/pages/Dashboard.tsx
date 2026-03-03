@@ -213,12 +213,12 @@ export default function Dashboard() {
       severity: revenueProgress < 60 ? 'critical' as const : 'warning' as const,
     });
   }
-  if (occupancy < 50) {
+  if (occupancy < targetOccupancy) {
     alerts.push({
       id: 'occupancy-warning',
       type: 'occupancy' as const,
       title: 'Low Occupancy Alert',
-      message: `Occupancy has dropped to ${formatPercent(occupancy)}. This is below the 50% threshold.`,
+      message: `Occupancy has dropped to ${formatPercent(occupancy)}. This is below the ${formatPercent(targetOccupancy)} threshold.`,
       severity: 'warning' as const,
     });
   }
