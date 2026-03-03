@@ -15,6 +15,46 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
+import { z } from 'zod';
+
+// Safe error message mapping — never expose raw DB errors to users
+const getSafeErrorMessage = (error: unknown): string => {
+  if (error && typeof error === 'object' && 'code' in error) {
+    const code = (error as { code: string }).code;
+    if (code === '23505') return 'Some records already exist. Please check for duplicates.';
+    if (code === '23503') return 'Related data not found. Please check your file references valid room types.';
+    if (code === '42P01') return 'Data could not be accessed. Please contact support.';
+  }
+  return 'An error occurred while processing your upload. Please try again.';
+};
+
+// Validation schemas for Excel data
+const DailyRowSchema = z.object({
+  Date: z.union([z.number().min(1).max(100000), z.string().min(1).max(20)]),
+  Revenue: z.preprocess(Number, z.number().min(0).max(100_000_000)),
+  Target: z.preprocess(Number, z.number().min(0).max(100_000_000)),
+  Occupancy: z.preprocess(Number, z.number().min(0).max(1)),
+  ARR: z.preprocess(Number, z.number().min(0).max(1_000_000)),
+});
+
+const RoomTypeRowSchema = z.object({
+  Type: z.string().min(1).max(100),
+  Rooms: z.preprocess(Number, z.number().int().min(0).max(10_000)),
+  Sold: z.preprocess(Number, z.number().int().min(0).max(100_000)),
+  Revenue: z.preprocess(Number, z.number().min(0).max(1_000_000_000)),
+  Rate: z.preprocess(Number, z.number().min(0).max(1_000_000)),
+});
+
+const AnnualRowSchema = z.object({
+  Year: z.preprocess(Number, z.number().int().min(1900).max(2100)),
+  RoomsSold: z.preprocess(Number, z.number().int().min(0).max(10_000_000)),
+  Occupancy: z.union([
+    z.string().regex(/^\d+(\.\d+)?%?$/),
+    z.number().min(0).max(100),
+  ]),
+  Revenue: z.preprocess(Number, z.number().min(0).max(100_000_000_000)),
+  Rate: z.preprocess(Number, z.number().min(0).max(1_000_000)),
+});
 
 interface DailyData {
   date: string;
@@ -103,9 +143,15 @@ export default function Upload() {
   };
 
   const parseExcelDate = (serial: number): string => {
-    // Excel dates start from Jan 1, 1900
+    if (serial < 1 || serial > 100000) {
+      throw new Error('Invalid date value in spreadsheet.');
+    }
     const date = new Date((serial - 25569) * 86400 * 1000);
-    return date.toISOString().split('T')[0];
+    const iso = date.toISOString().split('T')[0];
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid date value in spreadsheet.');
+    }
+    return iso;
   };
 
   const parseExcelFile = async (file: File): Promise<ParsedData> => {
@@ -122,34 +168,50 @@ export default function Upload() {
     const dailySheet = workbook.Sheets[workbook.SheetNames[0]];
     if (dailySheet) {
       const dailyRows = XLSX.utils.sheet_to_json<any>(dailySheet);
-      parsed.daily = dailyRows.map(row => ({
-        date: typeof row.Date === 'number' ? parseExcelDate(row.Date) : row.Date,
-        revenue: Number(row.Revenue) || 0,
-        target: Number(row.Target) || 0,
-        occupancy: Number(row.Occupancy) || 0,
-        arr: Number(row.ARR) || 0,
-      }));
+      parsed.daily = dailyRows.map((row, index) => {
+        const result = DailyRowSchema.safeParse(row);
+        if (!result.success) {
+          throw new Error(`Invalid data in Daily sheet row ${index + 2}: ${result.error.issues[0]?.message || 'validation failed'}`);
+        }
+        return {
+          date: typeof result.data.Date === 'number' ? parseExcelDate(result.data.Date) : String(result.data.Date),
+          revenue: Number(result.data.Revenue) || 0,
+          target: Number(result.data.Target) || 0,
+          occupancy: Number(result.data.Occupancy) || 0,
+          arr: Number(result.data.ARR) || 0,
+        };
+      });
     }
 
     // Parse Sheet 2 - Room Types
     const roomSheet = workbook.Sheets[workbook.SheetNames[1]];
     if (roomSheet) {
       const roomRows = XLSX.utils.sheet_to_json<any>(roomSheet);
-      parsed.roomTypes = roomRows.map(row => ({
-        name: row.Type || '',
-        totalRooms: Number(row.Rooms) || 0,
-        roomsSold: Number(row.Sold) || 0,
-        revenue: Number(row.Revenue) || 0,
-        avgRate: Number(row.Rate) || 0,
-      }));
+      parsed.roomTypes = roomRows.map((row, index) => {
+        const result = RoomTypeRowSchema.safeParse(row);
+        if (!result.success) {
+          throw new Error(`Invalid data in Room Types sheet row ${index + 2}: ${result.error.issues[0]?.message || 'validation failed'}`);
+        }
+        return {
+          name: result.data.Type.trim().substring(0, 100),
+          totalRooms: Number(result.data.Rooms) || 0,
+          roomsSold: Number(result.data.Sold) || 0,
+          revenue: Number(result.data.Revenue) || 0,
+          avgRate: Number(result.data.Rate) || 0,
+        };
+      });
     }
 
     // Parse Sheet 3 - Historical/Annual
     const annualSheet = workbook.Sheets[workbook.SheetNames[2]];
     if (annualSheet) {
       const annualRows = XLSX.utils.sheet_to_json<any>(annualSheet);
-      parsed.annual = annualRows.map(row => {
-        const occupancyVal = row.Occupancy;
+      parsed.annual = annualRows.map((row, index) => {
+        const result = AnnualRowSchema.safeParse(row);
+        if (!result.success) {
+          throw new Error(`Invalid data in Historical sheet row ${index + 2}: ${result.error.issues[0]?.message || 'validation failed'}`);
+        }
+        const occupancyVal = result.data.Occupancy;
         let occupancy = 0;
         if (typeof occupancyVal === 'string' && occupancyVal.includes('%')) {
           occupancy = parseFloat(occupancyVal) / 100;
@@ -157,11 +219,11 @@ export default function Upload() {
           occupancy = Number(occupancyVal) || 0;
         }
         return {
-          year: Number(row.Year) || 0,
-          roomsSold: Number(row.RoomsSold) || 0,
+          year: Number(result.data.Year),
+          roomsSold: Number(result.data.RoomsSold) || 0,
           occupancy,
-          revenue: Number(row.Revenue) || 0,
-          avgRate: Number(row.Rate) || 0,
+          revenue: Number(result.data.Revenue) || 0,
+          avgRate: Number(result.data.Rate) || 0,
         };
       });
     }
@@ -182,11 +244,14 @@ export default function Upload() {
         parsedData,
       }));
     } catch (error) {
-      console.error('Error parsing Excel file:', error);
+      if (import.meta.env.DEV) console.error('Parse error:', error);
+      const message = error instanceof Error && error.message.startsWith('Invalid data')
+        ? error.message
+        : 'Failed to parse Excel file. Please check the format matches the expected structure.';
       setState(prev => ({
         ...prev,
         status: 'error',
-        error: 'Failed to parse Excel file. Please check the format matches the expected structure.',
+        error: message,
       }));
     }
   };
@@ -368,11 +433,11 @@ export default function Upload() {
         description: `${totalRecords} records imported successfully.`,
       });
     } catch (error) {
-      console.error('Upload error:', error);
+      if (import.meta.env.DEV) console.error('Upload error:', error);
       setState(prev => ({
         ...prev,
         status: 'error',
-        error: 'Failed to upload data. Please try again.',
+        error: getSafeErrorMessage(error),
       }));
     }
   };
