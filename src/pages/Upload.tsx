@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useMonth } from '@/contexts/MonthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -103,6 +104,7 @@ export default function Upload() {
     recordsImported: 0,
   });
   const { toast } = useToast();
+  const { refetchMonths } = useMonth();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -427,6 +429,8 @@ export default function Upload() {
         status: 'success',
         recordsImported: totalRecords,
       }));
+      
+      refetchMonths();
       
       toast({
         title: 'Upload Successful',

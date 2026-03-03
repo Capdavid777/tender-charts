@@ -5,6 +5,7 @@ interface MonthContextType {
   selectedMonth: string;
   setSelectedMonth: (month: string) => void;
   availableMonths: string[];
+  refetchMonths: () => void;
 }
 
 const MonthContext = createContext<MonthContextType | undefined>(undefined);
@@ -20,33 +21,34 @@ export function MonthProvider({ children }: { children: ReactNode }) {
     sessionStorage.setItem('selectedMonth', month);
   };
 
-  useEffect(() => {
-    const fetchMonths = async () => {
-      const { data } = await supabase
-        .from('daily_revenue')
-        .select('date')
-        .is('room_type_id', null)
-        .order('date', { ascending: true });
+  const fetchMonths = async () => {
+    const { data } = await supabase
+      .from('daily_revenue')
+      .select('date')
+      .is('room_type_id', null)
+      .order('date', { ascending: true });
 
-      if (data && data.length > 0) {
-        const months = new Set<string>();
-        data.forEach(d => {
-          const date = new Date(d.date);
-          const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-          months.add(key);
-        });
-        const sorted = Array.from(months).sort().reverse();
-        setAvailableMonths(sorted);
-        if (!selectedMonth || !sorted.includes(selectedMonth)) {
-          setSelectedMonth(sorted[0]);
-        }
+    if (data && data.length > 0) {
+      const months = new Set<string>();
+      data.forEach(d => {
+        const date = new Date(d.date);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        months.add(key);
+      });
+      const sorted = Array.from(months).sort().reverse();
+      setAvailableMonths(sorted);
+      if (!selectedMonth || !sorted.includes(selectedMonth)) {
+        setSelectedMonth(sorted[0]);
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     fetchMonths();
   }, []);
 
   return (
-    <MonthContext.Provider value={{ selectedMonth, setSelectedMonth, availableMonths }}>
+    <MonthContext.Provider value={{ selectedMonth, setSelectedMonth, availableMonths, refetchMonths: fetchMonths }}>
       {children}
     </MonthContext.Provider>
   );
