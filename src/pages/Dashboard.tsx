@@ -265,7 +265,9 @@ export default function Dashboard() {
         <AlertBanner alerts={visibleAlerts} onDismiss={handleDismissAlert} />
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="space-y-2">
+          <span className="inline-flex items-center text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Actuals Only — Forecast Excluded</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
             title="Revenue MTD"
             value={formatCurrency(totalRevenue)}
@@ -298,6 +300,7 @@ export default function Dashboard() {
             icon={<Target className="w-5 h-5 text-primary" />}
             variant={variance >= 0 ? 'success' : variance >= -20 ? 'warning' : 'danger'}
           />
+        </div>
         </div>
 
         {/* Monthly Analysis Summary */}
