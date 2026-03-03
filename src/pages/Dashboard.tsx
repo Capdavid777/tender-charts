@@ -46,7 +46,7 @@ export default function Dashboard() {
     return monthlyTargets[selectedMonth] || { target_revenue: 0, target_occupancy: 80, available_rooms: totalRooms, breakeven_rate: 0, breakeven_occupancy: 0 };
   }, [monthlyTargets, selectedMonth, totalRooms]);
 
-  const targetOccupancy = currentTarget.target_occupancy || 80;
+  const targetOccupancy = (currentTarget.target_occupancy || 0.80) * 100;
   const availableRooms = currentTarget.available_rooms || totalRooms;
   const breakevenAdr = currentTarget.breakeven_rate || 0;
   const breakevenOccupancy = currentTarget.breakeven_occupancy || 0;
