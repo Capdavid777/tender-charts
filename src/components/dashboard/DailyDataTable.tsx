@@ -17,9 +17,10 @@ interface DailyDataTableProps {
   dailyTarget?: number;
   title?: string;
   icon?: React.ReactNode;
+  variant?: 'default' | 'forecast';
 }
 
-export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily Breakdown', icon }: DailyDataTableProps) {
+export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily Breakdown', icon, variant = 'default' }: DailyDataTableProps) {
   if (data.length === 0) return null;
 
   // Only show days with actual data, sorted ascending
@@ -40,11 +41,14 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
   const totalRoomsSold = sorted.reduce((s, d) => s + (d.rooms_sold || 0), 0);
 
   return (
-    <Card>
+    <Card className={cn(variant === 'forecast' && 'border-dashed border-muted-foreground/30 bg-muted/20')}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           {icon || <CalendarDays className="w-5 h-5 text-primary" />}
           {title}
+          {variant === 'forecast' && (
+            <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Projected</span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
