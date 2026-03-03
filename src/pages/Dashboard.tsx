@@ -75,15 +75,34 @@ export default function Dashboard() {
   }, [allData, selectedMonth]);
 
   // Calculate display data
+  // Split filtered data into actual (before today) and forecast (today onwards)
+  const { actualFilteredData, forecastFilteredData } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return {
+      actualFilteredData: filteredData.filter(d => {
+        const date = new Date(d.date);
+        date.setHours(0, 0, 0, 0);
+        return date < today;
+      }),
+      forecastFilteredData: filteredData.filter(d => {
+        const date = new Date(d.date);
+        date.setHours(0, 0, 0, 0);
+        return date >= today;
+      }),
+    };
+  }, [filteredData]);
+
+  // Calculate display data using only actual data for KPIs
   const dailyData: DailyData[] = useMemo(() => {
-    if (!selectedMonth || !currentTarget.target_revenue) return filteredData.map(d => {
+    if (!selectedMonth || !currentTarget.target_revenue) return actualFilteredData.map(d => {
       const date = new Date(d.date);
       return { date: date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }), revenue: Number(d.revenue), target: 0 };
     });
     const [year, month] = selectedMonth.split('-').map(Number);
     const daysInMonth = new Date(year, month, 0).getDate();
     const dailyTarget = currentTarget.target_revenue / daysInMonth;
-    return filteredData.map(d => {
+    return actualFilteredData.map(d => {
       const date = new Date(d.date);
       return {
         date: date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }),
@@ -91,11 +110,11 @@ export default function Dashboard() {
         target: dailyTarget,
       };
     });
-  }, [filteredData, selectedMonth, currentTarget]);
+  }, [actualFilteredData, selectedMonth, currentTarget]);
 
   const occupancy = useMemo(() => {
-    if (filteredData.length === 0) return 0;
-    const daysWithData = filteredData.filter(d => (d.occupancy ?? 0) > 0 || (d.rooms_sold ?? 0) > 0);
+    if (actualFilteredData.length === 0) return 0;
+    const daysWithData = actualFilteredData.filter(d => (d.occupancy ?? 0) > 0 || (d.rooms_sold ?? 0) > 0);
     if (daysWithData.length === 0) return 0;
     // Use stored occupancy rates (average of daily rates) for accuracy
     const hasOccupancy = daysWithData.some(d => d.occupancy != null && d.occupancy > 0);
@@ -107,14 +126,14 @@ export default function Dashboard() {
     if (availableRooms === 0) return 0;
     const totalRoomsSold = daysWithData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
     return Number(((totalRoomsSold / (availableRooms * daysWithData.length)) * 100).toFixed(2));
-  }, [filteredData, availableRooms]);
+  }, [actualFilteredData, availableRooms]);
 
   // Compare occupancy to the same date range in the previous month
   const occupancyTrend = useMemo(() => {
-    if (!selectedMonth || filteredData.length === 0) return null;
+    if (!selectedMonth || actualFilteredData.length === 0) return null;
     const [year, month] = selectedMonth.split('-').map(Number);
     // Get the max day of current filtered data (only days with actual data)
-    const daysWithActualData = filteredData.filter(d => (d.occupancy ?? 0) > 0 || (d.rooms_sold ?? 0) > 0);
+    const daysWithActualData = actualFilteredData.filter(d => (d.occupancy ?? 0) > 0 || (d.rooms_sold ?? 0) > 0);
     if (daysWithActualData.length === 0) return null;
     const maxDay = Math.max(...daysWithActualData.map(d => new Date(d.date).getDate()));
     // Calculate previous month
@@ -143,14 +162,14 @@ export default function Dashboard() {
     const pctChange = prevOccupancy > 0 ? Number(((occupancy - prevOccupancy) / prevOccupancy * 100).toFixed(1)) : null;
     if (pctChange === null) return null;
     return { value: pctChange, label: 'vs last month (same period)' };
-  }, [selectedMonth, filteredData, allData, monthlyTargets, totalRooms, occupancy]);
+  }, [selectedMonth, actualFilteredData, allData, monthlyTargets, totalRooms, occupancy]);
 
   const adr = useMemo(() => {
-    const daysWithRates = filteredData.filter(d => (d.average_rate ?? 0) > 0);
+    const daysWithRates = actualFilteredData.filter(d => (d.average_rate ?? 0) > 0);
     if (daysWithRates.length === 0) return 0;
     const avgRate = daysWithRates.reduce((sum, d) => sum + (d.average_rate || 0), 0) / daysWithRates.length;
     return Math.round(avgRate);
-  }, [filteredData]);
+  }, [actualFilteredData]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -293,41 +312,26 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Daily Breakdown Table (Actual - up to yesterday) */}
-        {(() => {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const actualData = filteredData.filter(d => {
-            const date = new Date(d.date);
-            date.setHours(0, 0, 0, 0);
-            return date < today;
-          });
-          const forecastData = filteredData.filter(d => {
-            const date = new Date(d.date);
-            date.setHours(0, 0, 0, 0);
-            return date >= today;
-          });
-          return (
-            <>
-              {/* Month-End Projection Summary */}
-              {(actualData.length > 0 || forecastData.length > 0) && (
-                <MonthProjectionSummary
-                  actualData={actualData}
-                  forecastData={forecastData}
-                  targetRevenue={currentTarget.target_revenue}
-                  targetOccupancy={targetOccupancy}
-                  availableRooms={availableRooms}
-                />
-              )}
-              {actualData.length > 0 && (
-                <DailyDataTable data={actualData} dailyTarget={dailyData[0]?.target || 0} title="Daily Breakdown" />
-              )}
-              {forecastData.length > 0 && (
-                <DailyDataTable data={forecastData} dailyTarget={dailyData[0]?.target || 0} title="Forecast" icon={<TrendingUpDown className="w-5 h-5 text-primary" />} variant="forecast" />
-              )}
-            </>
-          );
-        })()}
+        {/* Month-End Projection Summary */}
+        {(actualFilteredData.length > 0 || forecastFilteredData.length > 0) && (
+          <MonthProjectionSummary
+            actualData={actualFilteredData}
+            forecastData={forecastFilteredData}
+            targetRevenue={currentTarget.target_revenue}
+            targetOccupancy={targetOccupancy}
+            availableRooms={availableRooms}
+          />
+        )}
+
+        {/* Daily Breakdown Table (Actual only) */}
+        {actualFilteredData.length > 0 && (
+          <DailyDataTable data={actualFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Daily Breakdown" />
+        )}
+
+        {/* Forecast Table */}
+        {forecastFilteredData.length > 0 && (
+          <DailyDataTable data={forecastFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Forecast" icon={<TrendingUpDown className="w-5 h-5 text-primary" />} variant="forecast" />
+        )}
       </div>
     </DashboardLayout>
   );
