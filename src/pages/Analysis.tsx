@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FileText, Edit3, Save, X, Calendar } from 'lucide-react';
 import RichTextEditor from '@/components/analysis/RichTextEditor';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
 
 const MONTH_NAMES = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -150,7 +151,7 @@ export default function Analysis() {
               )}
               <div
                 className="prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-td:text-foreground prose-th:text-foreground prose-a:text-primary prose-table:text-sm prose-th:text-left prose-th:py-2 prose-th:px-3 prose-th:border-b prose-th:border-border prose-td:py-2 prose-td:px-3 prose-td:border-b prose-td:border-border [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1 [&_p]:whitespace-pre-wrap [&_p:empty]:min-h-[1.25em]"
-                dangerouslySetInnerHTML={{ __html: analysis.content }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(analysis.content) }}
               />
             </CardContent>
           </Card>
