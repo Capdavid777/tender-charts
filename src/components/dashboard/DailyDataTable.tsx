@@ -18,8 +18,10 @@ interface DailyDataTableProps {
 export default function DailyDataTable({ data }: DailyDataTableProps) {
   if (data.length === 0) return null;
 
-  // Sort by date ascending
-  const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date));
+  // Only show days with actual data, sorted ascending
+  const sorted = [...data]
+    .filter(d => d.revenue > 0 || (d.rooms_sold ?? 0) > 0 || (d.occupancy ?? 0) > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   // Totals / averages
   const totalRevenue = sorted.reduce((s, d) => s + d.revenue, 0);
