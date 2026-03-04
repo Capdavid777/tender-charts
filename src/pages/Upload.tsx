@@ -58,6 +58,11 @@ const AnnualRowSchema = z.object({
   Rate: z.preprocess(Number, z.number().min(0).max(1_000_000)),
 });
 
+const OtherIncomeRowSchema = z.object({
+  'Product Type': z.string().min(1).max(200),
+  'Revenue (Excl.)': z.preprocess(Number, z.number().min(0).max(100_000_000)),
+});
+
 interface DailyData {
   date: string;
   revenue: number;
@@ -83,10 +88,16 @@ interface AnnualData {
   avgRate: number;
 }
 
+interface OtherIncomeData {
+  productType: string;
+  revenue: number;
+}
+
 interface ParsedData {
   daily: DailyData[];
   roomTypes: RoomTypeData[];
   annual: AnnualData[];
+  otherIncome: OtherIncomeData[];
 }
 
 interface UploadState {
@@ -166,6 +177,7 @@ export default function Upload() {
       daily: [],
       roomTypes: [],
       annual: [],
+      otherIncome: [],
     };
 
     // Parse Sheet 1 - Daily Data
@@ -232,6 +244,28 @@ export default function Upload() {
           avgRate: Number(result.data.Rate) || 0,
         };
       });
+    }
+
+    // Parse Sheet 4 - Other Income (optional)
+    const otherIncomeSheet = workbook.Sheets['Other Income'];
+    if (otherIncomeSheet) {
+      const otherRows = XLSX.utils.sheet_to_json<any>(otherIncomeSheet);
+      parsed.otherIncome = otherRows
+        .filter(row => {
+          const pt = row['Product Type'];
+          // Skip total rows and empty rows
+          return pt && typeof pt === 'string' && pt.trim().toLowerCase() !== 'total' && pt.trim() !== '';
+        })
+        .map((row, index) => {
+          const result = OtherIncomeRowSchema.safeParse(row);
+          if (!result.success) {
+            throw new Error(`Invalid data in Other Income sheet row ${index + 2}: ${result.error.issues[0]?.message || 'validation failed'}`);
+          }
+          return {
+            productType: result.data['Product Type'].trim(),
+            revenue: result.data['Revenue (Excl.)'],
+          };
+        });
     }
 
     return parsed;
@@ -422,6 +456,34 @@ export default function Upload() {
         totalRecords += annualRecords.length;
       }
 
+      // Import other income data
+      if (state.parsedData.otherIncome.length > 0 && state.parsedData.daily.length > 0) {
+        const firstDate = new Date(state.parsedData.daily[0].date);
+        const oiYear = firstDate.getFullYear();
+        const oiMonth = firstDate.getMonth() + 1;
+
+        // Delete existing other income for this month then re-insert
+        await supabase
+          .from('other_income')
+          .delete()
+          .eq('year', oiYear)
+          .eq('month', oiMonth);
+
+        const otherIncomeRecords = state.parsedData.otherIncome.map(oi => ({
+          year: oiYear,
+          month: oiMonth,
+          product_type: oi.productType,
+          revenue: oi.revenue,
+        }));
+
+        const { error: oiError } = await supabase
+          .from('other_income')
+          .insert(otherIncomeRecords);
+
+        if (oiError) throw oiError;
+        totalRecords += otherIncomeRecords.length;
+      }
+
       // Record the upload
       const { error: uploadError } = await supabase.from('data_uploads').insert({
         filename: state.file?.name || 'unknown',
@@ -565,8 +627,9 @@ export default function Upload() {
                   <div className="text-sm">
                     <p className="font-medium text-foreground">Expected Format</p>
                     <p className="text-muted-foreground mt-1">
-                      Your spreadsheet should have 3 sheets: Daily Data (Date, Revenue, Target, Occupancy, ARR), 
+                     Your spreadsheet should have 3 sheets: Daily Data (Date, Revenue, Target, Occupancy, ARR), 
                       Room Types (Type, Rooms, Sold, Revenue, Rate), and Historical (Year, RoomsSold, Occupancy, Revenue, Rate).
+                      Optionally include an "Other Income" sheet (Product Type, Revenue (Excl.)).
                     </p>
                   </div>
                 </div>
@@ -586,7 +649,7 @@ export default function Upload() {
                     File Validated
                   </CardTitle>
                   <CardDescription>
-                    {state.file?.name} • {state.parsedData.daily.length} daily records, {state.parsedData.roomTypes.length} room types, {state.parsedData.annual.length} annual records
+                    {state.file?.name} • {state.parsedData.daily.length} daily records, {state.parsedData.roomTypes.length} room types, {state.parsedData.annual.length} annual records{state.parsedData.otherIncome.length > 0 ? `, ${state.parsedData.otherIncome.length} other income items` : ''}
                   </CardDescription>
                 </div>
                 <Button variant="ghost" size="sm" onClick={handleReset}>
@@ -682,6 +745,35 @@ export default function Upload() {
                             <td className="py-2 px-3 text-right">R{row.avgRate.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                           </tr>
                         ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Other Income Preview */}
+              {state.parsedData.otherIncome.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2">Other Income</p>
+                  <div className="overflow-x-auto border rounded-lg">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-muted">
+                          <th className="text-left py-2 px-3 font-medium">Product Type</th>
+                          <th className="text-right py-2 px-3 font-medium">Revenue</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {state.parsedData.otherIncome.map((row, index) => (
+                          <tr key={index} className="border-t">
+                            <td className="py-2 px-3">{row.productType}</td>
+                            <td className="py-2 px-3 text-right">R{row.revenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          </tr>
+                        ))}
+                        <tr className="border-t font-medium bg-muted/50">
+                          <td className="py-2 px-3">Total</td>
+                          <td className="py-2 px-3 text-right">R{state.parsedData.otherIncome.reduce((s, r) => s + r.revenue, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
