@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import KPICard from '@/components/dashboard/KPICard';
 import AlertBanner from '@/components/dashboard/AlertBanner';
@@ -11,6 +11,7 @@ import MonthSelector from '@/components/MonthSelector';
 import AnalysisSummary from '@/components/dashboard/AnalysisSummary';
 import DailyDataTable from '@/components/dashboard/DailyDataTable';
 import MonthProjectionSummary from '@/components/dashboard/MonthProjectionSummary';
+import OtherIncomeSummary from '@/components/dashboard/OtherIncomeSummary';
 
 interface DailyData {
   date: string;
@@ -41,6 +42,8 @@ export default function Dashboard() {
   const { selectedMonth, setSelectedMonth } = useMonth();
   const [totalRooms, setTotalRooms] = useState(80);
   const [monthlyTargets, setMonthlyTargets] = useState<Record<string, MonthlyTarget>>({});
+  const [otherIncomeTotal, setOtherIncomeTotal] = useState(0);
+  const handleOtherIncomeChange = useCallback((total: number) => setOtherIncomeTotal(total), []);
   
 
   // Get target for selected month
@@ -217,7 +220,8 @@ export default function Dashboard() {
   }, []);
 
   // Calculate KPIs from data
-  const totalRevenue = dailyData.reduce((sum, d) => sum + d.revenue, 0);
+  const roomRevenue = dailyData.reduce((sum, d) => sum + d.revenue, 0);
+  const totalRevenue = roomRevenue + otherIncomeTotal;
   const targetRevenue = dailyData.reduce((sum, d) => sum + d.target, 0);
   const revenueProgress = targetRevenue > 0 ? (totalRevenue / targetRevenue) * 100 : 0;
   const variance = targetRevenue > 0 ? ((totalRevenue - targetRevenue) / targetRevenue) * 100 : 0;
@@ -271,7 +275,7 @@ export default function Dashboard() {
           <KPICard
             title="Revenue MTD"
             value={formatCurrency(totalRevenue)}
-            subtitle="All room types"
+            subtitle={otherIncomeTotal > 0 ? `Rooms: ${formatCurrency(roomRevenue)} + Other: ${formatCurrency(otherIncomeTotal)}` : 'All room types'}
             icon={<DollarSign className="w-5 h-5 text-primary" />}
             progress={revenueProgress}
             variant={revenueProgress >= 80 ? 'success' : revenueProgress >= 60 ? 'warning' : 'danger'}
@@ -314,6 +318,9 @@ export default function Dashboard() {
             No revenue data available. Upload an Excel file to see your dashboard.
           </div>
         )}
+
+        {/* Other Income Breakdown */}
+        <OtherIncomeSummary onTotalChange={handleOtherIncomeChange} />
 
         {/* Month-End Projection Summary */}
         {(actualFilteredData.length > 0 || forecastFilteredData.length > 0) && (

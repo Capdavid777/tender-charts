@@ -202,6 +202,33 @@ export type Database = {
         }
         Relationships: []
       }
+      other_income: {
+        Row: {
+          created_at: string
+          id: string
+          month: number
+          product_type: string
+          revenue: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: number
+          product_type: string
+          revenue?: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: number
+          product_type?: string
+          revenue?: number
+          year?: number
+        }
+        Relationships: []
+      }
       room_types: {
         Row: {
           breakeven_rate: number | null
