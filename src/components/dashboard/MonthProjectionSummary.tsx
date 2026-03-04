@@ -17,6 +17,7 @@ interface MonthProjectionSummaryProps {
   targetRevenue: number;
   targetOccupancy: number;
   availableRooms: number;
+  otherIncomeTotal?: number;
 }
 
 export default function MonthProjectionSummary({
@@ -25,10 +26,12 @@ export default function MonthProjectionSummary({
   targetRevenue,
   targetOccupancy,
   availableRooms,
+  otherIncomeTotal = 0,
 }: MonthProjectionSummaryProps) {
   if (actualData.length === 0 && forecastData.length === 0) return null;
 
-  const actualRevenue = actualData.reduce((s, d) => s + Number(d.revenue), 0);
+  const actualRoomRevenue = actualData.reduce((s, d) => s + Number(d.revenue), 0);
+  const actualRevenue = actualRoomRevenue + otherIncomeTotal;
   const forecastRevenue = forecastData.reduce((s, d) => s + Number(d.revenue), 0);
   const projectedRevenue = actualRevenue + forecastRevenue;
 

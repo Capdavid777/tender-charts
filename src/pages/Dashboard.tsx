@@ -330,6 +330,7 @@ export default function Dashboard() {
             targetRevenue={currentTarget.target_revenue}
             targetOccupancy={targetOccupancy}
             availableRooms={availableRooms}
+            otherIncomeTotal={otherIncomeTotal}
           />
         )}
 
