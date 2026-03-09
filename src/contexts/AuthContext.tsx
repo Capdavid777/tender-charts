@@ -14,22 +14,36 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AUTH_KEY = 'reserved_suites_auth';
-const ROLE_KEY = 'reserved_suites_role';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [role, setRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const session = localStorage.getItem(AUTH_KEY);
-    const savedRole = localStorage.getItem(ROLE_KEY) as UserRole | null;
-    if (session) {
-      setIsAuthenticated(true);
-      setRole(savedRole);
-    }
-    setIsLoading(false);
+    // Listen for auth state changes FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setIsAuthenticated(true);
+        const appRole = (session.user.app_metadata?.app_role as UserRole) || 'viewer';
+        setRole(appRole);
+      } else {
+        setIsAuthenticated(false);
+        setRole(null);
+      }
+      setIsLoading(false);
+    });
+
+    // Then check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setIsAuthenticated(true);
+        const appRole = (session.user.app_metadata?.app_role as UserRole) || 'viewer';
+        setRole(appRole);
+      }
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (password: string): Promise<boolean> => {
@@ -42,20 +56,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      const userRole = data.role as UserRole;
-      localStorage.setItem(AUTH_KEY, 'true');
-      localStorage.setItem(ROLE_KEY, userRole);
-      setIsAuthenticated(true);
-      setRole(userRole);
+      // Set the Supabase session from the returned tokens
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+
+      if (sessionError) {
+        console.error('Failed to set session:', sessionError.message);
+        return false;
+      }
+
       return true;
     } catch {
       return false;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem(AUTH_KEY);
-    localStorage.removeItem(ROLE_KEY);
+  const logout = async () => {
+    await supabase.auth.signOut();
     setIsAuthenticated(false);
     setRole(null);
   };

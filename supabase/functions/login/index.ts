@@ -29,10 +29,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const { data: settings, error } = await supabase
       .from("app_settings")
@@ -49,29 +49,89 @@ Deno.serve(async (req) => {
     const adminPwd = settings?.find((s: any) => s.setting_key === "shared_password")?.setting_value || "";
     const staffPwd = settings?.find((s: any) => s.setting_key === "staff_password")?.setting_value || "";
 
-    // Always compare both to prevent timing leakage of which role exists
+    // Always compare both to prevent timing leakage
     const isAdmin = adminPwd.length > 0 && constantTimeCompare(password, adminPwd);
     const isStaff = staffPwd.length > 0 && constantTimeCompare(password, staffPwd);
 
-    if (isAdmin) {
+    let role: string | null = null;
+    if (isAdmin) role = "admin";
+    else if (isStaff) role = "viewer";
+
+    if (!role) {
       return new Response(
-        JSON.stringify({ authenticated: true, role: "admin" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ authenticated: false }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (isStaff) {
-      return new Response(
-        JSON.stringify({ authenticated: true, role: "viewer" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Create or sign in a Supabase Auth user for this role
+    const email = `${role}@internal.reserved-suites.app`;
+    // Deterministic internal password derived from service role key + role
+    const internalPassword = serviceRoleKey.slice(0, 32) + "_" + role;
+
+    // Try to sign in first
+    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
+    let session = null;
+
+    const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
+      email,
+      password: internalPassword,
+    });
+
+    if (signInData?.session) {
+      session = signInData.session;
+    } else {
+      // User doesn't exist yet — create with admin API
+      const { data: createData, error: createError } = await supabase.auth.admin.createUser({
+        email,
+        password: internalPassword,
+        email_confirm: true,
+        app_metadata: { app_role: role },
+      });
+
+      if (createError && !createError.message?.includes("already been registered")) {
+        console.error("Create user error:", createError.message);
+        return new Response(
+          JSON.stringify({ error: "Server error" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Try sign in again
+      const { data: retryData, error: retryError } = await anonClient.auth.signInWithPassword({
+        email,
+        password: internalPassword,
+      });
+
+      if (retryError || !retryData?.session) {
+        console.error("Sign in retry error:", retryError?.message);
+        return new Response(
+          JSON.stringify({ error: "Server error" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      session = retryData.session;
+
+      // Ensure app_metadata has the role
+      if (createData?.user) {
+        await supabase.auth.admin.updateUserById(createData.user.id, {
+          app_metadata: { app_role: role },
+        });
+      }
     }
 
     return new Response(
-      JSON.stringify({ authenticated: false }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        authenticated: true,
+        role,
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch {
+  } catch (e) {
+    console.error("Login error:", e);
     return new Response(
       JSON.stringify({ error: "Invalid request" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
