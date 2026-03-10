@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { timingSafeEqual } from "https://deno.land/std@0.208.0/crypto/timing_safe_equal.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,12 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function constantTimeCompare(a: string, b: string): boolean {
-  const encoder = new TextEncoder();
-  const aBuf = encoder.encode(a.padEnd(200, "\0"));
-  const bBuf = encoder.encode(b.padEnd(200, "\0"));
-  return timingSafeEqual(aBuf, bBuf);
-}
+const MAX_ATTEMPTS = 10;
+const WINDOW_MINUTES = 15;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -31,9 +26,28 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    // Rate limiting: check recent attempts from this IP
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+
+    const { data: recentAttempts, error: attemptsError } = await supabase
+      .from("login_attempts")
+      .select("id")
+      .eq("ip_address", clientIp)
+      .gte("attempted_at", new Date(Date.now() - WINDOW_MINUTES * 60 * 1000).toISOString());
+
+    if (!attemptsError && recentAttempts && recentAttempts.length >= MAX_ATTEMPTS) {
+      return new Response(
+        JSON.stringify({ error: "Too many login attempts. Please try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "900" } }
+      );
+    }
+
+    // Record this attempt
+    await supabase.from("login_attempts").insert({ ip_address: clientIp });
+
+    // Fetch hashed passwords from app_settings
     const { data: settings, error } = await supabase
       .from("app_settings")
       .select("setting_key, setting_value")
@@ -46,16 +60,27 @@ Deno.serve(async (req) => {
       );
     }
 
-    const adminPwd = settings?.find((s: any) => s.setting_key === "shared_password")?.setting_value || "";
-    const staffPwd = settings?.find((s: any) => s.setting_key === "staff_password")?.setting_value || "";
+    const adminHash = settings?.find((s: any) => s.setting_key === "shared_password")?.setting_value || "";
+    const staffHash = settings?.find((s: any) => s.setting_key === "staff_password")?.setting_value || "";
 
-    // Always compare both to prevent timing leakage
-    const isAdmin = adminPwd.length > 0 && constantTimeCompare(password, adminPwd);
-    const isStaff = staffPwd.length > 0 && constantTimeCompare(password, staffPwd);
-
+    // Compare using pgcrypto's crypt function via RPC
     let role: string | null = null;
-    if (isAdmin) role = "admin";
-    else if (isStaff) role = "viewer";
+
+    if (adminHash) {
+      const { data: adminMatch } = await supabase.rpc("verify_password", {
+        input_password: password,
+        stored_hash: adminHash,
+      });
+      if (adminMatch) role = "admin";
+    }
+
+    if (!role && staffHash) {
+      const { data: staffMatch } = await supabase.rpc("verify_password", {
+        input_password: password,
+        stored_hash: staffHash,
+      });
+      if (staffMatch) role = "viewer";
+    }
 
     if (!role) {
       return new Response(
@@ -66,14 +91,12 @@ Deno.serve(async (req) => {
 
     // Create or sign in a Supabase Auth user for this role
     const email = `${role}@internal.reserved-suites.app`;
-    // Deterministic internal password derived from service role key + role
     const internalPassword = serviceRoleKey.slice(0, 32) + "_" + role;
 
-    // Try to sign in first
     const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
     let session = null;
 
-    const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
+    const { data: signInData } = await anonClient.auth.signInWithPassword({
       email,
       password: internalPassword,
     });
@@ -81,7 +104,6 @@ Deno.serve(async (req) => {
     if (signInData?.session) {
       session = signInData.session;
     } else {
-      // User doesn't exist yet — create with admin API
       const { data: createData, error: createError } = await supabase.auth.admin.createUser({
         email,
         password: internalPassword,
@@ -97,7 +119,6 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Try sign in again
       const { data: retryData, error: retryError } = await anonClient.auth.signInWithPassword({
         email,
         password: internalPassword,
@@ -113,13 +134,15 @@ Deno.serve(async (req) => {
 
       session = retryData.session;
 
-      // Ensure app_metadata has the role
       if (createData?.user) {
         await supabase.auth.admin.updateUserById(createData.user.id, {
           app_metadata: { app_role: role },
         });
       }
     }
+
+    // Clean up attempts on successful login
+    await supabase.from("login_attempts").delete().eq("ip_address", clientIp);
 
     return new Response(
       JSON.stringify({
