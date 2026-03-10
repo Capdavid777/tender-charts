@@ -279,6 +279,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      hash_password: { Args: { plain_password: string }; Returns: string }
       verify_password: {
         Args: { input_password: string; stored_hash: string }
         Returns: boolean
