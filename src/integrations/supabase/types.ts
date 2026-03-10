@@ -133,6 +133,24 @@ export type Database = {
         }
         Relationships: []
       }
+      login_attempts: {
+        Row: {
+          attempted_at: string
+          id: string
+          ip_address: string
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          ip_address: string
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          ip_address?: string
+        }
+        Relationships: []
+      }
       monthly_analyses: {
         Row: {
           content: string
