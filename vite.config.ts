@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "robots.txt"],
+      includeAssets: ["favicon.ico", "robots.txt", "rs-logo.png"],
       manifest: {
         name: "Reserved Suites Illovo - Revenue Dashboard",
         short_name: "RS Dashboard",
