@@ -32,10 +32,23 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, isAdmin } = useAuth();
+  const [logoSrc, setLogoSrc] = useState(rsLogo);
+  const [logoFailed, setLogoFailed] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleLogoError = () => {
+    const publicLogoPath = `${import.meta.env.BASE_URL}rs-logo.png`;
+
+    if (logoSrc !== publicLogoPath) {
+      setLogoSrc(publicLogoPath);
+      return;
+    }
+
+    setLogoFailed(true);
   };
 
   return (
