@@ -1,13 +1,12 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import rsLogo from '@/assets/rs-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { 
-  LayoutDashboard, 
-  BedDouble, 
-  TrendingUp, 
-  Upload, 
+import {
+  LayoutDashboard,
+  BedDouble,
+  TrendingUp,
+  Upload,
   FileText,
   LogOut,
   Clock
@@ -32,8 +31,11 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, isAdmin } = useAuth();
-  const [logoSrc, setLogoSrc] = useState(rsLogo);
-  const [logoFailed, setLogoFailed] = useState(false);
+
+  const logoBasePath = `${import.meta.env.BASE_URL}rs-logo.png`;
+  const [logoSrc, setLogoSrc] = useState(`${logoBasePath}?v=20260314`);
+  const [logoLoaded, setLogoLoaded] = useState(false);
+  const [fallbackAttempted, setFallbackAttempted] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -41,14 +43,14 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
   };
 
   const handleLogoError = () => {
-    const publicLogoPath = `${import.meta.env.BASE_URL}rs-logo.png`;
-
-    if (logoSrc !== publicLogoPath) {
-      setLogoSrc(publicLogoPath);
+    if (!fallbackAttempted) {
+      setFallbackAttempted(true);
+      setLogoLoaded(false);
+      setLogoSrc(logoBasePath);
       return;
     }
 
-    setLogoFailed(true);
+    setLogoLoaded(false);
   };
 
   return (
