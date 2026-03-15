@@ -40,6 +40,19 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
     navigate('/');
   };
 
+  const handleRefresh = async () => {
+    // Unregister service workers and clear caches
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(r => r.unregister()));
+    }
+    if ('caches' in window) {
+      const names = await caches.keys();
+      await Promise.all(names.map(name => caches.delete(name)));
+    }
+    window.location.reload();
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
