@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -32,10 +32,22 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, isAdmin } = useAuth();
+  const publicLogoPath = `${import.meta.env.BASE_URL}rs-logo.png`;
+  const [logoSrc, setLogoSrc] = useState(publicLogoPath);
+  const [showLogoFallback, setShowLogoFallback] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleLogoError = () => {
+    if (logoSrc !== rsLogo) {
+      setLogoSrc(rsLogo);
+      return;
+    }
+
+    setShowLogoFallback(true);
   };
 
   return (
@@ -47,15 +59,20 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
             {/* Logo */}
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-muted ring-1 ring-border">
-                <img
-                  src={rsLogo}
-                  alt="Reserved Suites logo"
-                  className="h-10 w-10 object-contain"
-                  width={40}
-                  height={40}
-                  loading="eager"
-                  decoding="async"
-                />
+                {showLogoFallback ? (
+                  <span className="text-xs font-semibold text-foreground">RS</span>
+                ) : (
+                  <img
+                    src={logoSrc}
+                    alt="Reserved Suites logo"
+                    className="h-10 w-10 object-contain"
+                    width={40}
+                    height={40}
+                    loading="eager"
+                    decoding="async"
+                    onError={handleLogoError}
+                  />
+                )}
               </div>
               <div>
                 <h1 className="font-semibold text-foreground">Reserved Suites Illovo</h1>
