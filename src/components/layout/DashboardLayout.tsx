@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
   LogOut,
   Clock
 } from 'lucide-react';
+import rsLogo from '@/assets/rs-logo.png';
 
 import { cn } from '@/lib/utils';
 
@@ -18,35 +19,6 @@ interface DashboardLayoutProps {
   children: ReactNode;
   lastUpdated?: string;
 }
-
-const InlineRSLogo = () => (
-  <svg
-    viewBox="0 0 40 40"
-    role="img"
-    aria-label="Reserved Suites logo"
-    className="h-10 w-10"
-  >
-    <rect
-      x="1"
-      y="1"
-      width="38"
-      height="38"
-      rx="8"
-      className="fill-primary/10 stroke-border"
-      strokeWidth="1.5"
-    />
-    <path
-      d="M13 28V12h8.2c3.5 0 5.8 2.1 5.8 5.1 0 2.3-1.2 3.9-3.3 4.7L28 28h-4.6l-3.7-5.6H17V28h-4zm4-8.8h3.5c1.6 0 2.5-.8 2.5-2.1s-.9-2.1-2.5-2.1H17v4.2z"
-      className="fill-foreground"
-    />
-    <path
-      d="M12.8 31.2h14.4"
-      className="stroke-primary"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-  </svg>
-);
 
 const navItems = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: false },
