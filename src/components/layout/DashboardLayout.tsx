@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -32,10 +32,22 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, isAdmin } = useAuth();
+  const publicLogoPath = `${import.meta.env.BASE_URL}rs-logo.png`;
+  const [logoSrc, setLogoSrc] = useState(publicLogoPath);
+  const [showLogoFallback, setShowLogoFallback] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleLogoError = () => {
+    if (logoSrc !== rsLogo) {
+      setLogoSrc(rsLogo);
+      return;
+    }
+
+    setShowLogoFallback(true);
   };
 
   return (
