@@ -75,20 +75,7 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
             {/* Logo */}
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-muted ring-1 ring-border">
-                {showLogoFallback ? (
-                  <span className="text-xs font-semibold text-foreground">RS</span>
-                ) : (
-                  <img
-                    src={logoSrc}
-                    alt="Reserved Suites logo"
-                    className="h-10 w-10 object-contain"
-                    width={40}
-                    height={40}
-                    loading="eager"
-                    decoding="async"
-                    onError={handleLogoError}
-                  />
-                )}
+                <InlineRSLogo />
               </div>
               <div>
                 <h1 className="font-semibold text-foreground">Reserved Suites Illovo</h1>
