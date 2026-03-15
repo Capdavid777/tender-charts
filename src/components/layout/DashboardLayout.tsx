@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
   LogOut,
   Clock
 } from 'lucide-react';
+import rsLogo from '@/assets/rs-logo.png';
 
 import { cn } from '@/lib/utils';
 
@@ -32,25 +33,9 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
   const navigate = useNavigate();
   const { logout, isAdmin } = useAuth();
 
-  const logoBasePath = `${import.meta.env.BASE_URL}rs-logo.png`;
-  const [logoSrc, setLogoSrc] = useState(`${logoBasePath}?v=20260314`);
-  const [logoLoaded, setLogoLoaded] = useState(false);
-  const [fallbackAttempted, setFallbackAttempted] = useState(false);
-
   const handleLogout = () => {
     logout();
     navigate('/');
-  };
-
-  const handleLogoError = () => {
-    if (!fallbackAttempted) {
-      setFallbackAttempted(true);
-      setLogoLoaded(false);
-      setLogoSrc(logoBasePath);
-      return;
-    }
-
-    setLogoLoaded(false);
   };
 
   return (
