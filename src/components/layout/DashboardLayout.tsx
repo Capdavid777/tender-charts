@@ -101,6 +101,19 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
                   <span>Updated: {lastUpdated}</span>
                 </div>
               )}
+              <div className="hidden lg:flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground/60 font-mono">v{APP_VERSION}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRefresh}
+                  className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  title="Force refresh to get the latest version"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Refresh
+                </Button>
+              </div>
               <Button 
                 variant="outline" 
                 size="sm" 
