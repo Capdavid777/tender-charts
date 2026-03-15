@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
   LogOut,
   Clock
 } from 'lucide-react';
+import rsLogo from '@/assets/rs-logo.png';
 
 import { cn } from '@/lib/utils';
 
@@ -32,25 +33,9 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
   const navigate = useNavigate();
   const { logout, isAdmin } = useAuth();
 
-  const logoBasePath = `${import.meta.env.BASE_URL}rs-logo.png`;
-  const [logoSrc, setLogoSrc] = useState(`${logoBasePath}?v=20260314`);
-  const [logoLoaded, setLogoLoaded] = useState(false);
-  const [fallbackAttempted, setFallbackAttempted] = useState(false);
-
   const handleLogout = () => {
     logout();
     navigate('/');
-  };
-
-  const handleLogoError = () => {
-    if (!fallbackAttempted) {
-      setFallbackAttempted(true);
-      setLogoLoaded(false);
-      setLogoSrc(logoBasePath);
-      return;
-    }
-
-    setLogoLoaded(false);
   };
 
   return (
@@ -61,32 +46,15 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-muted ring-1 ring-border">
-                <span
-                  className={cn(
-                    'text-xs font-semibold text-foreground transition-opacity duration-200',
-                    logoLoaded ? 'opacity-0' : 'opacity-100'
-                  )}
-                >
-                  RS
-                </span>
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-muted ring-1 ring-border">
                 <img
-                  src={logoSrc}
+                  src={rsLogo}
                   alt="Reserved Suites logo"
-                  className={cn(
-                    'absolute inset-0 h-10 w-10 object-contain transition-opacity duration-200',
-                    logoLoaded ? 'opacity-100' : 'opacity-0'
-                  )}
+                  className="h-10 w-10 object-contain"
                   width={40}
                   height={40}
                   loading="eager"
                   decoding="async"
-                  onLoad={(event) => {
-                    if (event.currentTarget.naturalWidth > 0) {
-                      setLogoLoaded(true);
-                    }
-                  }}
-                  onError={handleLogoError}
                 />
               </div>
               <div>
