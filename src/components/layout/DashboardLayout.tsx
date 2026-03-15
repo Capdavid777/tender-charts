@@ -9,7 +9,8 @@ import {
   Upload,
   FileText,
   LogOut,
-  Clock
+  Clock,
+  RefreshCw
 } from 'lucide-react';
 import rsLogo from '@/assets/rs-logo.png';
 
