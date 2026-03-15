@@ -9,7 +9,8 @@ import {
   Upload,
   FileText,
   LogOut,
-  Clock
+  Clock,
+  RefreshCw
 } from 'lucide-react';
 import rsLogo from '@/assets/rs-logo.png';
 
@@ -19,6 +20,8 @@ interface DashboardLayoutProps {
   children: ReactNode;
   lastUpdated?: string;
 }
+
+const APP_VERSION = '1.0.0';
 
 const navItems = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: false },
@@ -37,6 +40,19 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleRefresh = async () => {
+    // Unregister service workers and clear caches
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(r => r.unregister()));
+    }
+    if ('caches' in window) {
+      const names = await caches.keys();
+      await Promise.all(names.map(name => caches.delete(name)));
+    }
+    window.location.reload();
   };
 
   return (
@@ -100,6 +116,19 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
                   <span>Updated: {lastUpdated}</span>
                 </div>
               )}
+              <div className="hidden lg:flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground/60 font-mono">v{APP_VERSION}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRefresh}
+                  className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  title="Force refresh to get the latest version"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Refresh
+                </Button>
+              </div>
               <Button 
                 variant="outline" 
                 size="sm" 
