@@ -21,6 +21,8 @@ interface DashboardLayoutProps {
   lastUpdated?: string;
 }
 
+const APP_VERSION = '1.0.0';
+
 const navItems = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: false },
   { href: '/room-types', label: 'Room Types', icon: BedDouble, adminOnly: false },
