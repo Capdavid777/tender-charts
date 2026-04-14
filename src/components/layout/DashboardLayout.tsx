@@ -111,8 +111,8 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
             {/* Right side */}
             <div className="flex items-center gap-4">
               {lastUpdated && (
-                <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Clock className="w-4 h-4" />
+              <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground whitespace-nowrap">
+                  <Clock className="w-4 h-4 shrink-0" />
                   <span>Updated: {lastUpdated}</span>
                 </div>
               )}
