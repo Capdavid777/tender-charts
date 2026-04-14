@@ -6,8 +6,44 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MAX_ATTEMPTS = 10;
+const MAX_IP_ATTEMPTS = 10;
+const MAX_GLOBAL_ATTEMPTS = 30;
 const WINDOW_MINUTES = 15;
+
+// Private/reserved IP ranges to skip when extracting client IP
+const PRIVATE_IP_PATTERNS = [
+  /^10\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./,
+  /^127\./, /^::1$/, /^fc00:/, /^fe80:/, /^fd/,
+  /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./,
+];
+
+function isPrivateIp(ip: string): boolean {
+  return PRIVATE_IP_PATTERNS.some((p) => p.test(ip));
+}
+
+/**
+ * Extract the most trustworthy client IP.
+ * Uses the rightmost non-private IP from x-forwarded-for (appended by infra),
+ * falling back to cf-connecting-ip, then "unknown".
+ */
+function getClientIp(req: Request): string {
+  // Prefer Cloudflare's non-spoofable header when available
+  const cfIp = req.headers.get("cf-connecting-ip")?.trim();
+  if (cfIp) return cfIp;
+
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) {
+    const parts = xff.split(",").map((s) => s.trim()).filter(Boolean);
+    // Walk from rightmost (infra-appended) to leftmost, pick first non-private
+    for (let i = parts.length - 1; i >= 0; i--) {
+      if (!isPrivateIp(parts[i])) return parts[i];
+    }
+    // All private — use the rightmost anyway
+    if (parts.length > 0) return parts[parts.length - 1];
+  }
+
+  return "unknown";
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,16 +64,26 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Rate limiting: check recent attempts from this IP
-    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const windowStart = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000).toISOString();
+    const clientIp = getClientIp(req);
 
-    const { data: recentAttempts, error: attemptsError } = await supabase
-      .from("login_attempts")
-      .select("id")
-      .eq("ip_address", clientIp)
-      .gte("attempted_at", new Date(Date.now() - WINDOW_MINUTES * 60 * 1000).toISOString());
+    // Dual rate limiting: per-IP AND global
+    const [ipResult, globalResult] = await Promise.all([
+      supabase
+        .from("login_attempts")
+        .select("id")
+        .eq("ip_address", clientIp)
+        .gte("attempted_at", windowStart),
+      supabase
+        .from("login_attempts")
+        .select("id")
+        .gte("attempted_at", windowStart),
+    ]);
 
-    if (!attemptsError && recentAttempts && recentAttempts.length >= MAX_ATTEMPTS) {
+    const ipCount = ipResult.data?.length ?? 0;
+    const globalCount = globalResult.data?.length ?? 0;
+
+    if (ipCount >= MAX_IP_ATTEMPTS || globalCount >= MAX_GLOBAL_ATTEMPTS) {
       return new Response(
         JSON.stringify({ error: "Too many login attempts. Please try again later." }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "900" } }
