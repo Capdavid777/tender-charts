@@ -137,8 +137,8 @@ export default function Analysis() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-foreground">{analysis.title}</h3>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <Calendar className="w-3 h-3" />
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 whitespace-nowrap">
+                      <Calendar className="w-3 h-3 shrink-0" />
                       Last updated {new Date(analysis.updated_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
