@@ -80,7 +80,7 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
                 )}
               </div>
               <div>
-                <h1 className="font-semibold text-foreground">Reserved Suites Illovo</h1>
+                <h1 className="font-semibold text-foreground">Reserved Suites</h1>
                 <p className="text-xs text-muted-foreground">Revenue Dashboard</p>
               </div>
             </div>
