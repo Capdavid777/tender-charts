@@ -49,7 +49,7 @@ export default function Dashboard() {
 
   // Get target for selected month
   const currentTarget = useMemo(() => {
-    return monthlyTargets[selectedMonth] || { target_revenue: 0, target_occupancy: 80, available_rooms: totalRooms, breakeven_rate: 0, breakeven_occupancy: 0 };
+    return monthlyTargets[selectedMonth] || { target_revenue: 0, target_occupancy: 80, available_rooms: totalRooms, breakeven_rate: 0, breakeven_occupancy: 0, room_cost_per_occupied: 0 };
   }, [monthlyTargets, selectedMonth, totalRooms]);
 
   const targetOccupancy = (currentTarget.target_occupancy || 0.80) * 100;
