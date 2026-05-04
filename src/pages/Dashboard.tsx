@@ -209,7 +209,7 @@ export default function Dashboard() {
         const map: Record<string, MonthlyTarget> = {};
         targetsRes.data.forEach(t => {
           const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
-          map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy), available_rooms: Number((t as any).available_rooms || 0), breakeven_rate: Number((t as any).breakeven_rate || 0), breakeven_occupancy: Number((t as any).breakeven_occupancy || 0) };
+          map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy), available_rooms: Number((t as any).available_rooms || 0), breakeven_rate: Number((t as any).breakeven_rate || 0), breakeven_occupancy: Number((t as any).breakeven_occupancy || 0), room_cost_per_occupied: Number((t as any).room_cost_per_occupied || 0) };
         });
         setMonthlyTargets(map);
       }
