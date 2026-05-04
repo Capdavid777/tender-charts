@@ -271,7 +271,14 @@ export default function Dashboard() {
 
         {/* KPI Cards */}
         <div className="space-y-2">
-          <span className="inline-flex items-center text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Actuals Only — Forecast Excluded</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Actuals Only — Forecast Excluded</span>
+            {currentTarget.room_cost_per_occupied > 0 && (
+              <span className="inline-flex items-center text-xs font-medium text-foreground bg-accent/40 border border-accent px-2.5 py-1 rounded-full">
+                Room Cost / Occupied Room: {formatCurrency(currentTarget.room_cost_per_occupied)}
+              </span>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
             title="Revenue MTD"
