@@ -192,6 +192,7 @@ export type Database = {
           created_at: string
           id: string
           month: number
+          room_cost_per_occupied: number | null
           target_occupancy: number | null
           target_revenue: number
           year: number
@@ -203,6 +204,7 @@ export type Database = {
           created_at?: string
           id?: string
           month: number
+          room_cost_per_occupied?: number | null
           target_occupancy?: number | null
           target_revenue?: number
           year: number
@@ -214,6 +216,7 @@ export type Database = {
           created_at?: string
           id?: string
           month?: number
+          room_cost_per_occupied?: number | null
           target_occupancy?: number | null
           target_revenue?: number
           year?: number

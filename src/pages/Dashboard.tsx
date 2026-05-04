@@ -33,6 +33,7 @@ interface MonthlyTarget {
   available_rooms: number;
   breakeven_rate: number;
   breakeven_occupancy: number;
+  room_cost_per_occupied: number;
 }
 export default function Dashboard() {
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
@@ -48,7 +49,7 @@ export default function Dashboard() {
 
   // Get target for selected month
   const currentTarget = useMemo(() => {
-    return monthlyTargets[selectedMonth] || { target_revenue: 0, target_occupancy: 80, available_rooms: totalRooms, breakeven_rate: 0, breakeven_occupancy: 0 };
+    return monthlyTargets[selectedMonth] || { target_revenue: 0, target_occupancy: 80, available_rooms: totalRooms, breakeven_rate: 0, breakeven_occupancy: 0, room_cost_per_occupied: 0 };
   }, [monthlyTargets, selectedMonth, totalRooms]);
 
   const targetOccupancy = (currentTarget.target_occupancy || 0.80) * 100;
@@ -208,7 +209,7 @@ export default function Dashboard() {
         const map: Record<string, MonthlyTarget> = {};
         targetsRes.data.forEach(t => {
           const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
-          map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy), available_rooms: Number((t as any).available_rooms || 0), breakeven_rate: Number((t as any).breakeven_rate || 0), breakeven_occupancy: Number((t as any).breakeven_occupancy || 0) };
+          map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy), available_rooms: Number((t as any).available_rooms || 0), breakeven_rate: Number((t as any).breakeven_rate || 0), breakeven_occupancy: Number((t as any).breakeven_occupancy || 0), room_cost_per_occupied: Number((t as any).room_cost_per_occupied || 0) };
         });
         setMonthlyTargets(map);
       }
@@ -270,7 +271,14 @@ export default function Dashboard() {
 
         {/* KPI Cards */}
         <div className="space-y-2">
-          <span className="inline-flex items-center text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Actuals Only — Forecast Excluded</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Actuals Only — Forecast Excluded</span>
+            {currentTarget.room_cost_per_occupied > 0 && (
+              <span className="inline-flex items-center text-xs font-medium text-foreground bg-accent/40 border border-accent px-2.5 py-1 rounded-full">
+                Room Cost / Occupied Room: {formatCurrency(currentTarget.room_cost_per_occupied)}
+              </span>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
             title="Revenue MTD"
