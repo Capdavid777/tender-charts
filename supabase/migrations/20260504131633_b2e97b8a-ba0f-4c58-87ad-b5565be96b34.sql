@@ -1,0 +1,1 @@
+ALTER TABLE public.monthly_targets ADD COLUMN IF NOT EXISTS room_cost_per_occupied numeric DEFAULT 0;
