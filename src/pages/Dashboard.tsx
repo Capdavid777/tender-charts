@@ -33,6 +33,7 @@ interface MonthlyTarget {
   available_rooms: number;
   breakeven_rate: number;
   breakeven_occupancy: number;
+  room_cost_per_occupied: number;
 }
 export default function Dashboard() {
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
