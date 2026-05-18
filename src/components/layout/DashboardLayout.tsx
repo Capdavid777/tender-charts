@@ -116,7 +116,7 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
                   <span>Updated: {lastUpdated}</span>
                 </div>
               )}
-              <div className="hidden lg:flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2">
                 <span className="text-[10px] text-muted-foreground/60 font-mono">v{APP_VERSION}</span>
                 <Button
                   variant="ghost"
