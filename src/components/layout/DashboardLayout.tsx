@@ -42,17 +42,17 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
     navigate('/');
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const handleRefresh = async () => {
-    // Unregister service workers and clear caches
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map(r => r.unregister()));
+    setRefreshing(true);
+    try {
+      window.dispatchEvent(new CustomEvent('app:refresh-data'));
+      // brief visual feedback
+      await new Promise((r) => setTimeout(r, 600));
+    } finally {
+      setRefreshing(false);
     }
-    if ('caches' in window) {
-      const names = await caches.keys();
-      await Promise.all(names.map(name => caches.delete(name)));
-    }
-    window.location.reload();
   };
 
   return (
