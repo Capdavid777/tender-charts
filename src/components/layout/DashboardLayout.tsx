@@ -1,7 +1,9 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 import {
   LayoutDashboard,
   BedDouble,
@@ -43,13 +45,17 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
   };
 
   const [refreshing, setRefreshing] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleRefresh = async () => {
+    if (refreshing) return;
     setRefreshing(true);
     try {
       window.dispatchEvent(new CustomEvent('app:refresh-data'));
-      // brief visual feedback
-      await new Promise((r) => setTimeout(r, 600));
+      await queryClient.invalidateQueries();
+      toast({ title: 'Data refreshed', description: 'Latest data loaded from the server.' });
+    } catch (e) {
+      toast({ title: 'Refresh failed', description: String((e as Error)?.message ?? e), variant: 'destructive' });
     } finally {
       setRefreshing(false);
     }

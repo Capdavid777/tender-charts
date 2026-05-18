@@ -36,6 +36,9 @@ export default function OtherIncomeSummary({ onTotalChange }: OtherIncomeSummary
     };
 
     fetchData();
+    const handler = () => fetchData();
+    window.addEventListener('app:refresh-data', handler);
+    return () => window.removeEventListener('app:refresh-data', handler);
   }, [selectedMonth]);
 
   const total = useMemo(() => items.reduce((sum, i) => sum + Number(i.revenue), 0), [items]);
