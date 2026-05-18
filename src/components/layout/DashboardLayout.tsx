@@ -42,17 +42,17 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
     navigate('/');
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const handleRefresh = async () => {
-    // Unregister service workers and clear caches
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map(r => r.unregister()));
+    setRefreshing(true);
+    try {
+      window.dispatchEvent(new CustomEvent('app:refresh-data'));
+      // brief visual feedback
+      await new Promise((r) => setTimeout(r, 600));
+    } finally {
+      setRefreshing(false);
     }
-    if ('caches' in window) {
-      const names = await caches.keys();
-      await Promise.all(names.map(name => caches.delete(name)));
-    }
-    window.location.reload();
   };
 
   return (
@@ -122,11 +122,12 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
                   variant="ghost"
                   size="sm"
                   onClick={handleRefresh}
+                  disabled={refreshing}
                   className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                  title="Force refresh to get the latest version"
+                  title="Refetch dashboard data"
                 >
-                  <RefreshCw className="w-3 h-3" />
-                  Refresh
+                  <RefreshCw className={cn('w-3 h-3', refreshing && 'animate-spin')} />
+                  {refreshing ? 'Refreshing…' : 'Refresh'}
                 </Button>
               </div>
               <Button 

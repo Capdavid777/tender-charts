@@ -175,50 +175,53 @@ export default function Dashboard() {
     return Math.round(avgRate);
   }, [actualFilteredData]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
 
-      const [uploadsRes, revenueRes, roomTypesRes, targetsRes] = await Promise.all([
-        supabase.from('data_uploads').select('uploaded_at').order('uploaded_at', { ascending: false }).limit(1),
-        supabase.from('daily_revenue').select('*').is('room_type_id', null).order('date', { ascending: true }),
-        supabase.from('room_types').select('total_rooms'),
-        supabase.from('monthly_targets').select('*'),
-      ]);
+    const [uploadsRes, revenueRes, roomTypesRes, targetsRes] = await Promise.all([
+      supabase.from('data_uploads').select('uploaded_at').order('uploaded_at', { ascending: false }).limit(1),
+      supabase.from('daily_revenue').select('*').is('room_type_id', null).order('date', { ascending: true }),
+      supabase.from('room_types').select('total_rooms'),
+      supabase.from('monthly_targets').select('*'),
+    ]);
 
-      if (uploadsRes.data && uploadsRes.data.length > 0) {
-        const date = new Date(uploadsRes.data[0].uploaded_at);
-        setLastUpdated(date.toLocaleDateString('en-ZA', {
-          day: 'numeric', month: 'short', year: 'numeric',
-          hour: '2-digit', minute: '2-digit'
-        }));
-      } else {
-        setLastUpdated('No data uploaded yet');
-      }
+    if (uploadsRes.data && uploadsRes.data.length > 0) {
+      const date = new Date(uploadsRes.data[0].uploaded_at);
+      setLastUpdated(date.toLocaleDateString('en-ZA', {
+        day: 'numeric', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      }));
+    } else {
+      setLastUpdated('No data uploaded yet');
+    }
 
-      if (revenueRes.data && revenueRes.data.length > 0) {
-        setAllData(revenueRes.data as RawDailyData[]);
-      }
+    if (revenueRes.data && revenueRes.data.length > 0) {
+      setAllData(revenueRes.data as RawDailyData[]);
+    }
 
-      if (roomTypesRes.data) {
-        const total = roomTypesRes.data.reduce((sum, rt) => sum + (rt.total_rooms || 0), 0);
-        setTotalRooms(total);
-      }
+    if (roomTypesRes.data) {
+      const total = roomTypesRes.data.reduce((sum, rt) => sum + (rt.total_rooms || 0), 0);
+      setTotalRooms(total);
+    }
 
-      if (targetsRes.data) {
-        const map: Record<string, MonthlyTarget> = {};
-        targetsRes.data.forEach(t => {
-          const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
-          map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy), available_rooms: Number((t as any).available_rooms || 0), breakeven_rate: Number((t as any).breakeven_rate || 0), breakeven_occupancy: Number((t as any).breakeven_occupancy || 0), room_cost_per_occupied: Number((t as any).room_cost_per_occupied || 0) };
-        });
-        setMonthlyTargets(map);
-      }
+    if (targetsRes.data) {
+      const map: Record<string, MonthlyTarget> = {};
+      targetsRes.data.forEach(t => {
+        const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
+        map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy), available_rooms: Number((t as any).available_rooms || 0), breakeven_rate: Number((t as any).breakeven_rate || 0), breakeven_occupancy: Number((t as any).breakeven_occupancy || 0), room_cost_per_occupied: Number((t as any).room_cost_per_occupied || 0) };
+      });
+      setMonthlyTargets(map);
+    }
 
-      setLoading(false);
-    };
-
-    fetchData();
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchData();
+    const handler = () => fetchData();
+    window.addEventListener('app:refresh-data', handler);
+    return () => window.removeEventListener('app:refresh-data', handler);
+  }, [fetchData]);
 
   // Calculate KPIs from data
   const roomRevenue = dailyData.reduce((sum, d) => sum + d.revenue, 0);
