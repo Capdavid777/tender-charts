@@ -122,11 +122,12 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
                   variant="ghost"
                   size="sm"
                   onClick={handleRefresh}
+                  disabled={refreshing}
                   className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                  title="Force refresh to get the latest version"
+                  title="Refetch dashboard data"
                 >
-                  <RefreshCw className="w-3 h-3" />
-                  Refresh
+                  <RefreshCw className={cn('w-3 h-3', refreshing && 'animate-spin')} />
+                  {refreshing ? 'Refreshing…' : 'Refresh'}
                 </Button>
               </div>
               <Button 
