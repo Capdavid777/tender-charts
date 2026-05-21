@@ -20,21 +20,27 @@ interface OtherIncomeSummaryProps {
 export default function OtherIncomeSummary({ onTotalChange }: OtherIncomeSummaryProps) {
   const { selectedMonth } = useMonth();
   const [items, setItems] = useState<OtherIncomeItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!selectedMonth) return;
     const [year, month] = selectedMonth.split('-').map(Number);
 
     const fetchData = async () => {
-      const { data } = await supabase
-        .from('other_income')
-        .select('product_type, revenue')
-        .eq('year', year)
-        .eq('month', month)
-        .order('revenue', { ascending: false });
+      setLoading(true);
+      try {
+        const { data } = await supabase
+          .from('other_income')
+          .select('product_type, revenue')
+          .eq('year', year)
+          .eq('month', month)
+          .order('revenue', { ascending: false });
 
-      const result = (data as OtherIncomeItem[]) || [];
-      setItems(result);
+        const result = (data as OtherIncomeItem[]) || [];
+        setItems(result);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
@@ -48,6 +54,25 @@ export default function OtherIncomeSummary({ onTotalChange }: OtherIncomeSummary
   useEffect(() => {
     onTotalChange?.(total);
   }, [total, onTotalChange]);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Banknote className="w-5 h-5 text-primary" />
+            Additional Other Income
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-4 w-1/3" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (items.length === 0) return null;
 
