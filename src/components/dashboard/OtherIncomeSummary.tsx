@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Banknote } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useMonth } from '@/contexts/MonthContext';
 import { formatCurrency } from '@/lib/format';
+
 
 interface OtherIncomeItem {
   product_type: string;
