@@ -29,6 +29,7 @@ export default function MonthProjectionSummary({
   targetOccupancy,
   availableRooms,
   otherIncomeTotal = 0,
+  loading = false,
 }: MonthProjectionSummaryProps) {
   if (actualData.length === 0 && forecastData.length === 0) return null;
 
