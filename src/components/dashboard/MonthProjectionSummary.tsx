@@ -19,6 +19,7 @@ interface MonthProjectionSummaryProps {
   targetOccupancy: number;
   availableRooms: number;
   otherIncomeTotal?: number;
+  loading?: boolean;
 }
 
 export default function MonthProjectionSummary({
