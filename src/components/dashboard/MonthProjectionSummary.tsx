@@ -31,6 +31,34 @@ export default function MonthProjectionSummary({
   otherIncomeTotal = 0,
   loading = false,
 }: MonthProjectionSummaryProps) {
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-primary" />
+            Month-End Projection
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="mb-6 space-y-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-3 w-3/4" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="rounded-lg border p-3 space-y-2">
+                <Skeleton className="h-3 w-3/4" />
+                <Skeleton className="h-6 w-1/2" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (actualData.length === 0 && forecastData.length === 0) return null;
 
   const actualRoomRevenue = actualData.reduce((s, d) => s + Number(d.revenue), 0);
