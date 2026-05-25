@@ -334,16 +334,15 @@ export default function Dashboard() {
         <OtherIncomeSummary onTotalChange={handleOtherIncomeChange} />
 
         {/* Month-End Projection Summary */}
-        {(actualFilteredData.length > 0 || forecastFilteredData.length > 0) && (
-          <MonthProjectionSummary
-            actualData={actualFilteredData}
-            forecastData={forecastFilteredData}
-            targetRevenue={currentTarget.target_revenue}
-            targetOccupancy={targetOccupancy}
-            availableRooms={availableRooms}
-            otherIncomeTotal={otherIncomeTotal}
-          />
-        )}
+        <MonthProjectionSummary
+          actualData={actualFilteredData}
+          forecastData={forecastFilteredData}
+          targetRevenue={currentTarget.target_revenue}
+          targetOccupancy={targetOccupancy}
+          availableRooms={availableRooms}
+          otherIncomeTotal={otherIncomeTotal}
+          loading={loading}
+        />
 
         {/* Daily Breakdown Table (Actual only) */}
         {actualFilteredData.length > 0 && (
