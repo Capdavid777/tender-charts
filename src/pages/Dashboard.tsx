@@ -283,6 +283,7 @@ export default function Dashboard() {
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="animate-fade-in-up" style={{ animationDelay: '0ms' }}>
           <KPICard
             title="Revenue MTD"
             value={formatCurrency(totalRevenue)}
@@ -291,6 +292,8 @@ export default function Dashboard() {
             progress={revenueProgress}
             variant={revenueProgress >= 80 ? 'success' : revenueProgress >= 60 ? 'warning' : 'danger'}
           />
+          </div>
+          <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
           <KPICard
             title="Occupancy Rate"
             value={formatPercent(occupancy)}
@@ -299,6 +302,8 @@ export default function Dashboard() {
             trend={occupancyTrend || undefined}
             variant={occupancy >= targetOccupancy ? 'success' : 'default'}
           />
+          </div>
+          <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
           <KPICard
             title="Average Daily Rate"
             value={formatCurrency(adr)}
@@ -308,6 +313,8 @@ export default function Dashboard() {
             icon={<TrendingUp className="w-5 h-5 text-primary" />}
             variant={adr >= breakevenAdr ? 'success' : 'danger'}
           />
+          </div>
+          <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
           <KPICard
             title="Target Variance"
             value={`${variance >= 0 ? '+' : ''}${variance.toFixed(2)}%`}
@@ -315,15 +322,20 @@ export default function Dashboard() {
             icon={<Target className="w-5 h-5 text-primary" />}
             variant={variance >= 0 ? 'success' : variance >= -20 ? 'warning' : 'danger'}
           />
+          </div>
         </div>
         </div>
 
         {/* Monthly Analysis Summary */}
-        <AnalysisSummary />
+        <div className="animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+          <AnalysisSummary />
+        </div>
 
         {/* Revenue Chart */}
         {dailyData.length > 0 ? (
-          <RevenueChart data={dailyData} dailyTarget={dailyData[0]?.target || 0} />
+          <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
+            <RevenueChart data={dailyData} dailyTarget={dailyData[0]?.target || 0} />
+          </div>
         ) : !loading && (
           <div className="text-center py-12 text-muted-foreground">
             No revenue data available. Upload an Excel file to see your dashboard.
@@ -331,27 +343,35 @@ export default function Dashboard() {
         )}
 
         {/* Other Income Breakdown */}
-        <OtherIncomeSummary onTotalChange={handleOtherIncomeChange} />
+        <div className="animate-fade-in-up" style={{ animationDelay: '600ms' }}>
+          <OtherIncomeSummary onTotalChange={handleOtherIncomeChange} />
+        </div>
 
         {/* Month-End Projection Summary */}
-        <MonthProjectionSummary
-          actualData={actualFilteredData}
-          forecastData={forecastFilteredData}
-          targetRevenue={currentTarget.target_revenue}
-          targetOccupancy={targetOccupancy}
-          availableRooms={availableRooms}
-          otherIncomeTotal={otherIncomeTotal}
-          loading={loading}
-        />
+        <div className="animate-fade-in-up" style={{ animationDelay: '700ms' }}>
+          <MonthProjectionSummary
+            actualData={actualFilteredData}
+            forecastData={forecastFilteredData}
+            targetRevenue={currentTarget.target_revenue}
+            targetOccupancy={targetOccupancy}
+            availableRooms={availableRooms}
+            otherIncomeTotal={otherIncomeTotal}
+            loading={loading}
+          />
+        </div>
 
         {/* Daily Breakdown Table (Actual only) */}
         {actualFilteredData.length > 0 && (
-          <DailyDataTable data={actualFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Daily Breakdown" />
+          <div className="animate-fade-in-up" style={{ animationDelay: '800ms' }}>
+            <DailyDataTable data={actualFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Daily Breakdown" />
+          </div>
         )}
 
         {/* Forecast Table */}
         {forecastFilteredData.length > 0 && (
-          <DailyDataTable data={forecastFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Forecast" icon={<TrendingUpDown className="w-5 h-5 text-primary" />} variant="forecast" />
+          <div className="animate-fade-in-up" style={{ animationDelay: '900ms' }}>
+            <DailyDataTable data={forecastFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Forecast" icon={<TrendingUpDown className="w-5 h-5 text-primary" />} variant="forecast" />
+          </div>
         )}
       </div>
     </DashboardLayout>
