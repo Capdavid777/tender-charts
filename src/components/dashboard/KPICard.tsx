@@ -37,9 +37,11 @@ export default function KPICard({
 
   const trendColor = trend && trend.value >= 0 ? 'text-success' : 'text-destructive';
 
+  const clampedProgress = progress !== undefined ? Math.min(progress, 100) : 0;
+
   return (
     <Card className={cn(
-      'overflow-hidden border-l-4 transition-all hover:shadow-card-hover',
+      'overflow-hidden border-l-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover',
       variantStyles[variant]
     )}>
       <CardContent className="p-6">
@@ -71,12 +73,12 @@ export default function KPICard({
               <span className="font-medium">{progress.toFixed(2)}%</span>
             </div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
-              <div 
+              <div
                 className={cn(
-                  'h-full rounded-full transition-all duration-500',
+                  'h-full rounded-full animate-progress-fill',
                   progress >= 100 ? 'bg-success' : progress >= 80 ? 'bg-accent' : 'bg-destructive'
                 )}
-                style={{ width: `${Math.min(progress, 100)}%` }}
+                style={{ ['--progress-target' as any]: `${clampedProgress}%`, width: `${clampedProgress}%` }}
               />
             </div>
           </div>
