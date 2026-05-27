@@ -12,6 +12,8 @@ import AnalysisSummary from '@/components/dashboard/AnalysisSummary';
 import DailyDataTable from '@/components/dashboard/DailyDataTable';
 import MonthProjectionSummary from '@/components/dashboard/MonthProjectionSummary';
 import OtherIncomeSummary from '@/components/dashboard/OtherIncomeSummary';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface DailyData {
   date: string;
@@ -272,106 +274,218 @@ export default function Dashboard() {
         {/* Alerts */}
         <AlertBanner alerts={visibleAlerts} onDismiss={handleDismissAlert} />
 
-        {/* KPI Cards */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Actuals Only — Forecast Excluded</span>
-            {currentTarget.room_cost_per_occupied > 0 && (
-              <span className="inline-flex items-center text-xs font-medium text-foreground bg-accent/40 border border-accent px-2.5 py-1 rounded-full">
-                Room Cost / Occupied Room: {formatCurrency(currentTarget.room_cost_per_occupied)}
-              </span>
+        {loading ? (
+          <>
+            {/* KPI Skeletons */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Skeleton className="h-6 w-40 rounded-full" />
+                <Skeleton className="h-6 w-56 rounded-full" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[0, 1, 2, 3].map(i => (
+                  <Card key={i} className="border-l-4 border-l-muted">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2 w-full">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-8 w-32" />
+                          <Skeleton className="h-4 w-48" />
+                          <Skeleton className="h-4 w-36" />
+                        </div>
+                        <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0 ml-4" />
+                      </div>
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-4 w-28" />
+                          <Skeleton className="h-4 w-12" />
+                        </div>
+                        <Skeleton className="h-2 w-full rounded-full" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Analysis Summary Skeleton */}
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <Skeleton className="h-6 w-48" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[0, 1, 2, 3].map(i => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-8 w-28" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Revenue Chart Skeleton */}
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <Skeleton className="h-6 w-40" />
+                <Skeleton className="h-64 w-full rounded-lg" />
+              </CardContent>
+            </Card>
+
+            {/* Other Income Skeleton */}
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <Skeleton className="h-6 w-44" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-8 w-28" />
+                      <Skeleton className="h-2 w-full rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Month Projection Skeleton */}
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <Skeleton className="h-6 w-52" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[0, 1, 2, 3].map(i => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-8 w-28" />
+                      <Skeleton className="h-2 w-full rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Daily Table Skeleton */}
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <Skeleton className="h-6 w-36" />
+                <div className="space-y-2">
+                  <div className="flex gap-4">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  {[0, 1, 2, 3, 4].map(i => (
+                    <Skeleton key={i} className="h-10 w-full rounded-md" />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <>
+            {/* KPI Cards */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Actuals Only — Forecast Excluded</span>
+                {currentTarget.room_cost_per_occupied > 0 && (
+                  <span className="inline-flex items-center text-xs font-medium text-foreground bg-accent/40 border border-accent px-2.5 py-1 rounded-full">
+                    Room Cost / Occupied Room: {formatCurrency(currentTarget.room_cost_per_occupied)}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+                  <KPICard
+                    title="Revenue MTD"
+                    value={formatCurrency(totalRevenue)}
+                    subtitle={otherIncomeTotal > 0 ? `Rooms: ${formatCurrency(roomRevenue)} + Other: ${formatCurrency(otherIncomeTotal)}` : 'All room types'}
+                    icon={<DollarSign className="w-5 h-5 text-primary" />}
+                    progress={revenueProgress}
+                    variant={revenueProgress >= 80 ? 'success' : revenueProgress >= 60 ? 'warning' : 'danger'}
+                  />
+                </div>
+                <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                  <KPICard
+                    title="Occupancy Rate"
+                    value={formatPercent(occupancy)}
+                    subtitle={`Target: ${formatPercent(targetOccupancy)}`}
+                    icon={<Percent className="w-5 h-5 text-primary" />}
+                    trend={occupancyTrend || undefined}
+                    variant={occupancy >= targetOccupancy ? 'success' : 'default'}
+                  />
+                </div>
+                <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                  <KPICard
+                    title="Average Daily Rate"
+                    value={formatCurrency(adr)}
+                    subtitle="Simple avg across days"
+                    secondarySubtitle={`${adr < breakevenAdr ? '⚠ ' : '✓ '}Breakeven: ${formatCurrency(breakevenAdr)}`}
+                    secondarySubtitleClassName={adr >= breakevenAdr ? 'text-success' : 'text-destructive'}
+                    icon={<TrendingUp className="w-5 h-5 text-primary" />}
+                    variant={adr >= breakevenAdr ? 'success' : 'danger'}
+                  />
+                </div>
+                <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+                  <KPICard
+                    title="Target Variance"
+                    value={`${variance >= 0 ? '+' : ''}${variance.toFixed(2)}%`}
+                    subtitle={`${variance >= 0 ? 'Ahead' : 'Behind'} by ${formatCurrency(Math.abs(totalRevenue - targetRevenue))}`}
+                    icon={<Target className="w-5 h-5 text-primary" />}
+                    variant={variance >= 0 ? 'success' : variance >= -20 ? 'warning' : 'danger'}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Monthly Analysis Summary */}
+            <div className="animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+              <AnalysisSummary />
+            </div>
+
+            {/* Revenue Chart */}
+            {dailyData.length > 0 ? (
+              <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
+                <RevenueChart data={dailyData} dailyTarget={dailyData[0]?.target || 0} />
+              </div>
+            ) : !loading && (
+              <div className="text-center py-12 text-muted-foreground">
+                No revenue data available. Upload an Excel file to see your dashboard.
+              </div>
             )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="animate-fade-in-up" style={{ animationDelay: '0ms' }}>
-          <KPICard
-            title="Revenue MTD"
-            value={formatCurrency(totalRevenue)}
-            subtitle={otherIncomeTotal > 0 ? `Rooms: ${formatCurrency(roomRevenue)} + Other: ${formatCurrency(otherIncomeTotal)}` : 'All room types'}
-            icon={<DollarSign className="w-5 h-5 text-primary" />}
-            progress={revenueProgress}
-            variant={revenueProgress >= 80 ? 'success' : revenueProgress >= 60 ? 'warning' : 'danger'}
-          />
-          </div>
-          <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-          <KPICard
-            title="Occupancy Rate"
-            value={formatPercent(occupancy)}
-            subtitle={`Target: ${formatPercent(targetOccupancy)}`}
-            icon={<Percent className="w-5 h-5 text-primary" />}
-            trend={occupancyTrend || undefined}
-            variant={occupancy >= targetOccupancy ? 'success' : 'default'}
-          />
-          </div>
-          <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-          <KPICard
-            title="Average Daily Rate"
-            value={formatCurrency(adr)}
-            subtitle="Simple avg across days"
-            secondarySubtitle={`${adr < breakevenAdr ? '⚠ ' : '✓ '}Breakeven: ${formatCurrency(breakevenAdr)}`}
-            secondarySubtitleClassName={adr >= breakevenAdr ? 'text-success' : 'text-destructive'}
-            icon={<TrendingUp className="w-5 h-5 text-primary" />}
-            variant={adr >= breakevenAdr ? 'success' : 'danger'}
-          />
-          </div>
-          <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-          <KPICard
-            title="Target Variance"
-            value={`${variance >= 0 ? '+' : ''}${variance.toFixed(2)}%`}
-            subtitle={`${variance >= 0 ? 'Ahead' : 'Behind'} by ${formatCurrency(Math.abs(totalRevenue - targetRevenue))}`}
-            icon={<Target className="w-5 h-5 text-primary" />}
-            variant={variance >= 0 ? 'success' : variance >= -20 ? 'warning' : 'danger'}
-          />
-          </div>
-        </div>
-        </div>
 
-        {/* Monthly Analysis Summary */}
-        <div className="animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-          <AnalysisSummary />
-        </div>
+            {/* Other Income Breakdown */}
+            <div className="animate-fade-in-up" style={{ animationDelay: '600ms' }}>
+              <OtherIncomeSummary onTotalChange={handleOtherIncomeChange} />
+            </div>
 
-        {/* Revenue Chart */}
-        {dailyData.length > 0 ? (
-          <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
-            <RevenueChart data={dailyData} dailyTarget={dailyData[0]?.target || 0} />
-          </div>
-        ) : !loading && (
-          <div className="text-center py-12 text-muted-foreground">
-            No revenue data available. Upload an Excel file to see your dashboard.
-          </div>
-        )}
+            {/* Month-End Projection Summary */}
+            <div className="animate-fade-in-up" style={{ animationDelay: '700ms' }}>
+              <MonthProjectionSummary
+                actualData={actualFilteredData}
+                forecastData={forecastFilteredData}
+                targetRevenue={currentTarget.target_revenue}
+                targetOccupancy={targetOccupancy}
+                availableRooms={availableRooms}
+                otherIncomeTotal={otherIncomeTotal}
+                loading={loading}
+              />
+            </div>
 
-        {/* Other Income Breakdown */}
-        <div className="animate-fade-in-up" style={{ animationDelay: '600ms' }}>
-          <OtherIncomeSummary onTotalChange={handleOtherIncomeChange} />
-        </div>
+            {/* Daily Breakdown Table (Actual only) */}
+            {actualFilteredData.length > 0 && (
+              <div className="animate-fade-in-up" style={{ animationDelay: '800ms' }}>
+                <DailyDataTable data={actualFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Daily Breakdown" />
+              </div>
+            )}
 
-        {/* Month-End Projection Summary */}
-        <div className="animate-fade-in-up" style={{ animationDelay: '700ms' }}>
-          <MonthProjectionSummary
-            actualData={actualFilteredData}
-            forecastData={forecastFilteredData}
-            targetRevenue={currentTarget.target_revenue}
-            targetOccupancy={targetOccupancy}
-            availableRooms={availableRooms}
-            otherIncomeTotal={otherIncomeTotal}
-            loading={loading}
-          />
-        </div>
-
-        {/* Daily Breakdown Table (Actual only) */}
-        {actualFilteredData.length > 0 && (
-          <div className="animate-fade-in-up" style={{ animationDelay: '800ms' }}>
-            <DailyDataTable data={actualFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Daily Breakdown" />
-          </div>
-        )}
-
-        {/* Forecast Table */}
-        {forecastFilteredData.length > 0 && (
-          <div className="animate-fade-in-up" style={{ animationDelay: '900ms' }}>
-            <DailyDataTable data={forecastFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Forecast" icon={<TrendingUpDown className="w-5 h-5 text-primary" />} variant="forecast" />
-          </div>
+            {/* Forecast Table */}
+            {forecastFilteredData.length > 0 && (
+              <div className="animate-fade-in-up" style={{ animationDelay: '900ms' }}>
+                <DailyDataTable data={forecastFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Forecast" icon={<TrendingUpDown className="w-5 h-5 text-primary" />} variant="forecast" />
+              </div>
+            )}
+          </>
         )}
       </div>
     </DashboardLayout>
