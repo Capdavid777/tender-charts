@@ -1,19 +1,28 @@
+# Visual Update Plan: Staggered Dashboard Entrance Animations & Card Hover Effects
 
+## Goal
+Add polished entrance animations and micro-interactions to the dashboard for a more premium, modern feel.
 
-## Recommendation: Keep Both, But Rename for Clarity
+## Changes
 
-The two metrics actually tell different stories, and both are useful:
+### 1. `tailwind.config.ts`
+- Add new keyframes: `fade-in-up`, `scale-in`, `progress-fill`
+- Add new animation utilities: `animate-fade-in-up`, `animate-scale-in`, `animate-progress-fill`
 
-- **Simple Average ADR** (Dashboard): "What was the typical daily rate?" — matches your spreadsheet calculations and is intuitive for day-to-day monitoring.
-- **Weighted ADR** (Room Types): "What did we actually earn per room sold?" — accounts for volume differences across days, giving a more accurate revenue-per-key metric.
+### 2. `src/components/dashboard/KPICard.tsx`
+- Add animated progress bar that fills from 0% to actual value on mount (1s ease-out)
+- Add subtle card hover lift: `hover:-translate-y-1 hover:shadow-card-hover`
+- Add `duration-300` transition for smooth hover feel
 
-### Proposed Changes
+### 3. `src/pages/Dashboard.tsx`
+- Apply staggered `animate-fade-in-up` with inline `animationDelay` to:
+  - KPI cards (delay: 0ms, 100ms, 200ms, 300ms)
+  - AnalysisSummary (delay: 400ms)
+  - RevenueChart (delay: 500ms)
+  - OtherIncomeSummary (delay: 600ms)
+  - MonthProjectionSummary (delay: 700ms)
+  - DailyDataTable (delay: 800ms)
+- Add `opacity-0` initial state so animation starts hidden and fades in
 
-1. **Dashboard ADR card** — Keep the simple average calculation. Rename subtitle to clarify: `"Simple avg across days"` so it's obvious what it represents.
-
-2. **Room Types Weighted ADR card** — Keep the revenue ÷ rooms sold calculation. Update subtitle to: `"Revenue ÷ rooms sold"`.
-
-3. **No formula changes** — Both calculations stay as they are, preserving consistency with your spreadsheet.
-
-This is a small labeling update to `Dashboard.tsx` and `RoomTypes.tsx` subtitles only.
-
+## Impact
+Dashboard sections no longer appear instantly all at once. Cards subtly lift on hover. Progress bars animate on load. Overall perception of quality and polish improves significantly.
