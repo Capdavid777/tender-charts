@@ -231,3 +231,92 @@ export function SearchSkeleton({
   );
 }
 
+/**
+ * DropdownTriggerSkeleton — closed state of a Select/Dropdown.
+ * Mimics the trigger button with placeholder label and chevron.
+ */
+interface DropdownTriggerSkeletonProps {
+  width?: string;
+  withLabel?: boolean;
+  labelWidth?: string;
+  className?: string;
+}
+
+export function DropdownTriggerSkeleton({
+  width = 'w-[180px]',
+  withLabel = false,
+  labelWidth = 'w-20',
+  className,
+}: DropdownTriggerSkeletonProps) {
+  return (
+    <div className={cn('flex flex-col gap-1.5', className)}>
+      {withLabel && <Skeleton className={cn('h-3', labelWidth)} />}
+      <div
+        className={cn(
+          'relative inline-flex items-center justify-between rounded-md border border-input bg-background px-3 h-10',
+          width,
+        )}
+      >
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-3 w-3 rounded-sm" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * DropdownOpenSkeleton — open state of a Select/Dropdown.
+ * Renders the trigger plus a popover panel with option rows
+ * (each row has an optional check indicator and a label).
+ */
+interface DropdownOpenSkeletonProps {
+  width?: string;
+  options?: number;
+  withCheck?: boolean;
+  withLabel?: boolean;
+  labelWidth?: string;
+  className?: string;
+}
+
+export function DropdownOpenSkeleton({
+  width = 'w-[180px]',
+  options = 6,
+  withCheck = true,
+  withLabel = false,
+  labelWidth = 'w-20',
+  className,
+}: DropdownOpenSkeletonProps) {
+  // Deterministic varied option-label widths so the panel doesn't look uniform.
+  const labelWidths = ['w-24', 'w-32', 'w-20', 'w-28', 'w-36', 'w-24', 'w-32', 'w-20'];
+
+  return (
+    <div className={cn('flex flex-col gap-1.5', className)}>
+      {withLabel && <Skeleton className={cn('h-3', labelWidth)} />}
+      <div className={cn('relative', width)}>
+        {/* Trigger */}
+        <div className="relative inline-flex items-center justify-between rounded-md border border-input bg-background px-3 h-10 w-full">
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-3 w-3 rounded-sm" />
+        </div>
+
+        {/* Popover panel */}
+        <div className="absolute left-0 right-0 top-full mt-1 rounded-md border bg-popover shadow-md p-1 z-50 animate-fade-in">
+          {Array.from({ length: options }).map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                'flex items-center gap-2 px-2 py-1.5 rounded-sm',
+                i === 0 && 'bg-accent/30',
+              )}
+            >
+              {withCheck && <Skeleton className="h-3.5 w-3.5 rounded-sm shrink-0" />}
+              <Skeleton className={cn('h-4', labelWidths[i % labelWidths.length])} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
