@@ -13,7 +13,7 @@ import DailyDataTable from '@/components/dashboard/DailyDataTable';
 import MonthProjectionSummary from '@/components/dashboard/MonthProjectionSummary';
 import OtherIncomeSummary from '@/components/dashboard/OtherIncomeSummary';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChartSkeleton, TableSkeleton } from '@/components/ui/skeleton-variants';
+import { ChartSkeleton, TableSkeleton, FilterBarSkeleton } from '@/components/ui/skeleton-variants';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface DailyData {
@@ -264,13 +264,17 @@ export default function Dashboard() {
     <DashboardLayout lastUpdated={lastUpdated}>
       <div className="space-y-6">
         {/* Page title + Month selector */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">Dashboard Overview</h2>
-            <p className="text-muted-foreground">Monitor our performance at a glance</p>
+        {loading ? (
+          <FilterBarSkeleton filters={1} filterWidth="w-[180px]" />
+        ) : (
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Dashboard Overview</h2>
+              <p className="text-muted-foreground">Monitor our performance at a glance</p>
+            </div>
+            <MonthSelector />
           </div>
-          <MonthSelector />
-        </div>
+        )}
 
         {/* Alerts */}
         <AlertBanner alerts={visibleAlerts} onDismiss={handleDismissAlert} />
