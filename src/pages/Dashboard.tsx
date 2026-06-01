@@ -13,6 +13,7 @@ import DailyDataTable from '@/components/dashboard/DailyDataTable';
 import MonthProjectionSummary from '@/components/dashboard/MonthProjectionSummary';
 import OtherIncomeSummary from '@/components/dashboard/OtherIncomeSummary';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChartSkeleton, TableSkeleton } from '@/components/ui/skeleton-variants';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface DailyData {
@@ -325,12 +326,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Revenue Chart Skeleton */}
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-64 w-full rounded-lg" />
-              </CardContent>
-            </Card>
+            <ChartSkeleton bars={14} height={300} titleWidth="w-40" />
 
             {/* Other Income Skeleton */}
             <Card>
@@ -365,23 +361,9 @@ export default function Dashboard() {
             </Card>
 
             {/* Daily Table Skeleton */}
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                <Skeleton className="h-6 w-36" />
-                <div className="space-y-2">
-                  <div className="flex gap-4">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-24" />
-                  </div>
-                  {[0, 1, 2, 3, 4].map(i => (
-                    <Skeleton key={i} className="h-10 w-full rounded-md" />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <TableSkeleton rows={8} columns={5} withProgressColumn titleWidth="w-36" />
           </>
+
         ) : (
           <>
             {/* KPI Cards */}
