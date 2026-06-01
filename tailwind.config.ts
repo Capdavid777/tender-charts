@@ -103,6 +103,9 @@ export default {
           from: { width: "0%" },
           to: { width: "var(--progress-target, 100%)" },
         },
+        "shimmer": {
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -111,6 +114,7 @@ export default {
         "fade-in-up": "fade-in-up 0.5s ease-out both",
         "scale-in": "scale-in 0.3s ease-out both",
         "progress-fill": "progress-fill 1s ease-out both",
+        "shimmer": "shimmer 1.6s infinite",
       },
     },
   },
