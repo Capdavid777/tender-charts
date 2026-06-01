@@ -167,3 +167,67 @@ export function TableSkeleton({
     </Card>
   );
 }
+
+/**
+ * FilterBarSkeleton — mimics a page header with title, subtitle,
+ * and right-aligned filter controls (e.g. month selector, dropdowns).
+ */
+interface FilterBarSkeletonProps {
+  filters?: number;
+  filterWidth?: string;
+  showSubtitle?: boolean;
+  className?: string;
+}
+
+export function FilterBarSkeleton({
+  filters = 1,
+  filterWidth = 'w-[180px]',
+  showSubtitle = true,
+  className,
+}: FilterBarSkeletonProps) {
+  return (
+    <div className={cn('flex items-center justify-between flex-wrap gap-4', className)}>
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-56" />
+        {showSubtitle && <Skeleton className="h-4 w-72" />}
+      </div>
+      <div className="flex items-center gap-2">
+        {Array.from({ length: filters }).map((_, i) => (
+          <Skeleton key={i} className={cn('h-10 rounded-md', filterWidth)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * SearchSkeleton — mimics a search input, optionally paired with
+ * adjacent filter chips or action buttons.
+ */
+interface SearchSkeletonProps {
+  searchWidth?: string;
+  chips?: number;
+  withButton?: boolean;
+  className?: string;
+}
+
+export function SearchSkeleton({
+  searchWidth = 'w-full max-w-sm',
+  chips = 0,
+  withButton = false,
+  className,
+}: SearchSkeletonProps) {
+  return (
+    <div className={cn('flex items-center gap-2 flex-wrap', className)}>
+      <div className={cn('relative', searchWidth)}>
+        <Skeleton className="h-10 w-full rounded-md" />
+        <Skeleton className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full" />
+      </div>
+      {Array.from({ length: chips }).map((_, i) => (
+        <Skeleton key={i} className="h-7 w-20 rounded-full" />
+      ))}
+      {withButton && <Skeleton className="h-10 w-28 rounded-md ml-auto" />}
+    </div>
+  );
+}
+
