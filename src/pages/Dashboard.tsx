@@ -412,7 +412,7 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+                <div className="animate-fade-in-up h-full" style={{ animationDelay: '0ms' }}>
                   <KPICard
                     title="Revenue MTD"
                     value={formatCurrency(totalRevenue)}
