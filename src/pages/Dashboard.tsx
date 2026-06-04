@@ -71,7 +71,7 @@ export default function Dashboard() {
   const breakevenOccupancy = currentTarget.breakeven_occupancy || 0;
 
   // Derive available months from data (for filtering)
-  const availableMonths = useMemo(() => {
+  const availableMonths = useMemoTracked(() => {
     const months = new Set<string>();
     allData.forEach(d => {
       const date = new Date(d.date);
@@ -79,21 +79,21 @@ export default function Dashboard() {
       months.add(key);
     });
     return Array.from(months).sort().reverse();
-  }, [allData]);
+  }, [allData], PERF_SCOPE, 'availableMonths');
 
   // Filter data by selected month
-  const filteredData = useMemo(() => {
+  const filteredData = useMemoTracked(() => {
     if (!selectedMonth) return allData;
     const [year, month] = selectedMonth.split('-').map(Number);
     return allData.filter(d => {
       const date = new Date(d.date);
       return date.getFullYear() === year && date.getMonth() + 1 === month;
     });
-  }, [allData, selectedMonth]);
+  }, [allData, selectedMonth], PERF_SCOPE, 'filteredData');
 
   // Calculate display data
   // Split filtered data into actual (before today) and forecast (today onwards)
-  const { actualFilteredData, forecastFilteredData } = useMemo(() => {
+  const { actualFilteredData, forecastFilteredData } = useMemoTracked(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return {
@@ -108,10 +108,10 @@ export default function Dashboard() {
         return date >= today;
       }),
     };
-  }, [filteredData]);
+  }, [filteredData], PERF_SCOPE, 'actual/forecastSplit');
 
   // Calculate display data using only actual data for KPIs
-  const dailyData: DailyData[] = useMemo(() => {
+  const dailyData: DailyData[] = useMemoTracked(() => {
     if (!selectedMonth || !currentTarget.target_revenue) return actualFilteredData.map(d => {
       const date = new Date(d.date);
       return { date: date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }), revenue: Number(d.revenue), target: 0 };
@@ -127,9 +127,9 @@ export default function Dashboard() {
         target: dailyTarget,
       };
     });
-  }, [actualFilteredData, selectedMonth, currentTarget]);
+  }, [actualFilteredData, selectedMonth, currentTarget], PERF_SCOPE, 'dailyData');
 
-  const occupancy = useMemo(() => {
+  const occupancy = useMemoTracked(() => {
     if (actualFilteredData.length === 0) return 0;
     const daysWithData = actualFilteredData.filter(d => (d.occupancy ?? 0) > 0 || (d.rooms_sold ?? 0) > 0);
     if (daysWithData.length === 0) return 0;
@@ -143,10 +143,10 @@ export default function Dashboard() {
     if (availableRooms === 0) return 0;
     const totalRoomsSold = daysWithData.reduce((sum, d) => sum + (d.rooms_sold || 0), 0);
     return Number(((totalRoomsSold / (availableRooms * daysWithData.length)) * 100).toFixed(2));
-  }, [actualFilteredData, availableRooms]);
+  }, [actualFilteredData, availableRooms], PERF_SCOPE, 'occupancy');
 
   // Compare occupancy to the same date range in the previous month
-  const occupancyTrend = useMemo(() => {
+  const occupancyTrend = useMemoTracked(() => {
     if (!selectedMonth || actualFilteredData.length === 0) return null;
     const [year, month] = selectedMonth.split('-').map(Number);
     // Get the max day of current filtered data (only days with actual data)
@@ -179,14 +179,14 @@ export default function Dashboard() {
     const pctChange = prevOccupancy > 0 ? Number(((occupancy - prevOccupancy) / prevOccupancy * 100).toFixed(1)) : null;
     if (pctChange === null) return null;
     return { value: pctChange, label: 'vs last month (same period)' };
-  }, [selectedMonth, actualFilteredData, allData, monthlyTargets, totalRooms, occupancy]);
+  }, [selectedMonth, actualFilteredData, allData, monthlyTargets, totalRooms, occupancy], PERF_SCOPE, 'occupancyTrend');
 
-  const adr = useMemo(() => {
+  const adr = useMemoTracked(() => {
     const daysWithRates = actualFilteredData.filter(d => (d.average_rate ?? 0) > 0);
     if (daysWithRates.length === 0) return 0;
     const avgRate = daysWithRates.reduce((sum, d) => sum + (d.average_rate || 0), 0) / daysWithRates.length;
     return Math.round(avgRate);
-  }, [actualFilteredData]);
+  }, [actualFilteredData], PERF_SCOPE, 'adr');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -237,7 +237,7 @@ export default function Dashboard() {
   }, [fetchData]);
 
   // Calculate KPIs from data (memoized to avoid recomputing on unrelated re-renders)
-  const { roomRevenue, totalRevenue, targetRevenue, revenueProgress, variance } = useMemo(() => {
+  const { roomRevenue, totalRevenue, targetRevenue, revenueProgress, variance } = useMemoTracked(() => {
     const room = dailyData.reduce((sum, d) => sum + d.revenue, 0);
     const total = room + otherIncomeTotal;
     const target = dailyData.reduce((sum, d) => sum + d.target, 0);
@@ -248,10 +248,10 @@ export default function Dashboard() {
       revenueProgress: target > 0 ? (total / target) * 100 : 0,
       variance: target > 0 ? ((total - target) / target) * 100 : 0,
     };
-  }, [dailyData, otherIncomeTotal]);
+  }, [dailyData, otherIncomeTotal], PERF_SCOPE, 'kpiTotals');
 
   // Generate alerts based on thresholds (memoized)
-  const alerts = useMemo(() => {
+  const alerts = useMemoTracked(() => {
     const list: Array<{
       id: string;
       type: 'revenue' | 'occupancy';
