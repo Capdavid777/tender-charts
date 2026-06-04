@@ -226,39 +226,58 @@ export default function Dashboard() {
     return () => window.removeEventListener('app:refresh-data', handler);
   }, [fetchData]);
 
-  // Calculate KPIs from data
-  const roomRevenue = dailyData.reduce((sum, d) => sum + d.revenue, 0);
-  const totalRevenue = roomRevenue + otherIncomeTotal;
-  const targetRevenue = dailyData.reduce((sum, d) => sum + d.target, 0);
-  const revenueProgress = targetRevenue > 0 ? (totalRevenue / targetRevenue) * 100 : 0;
-  const variance = targetRevenue > 0 ? ((totalRevenue - targetRevenue) / targetRevenue) * 100 : 0;
+  // Calculate KPIs from data (memoized to avoid recomputing on unrelated re-renders)
+  const { roomRevenue, totalRevenue, targetRevenue, revenueProgress, variance } = useMemo(() => {
+    const room = dailyData.reduce((sum, d) => sum + d.revenue, 0);
+    const total = room + otherIncomeTotal;
+    const target = dailyData.reduce((sum, d) => sum + d.target, 0);
+    return {
+      roomRevenue: room,
+      totalRevenue: total,
+      targetRevenue: target,
+      revenueProgress: target > 0 ? (total / target) * 100 : 0,
+      variance: target > 0 ? ((total - target) / target) * 100 : 0,
+    };
+  }, [dailyData, otherIncomeTotal]);
 
-  // Generate alerts based on thresholds
-  const alerts = [];
-  if (revenueProgress < 80) {
-    alerts.push({
-      id: 'revenue-warning',
-      type: 'revenue' as const,
-      title: 'Revenue Behind Target',
-      message: `Current revenue is ${Math.abs(variance).toFixed(2)}% below the monthly target. Consider reviewing pricing strategy.`,
-      severity: revenueProgress < 60 ? 'critical' as const : 'warning' as const,
-    });
-  }
-  if (occupancy < targetOccupancy) {
-    alerts.push({
-      id: 'occupancy-warning',
-      type: 'occupancy' as const,
-      title: 'Low Occupancy Alert',
-      message: `Occupancy has dropped to ${formatPercent(occupancy)}. This is below the ${formatPercent(targetOccupancy)} threshold.`,
-      severity: 'warning' as const,
-    });
-  }
+  // Generate alerts based on thresholds (memoized)
+  const alerts = useMemo(() => {
+    const list: Array<{
+      id: string;
+      type: 'revenue' | 'occupancy';
+      title: string;
+      message: string;
+      severity: 'critical' | 'warning';
+    }> = [];
+    if (revenueProgress < 80) {
+      list.push({
+        id: 'revenue-warning',
+        type: 'revenue',
+        title: 'Revenue Behind Target',
+        message: `Current revenue is ${Math.abs(variance).toFixed(2)}% below the monthly target. Consider reviewing pricing strategy.`,
+        severity: revenueProgress < 60 ? 'critical' : 'warning',
+      });
+    }
+    if (occupancy < targetOccupancy) {
+      list.push({
+        id: 'occupancy-warning',
+        type: 'occupancy',
+        title: 'Low Occupancy Alert',
+        message: `Occupancy has dropped to ${formatPercent(occupancy)}. This is below the ${formatPercent(targetOccupancy)} threshold.`,
+        severity: 'warning',
+      });
+    }
+    return list;
+  }, [revenueProgress, variance, occupancy, targetOccupancy]);
 
-  const visibleAlerts = alerts.filter(a => !dismissedAlerts.includes(a.id));
+  const visibleAlerts = useMemo(
+    () => alerts.filter(a => !dismissedAlerts.includes(a.id)),
+    [alerts, dismissedAlerts]
+  );
 
-  const handleDismissAlert = (id: string) => {
+  const handleDismissAlert = useCallback((id: string) => {
     setDismissedAlerts(prev => [...prev, id]);
-  };
+  }, []);
 
   return (
     <DashboardLayout lastUpdated={lastUpdated}>
