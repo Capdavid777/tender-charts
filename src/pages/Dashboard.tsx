@@ -505,6 +505,7 @@ export default function Dashboard() {
           </>
         )}
       </div>
+      <PerfPanel scope={PERF_SCOPE} />
     </DashboardLayout>
   );
 }
