@@ -412,7 +412,7 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+                <div className="animate-fade-in-up h-full" style={{ animationDelay: '0ms' }}>
                   <KPICard
                     title="Revenue MTD"
                     value={formatCurrency(totalRevenue)}
@@ -422,7 +422,7 @@ export default function Dashboard() {
                     variant={revenueProgress >= 80 ? 'success' : revenueProgress >= 60 ? 'warning' : 'danger'}
                   />
                 </div>
-                <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                <div className="animate-fade-in-up h-full" style={{ animationDelay: '100ms' }}>
                   <KPICard
                     title="Occupancy Rate"
                     value={formatPercent(occupancy)}
@@ -432,7 +432,7 @@ export default function Dashboard() {
                     variant={occupancy >= targetOccupancy ? 'success' : 'default'}
                   />
                 </div>
-                <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                <div className="animate-fade-in-up h-full" style={{ animationDelay: '200ms' }}>
                   <KPICard
                     title="Average Daily Rate"
                     value={formatCurrency(adr)}
@@ -443,7 +443,7 @@ export default function Dashboard() {
                     variant={adr >= breakevenAdr ? 'success' : 'danger'}
                   />
                 </div>
-                <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+                <div className="animate-fade-in-up h-full" style={{ animationDelay: '300ms' }}>
                   <KPICard
                     title="Target Variance"
                     value={`${variance >= 0 ? '+' : ''}${variance.toFixed(2)}%`}

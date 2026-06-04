@@ -41,10 +41,10 @@ export default function KPICard({
 
   return (
     <Card className={cn(
-      'overflow-hidden border-l-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover',
+      'h-full flex flex-col overflow-hidden border-l-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover',
       variantStyles[variant]
     )}>
-      <CardContent className="p-6">
+      <CardContent className="p-6 flex flex-col flex-1">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
@@ -67,7 +67,7 @@ export default function KPICard({
         </div>
         
         {progress !== undefined && (
-          <div className="mt-4">
+          <div className="mt-auto pt-4">
             <div className="flex items-center justify-between text-sm mb-1">
               <span className="text-muted-foreground">Progress to target</span>
               <span className="font-medium">{progress.toFixed(2)}%</span>
