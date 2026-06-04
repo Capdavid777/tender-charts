@@ -422,7 +422,7 @@ export default function Dashboard() {
                     variant={revenueProgress >= 80 ? 'success' : revenueProgress >= 60 ? 'warning' : 'danger'}
                   />
                 </div>
-                <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                <div className="animate-fade-in-up h-full" style={{ animationDelay: '100ms' }}>
                   <KPICard
                     title="Occupancy Rate"
                     value={formatPercent(occupancy)}
