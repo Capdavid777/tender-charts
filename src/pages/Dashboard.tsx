@@ -43,6 +43,13 @@ interface MonthlyTarget {
   room_cost_per_occupied: number;
 }
 export default function Dashboard() {
+  // Render timing: mark start synchronously, record duration after commit.
+  const renderStart = useRef(performance.now());
+  renderStart.current = performance.now();
+  useEffect(() => {
+    perfRegistry.recordRender(PERF_SCOPE, performance.now() - renderStart.current);
+  });
+
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
   const [lastUpdated, setLastUpdated] = useState('');
   const [allData, setAllData] = useState<RawDailyData[]>([]);
@@ -52,12 +59,11 @@ export default function Dashboard() {
   const [monthlyTargets, setMonthlyTargets] = useState<Record<string, MonthlyTarget>>({});
   const [otherIncomeTotal, setOtherIncomeTotal] = useState(0);
   const handleOtherIncomeChange = useCallback((total: number) => setOtherIncomeTotal(total), []);
-  
 
   // Get target for selected month
-  const currentTarget = useMemo(() => {
+  const currentTarget = useMemoTracked(() => {
     return monthlyTargets[selectedMonth] || { target_revenue: 0, target_occupancy: 80, available_rooms: totalRooms, breakeven_rate: 0, breakeven_occupancy: 0, room_cost_per_occupied: 0 };
-  }, [monthlyTargets, selectedMonth, totalRooms]);
+  }, [monthlyTargets, selectedMonth, totalRooms], PERF_SCOPE, 'currentTarget');
 
   const targetOccupancy = (currentTarget.target_occupancy || 0.80) * 100;
   const availableRooms = currentTarget.available_rooms || totalRooms;
