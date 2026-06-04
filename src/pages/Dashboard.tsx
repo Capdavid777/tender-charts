@@ -443,7 +443,7 @@ export default function Dashboard() {
                     variant={adr >= breakevenAdr ? 'success' : 'danger'}
                   />
                 </div>
-                <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+                <div className="animate-fade-in-up h-full" style={{ animationDelay: '300ms' }}>
                   <KPICard
                     title="Target Variance"
                     value={`${variance >= 0 ? '+' : ''}${variance.toFixed(2)}%`}
