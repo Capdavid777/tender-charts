@@ -432,7 +432,7 @@ export default function Dashboard() {
                     variant={occupancy >= targetOccupancy ? 'success' : 'default'}
                   />
                 </div>
-                <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                <div className="animate-fade-in-up h-full" style={{ animationDelay: '200ms' }}>
                   <KPICard
                     title="Average Daily Rate"
                     value={formatCurrency(adr)}
