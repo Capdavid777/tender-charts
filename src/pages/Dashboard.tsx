@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import KPICard from '@/components/dashboard/KPICard';
 import AlertBanner from '@/components/dashboard/AlertBanner';
@@ -12,9 +12,13 @@ import AnalysisSummary from '@/components/dashboard/AnalysisSummary';
 import DailyDataTable from '@/components/dashboard/DailyDataTable';
 import MonthProjectionSummary from '@/components/dashboard/MonthProjectionSummary';
 import OtherIncomeSummary from '@/components/dashboard/OtherIncomeSummary';
+import PerfPanel from '@/components/dashboard/PerfPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartSkeleton, TableSkeleton, FilterBarSkeleton } from '@/components/ui/skeleton-variants';
 import { Card, CardContent } from '@/components/ui/card';
+import { perfRegistry, useMemoTracked } from '@/lib/perf';
+
+const PERF_SCOPE = 'Dashboard';
 
 interface DailyData {
   date: string;
