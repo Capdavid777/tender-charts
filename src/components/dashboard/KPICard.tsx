@@ -41,7 +41,7 @@ export default function KPICard({
 
   return (
     <Card className={cn(
-      'overflow-hidden border-l-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover',
+      'h-full flex flex-col overflow-hidden border-l-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover',
       variantStyles[variant]
     )}>
       <CardContent className="p-6">
