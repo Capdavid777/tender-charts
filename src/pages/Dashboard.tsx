@@ -278,11 +278,13 @@ export default function Dashboard() {
       });
     }
     return list;
-  }, [revenueProgress, variance, occupancy, targetOccupancy]);
+  }, [revenueProgress, variance, occupancy, targetOccupancy], PERF_SCOPE, 'alerts');
 
-  const visibleAlerts = useMemo(
+  const visibleAlerts = useMemoTracked(
     () => alerts.filter(a => !dismissedAlerts.includes(a.id)),
-    [alerts, dismissedAlerts]
+    [alerts, dismissedAlerts],
+    PERF_SCOPE,
+    'visibleAlerts',
   );
 
   const handleDismissAlert = useCallback((id: string) => {
