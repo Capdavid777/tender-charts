@@ -14,7 +14,7 @@ import MonthProjectionSummary from '@/components/dashboard/MonthProjectionSummar
 import OtherIncomeSummary from '@/components/dashboard/OtherIncomeSummary';
 import PerfPanel from '@/components/dashboard/PerfPanel';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChartSkeleton, TableSkeleton, FilterBarSkeleton } from '@/components/ui/skeleton-variants';
+import { ChartSkeleton, TableSkeleton, FilterBarSkeleton, KPICardSkeleton } from '@/components/ui/skeleton-variants';
 import { Card, CardContent } from '@/components/ui/card';
 import { perfRegistry, useMemoTracked } from '@/lib/perf';
 
