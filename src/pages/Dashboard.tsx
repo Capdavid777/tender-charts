@@ -14,7 +14,7 @@ import MonthProjectionSummary from '@/components/dashboard/MonthProjectionSummar
 import OtherIncomeSummary from '@/components/dashboard/OtherIncomeSummary';
 import PerfPanel from '@/components/dashboard/PerfPanel';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChartSkeleton, TableSkeleton, FilterBarSkeleton } from '@/components/ui/skeleton-variants';
+import { ChartSkeleton, TableSkeleton, FilterBarSkeleton, KPICardSkeleton } from '@/components/ui/skeleton-variants';
 import { Card, CardContent } from '@/components/ui/card';
 import { perfRegistry, useMemoTracked } from '@/lib/perf';
 
@@ -318,30 +318,7 @@ export default function Dashboard() {
                 <Skeleton className="h-6 w-40 rounded-full" />
                 <Skeleton className="h-6 w-56 rounded-full" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[0, 1, 2, 3].map(i => (
-                  <Card key={i} className="border-l-4 border-l-muted">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-2 w-full">
-                          <Skeleton className="h-4 w-24" />
-                          <Skeleton className="h-8 w-32" />
-                          <Skeleton className="h-4 w-48" />
-                          <Skeleton className="h-4 w-36" />
-                        </div>
-                        <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0 ml-4" />
-                      </div>
-                      <div className="mt-4 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Skeleton className="h-4 w-28" />
-                          <Skeleton className="h-4 w-12" />
-                        </div>
-                        <Skeleton className="h-2 w-full rounded-full" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <KPICardSkeleton count={4} showProgress />
             </div>
 
             {/* Analysis Summary Skeleton */}
