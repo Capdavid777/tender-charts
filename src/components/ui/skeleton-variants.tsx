@@ -3,6 +3,51 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 /**
+ * KPICardSkeleton — mirrors the real KPICard layout so skeletons are
+ * exactly the same size as the loaded cards, eliminating layout shift.
+ */
+interface KPICardSkeletonProps {
+  count?: number;
+  showProgress?: boolean;
+  className?: string;
+}
+
+export function KPICardSkeleton({
+  count = 4,
+  showProgress = true,
+  className,
+}: KPICardSkeletonProps) {
+  return (
+    <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4", className)}>
+      {Array.from({ length: count }).map((_, i) => (
+        <Card key={i} className="h-full flex flex-col overflow-hidden border-l-4 border-l-muted">
+          <CardContent className="p-6 flex flex-col flex-1">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2 w-full">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+              <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0 ml-4" />
+            </div>
+            {showProgress && (
+              <div className="mt-auto pt-4">
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
+                <Skeleton className="h-2 w-full rounded-full" />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+/**
  * ChartSkeleton — mimics a bar chart with axis labels, gridlines,
  * a dashed target reference line, and bars of varied heights.
  */
