@@ -11,7 +11,7 @@ import MonthSelector from '@/components/MonthSelector';
 import AnalysisSummary from '@/components/dashboard/AnalysisSummary';
 import DailyDataTable from '@/components/dashboard/DailyDataTable';
 import MonthProjectionSummary from '@/components/dashboard/MonthProjectionSummary';
-import OtherIncomeSummary from '@/components/dashboard/OtherIncomeSummary';
+import OtherIncomeSummary, { OtherIncomeItem } from '@/components/dashboard/OtherIncomeSummary';
 import PerfPanel from '@/components/dashboard/PerfPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartSkeleton, TableSkeleton, FilterBarSkeleton, KPICardSkeleton } from '@/components/ui/skeleton-variants';
