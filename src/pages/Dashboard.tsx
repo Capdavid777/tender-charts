@@ -335,7 +335,20 @@ export default function Dashboard() {
         {/* Alerts */}
         <AlertBanner alerts={visibleAlerts} onDismiss={handleDismissAlert} />
 
-        {loading ? (
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Couldn't load the latest dashboard data</AlertTitle>
+            <AlertDescription className="flex items-start justify-between gap-4 flex-wrap">
+              <span>{error}</span>
+              <Button size="sm" variant="outline" onClick={() => fetchData()} className="gap-1.5">
+                <RefreshCw className="w-3.5 h-3.5" /> Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {loading && !error ? (
           <>
             {/* KPI Skeletons */}
             <div className="space-y-2">
