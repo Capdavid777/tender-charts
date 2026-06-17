@@ -3,7 +3,9 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import KPICard from '@/components/dashboard/KPICard';
 import AlertBanner from '@/components/dashboard/AlertBanner';
 import RevenueChart from '@/components/dashboard/RevenueChart';
-import { DollarSign, Percent, TrendingUp, Target, TrendingUpDown } from 'lucide-react';
+import { DollarSign, Percent, TrendingUp, Target, TrendingUpDown, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { useMonth } from '@/contexts/MonthContext';
@@ -191,54 +193,67 @@ export default function Dashboard() {
     return Math.round(avgRate);
   }, [actualFilteredData], PERF_SCOPE, 'adr');
 
+  const [error, setError] = useState<string | null>(null);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
 
-    const [year, month] = (selectedMonth || '').split('-').map(Number);
-    const hasMonth = !!selectedMonth;
-    const otherIncomeQuery = hasMonth
-      ? supabase.from('other_income').select('product_type, revenue').eq('year', year).eq('month', month).order('revenue', { ascending: false })
-      : Promise.resolve({ data: [] as OtherIncomeItem[] });
+    try {
+      const [year, month] = (selectedMonth || '').split('-').map(Number);
+      const hasMonth = !!selectedMonth;
+      const otherIncomeQuery = hasMonth
+        ? supabase.from('other_income').select('product_type, revenue').eq('year', year).eq('month', month).order('revenue', { ascending: false })
+        : Promise.resolve({ data: [] as OtherIncomeItem[], error: null });
 
-    const [uploadsRes, revenueRes, roomTypesRes, targetsRes, otherIncomeRes] = await Promise.all([
-      supabase.from('data_uploads').select('uploaded_at').order('uploaded_at', { ascending: false }).limit(1),
-      supabase.from('daily_revenue').select('*').is('room_type_id', null).order('date', { ascending: true }),
-      supabase.from('room_types').select('total_rooms'),
-      supabase.from('monthly_targets').select('*'),
-      otherIncomeQuery,
-    ]);
+      const [uploadsRes, revenueRes, roomTypesRes, targetsRes, otherIncomeRes] = await Promise.all([
+        supabase.from('data_uploads').select('uploaded_at').order('uploaded_at', { ascending: false }).limit(1),
+        supabase.from('daily_revenue').select('*').is('room_type_id', null).order('date', { ascending: true }),
+        supabase.from('room_types').select('total_rooms'),
+        supabase.from('monthly_targets').select('*'),
+        otherIncomeQuery,
+      ]);
 
-    setOtherIncomeItems(((otherIncomeRes as any).data as OtherIncomeItem[]) || []);
+      const firstError = [uploadsRes, revenueRes, roomTypesRes, targetsRes, otherIncomeRes]
+        .map((r: any) => r?.error)
+        .find(Boolean);
+      if (firstError) throw firstError;
 
-    if (uploadsRes.data && uploadsRes.data.length > 0) {
-      const date = new Date(uploadsRes.data[0].uploaded_at);
-      setLastUpdated(date.toLocaleDateString('en-ZA', {
-        day: 'numeric', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      }));
-    } else {
-      setLastUpdated('No data uploaded yet');
+      setOtherIncomeItems(((otherIncomeRes as any).data as OtherIncomeItem[]) || []);
+
+      if (uploadsRes.data && uploadsRes.data.length > 0) {
+        const date = new Date(uploadsRes.data[0].uploaded_at);
+        setLastUpdated(date.toLocaleDateString('en-ZA', {
+          day: 'numeric', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }));
+      } else {
+        setLastUpdated('No data uploaded yet');
+      }
+
+      if (revenueRes.data && revenueRes.data.length > 0) {
+        setAllData(revenueRes.data as RawDailyData[]);
+      }
+
+      if (roomTypesRes.data) {
+        const total = roomTypesRes.data.reduce((sum, rt) => sum + (rt.total_rooms || 0), 0);
+        setTotalRooms(total);
+      }
+
+      if (targetsRes.data) {
+        const map: Record<string, MonthlyTarget> = {};
+        targetsRes.data.forEach(t => {
+          const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
+          map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy), available_rooms: Number((t as any).available_rooms || 0), breakeven_rate: Number((t as any).breakeven_rate || 0), breakeven_occupancy: Number((t as any).breakeven_occupancy || 0), room_cost_per_occupied: Number((t as any).room_cost_per_occupied || 0) };
+        });
+        setMonthlyTargets(map);
+      }
+    } catch (e: any) {
+      console.error('[Dashboard] fetchData failed', e);
+      setError(e?.message || 'Failed to load dashboard data. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    if (revenueRes.data && revenueRes.data.length > 0) {
-      setAllData(revenueRes.data as RawDailyData[]);
-    }
-
-    if (roomTypesRes.data) {
-      const total = roomTypesRes.data.reduce((sum, rt) => sum + (rt.total_rooms || 0), 0);
-      setTotalRooms(total);
-    }
-
-    if (targetsRes.data) {
-      const map: Record<string, MonthlyTarget> = {};
-      targetsRes.data.forEach(t => {
-        const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
-        map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy), available_rooms: Number((t as any).available_rooms || 0), breakeven_rate: Number((t as any).breakeven_rate || 0), breakeven_occupancy: Number((t as any).breakeven_occupancy || 0), room_cost_per_occupied: Number((t as any).room_cost_per_occupied || 0) };
-      });
-      setMonthlyTargets(map);
-    }
-
-    setLoading(false);
   }, [selectedMonth]);
 
   useEffect(() => {
@@ -322,7 +337,20 @@ export default function Dashboard() {
         {/* Alerts */}
         <AlertBanner alerts={visibleAlerts} onDismiss={handleDismissAlert} />
 
-        {loading ? (
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Couldn't load the latest dashboard data</AlertTitle>
+            <AlertDescription className="flex items-start justify-between gap-4 flex-wrap">
+              <span>{error}</span>
+              <Button size="sm" variant="outline" onClick={() => fetchData()} className="gap-1.5">
+                <RefreshCw className="w-3.5 h-3.5" /> Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {loading && !error ? (
           <>
             {/* KPI Skeletons */}
             <div className="space-y-2">
@@ -462,7 +490,7 @@ export default function Dashboard() {
 
             {/* Other Income Breakdown */}
             <div className="animate-fade-in-up" style={{ animationDelay: '600ms' }}>
-              <OtherIncomeSummary items={otherIncomeItems} />
+              <OtherIncomeSummary items={otherIncomeItems} loading={loading} error={error} onRetry={fetchData} />
             </div>
 
             {/* Month-End Projection Summary */}
@@ -475,6 +503,8 @@ export default function Dashboard() {
                 availableRooms={availableRooms}
                 otherIncomeTotal={otherIncomeTotal}
                 loading={loading}
+                error={error}
+                onRetry={fetchData}
               />
             </div>
 
