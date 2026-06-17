@@ -503,6 +503,8 @@ export default function Dashboard() {
                 availableRooms={availableRooms}
                 otherIncomeTotal={otherIncomeTotal}
                 loading={loading}
+                error={error}
+                onRetry={fetchData}
               />
             </div>
 
