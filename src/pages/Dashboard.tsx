@@ -57,8 +57,11 @@ export default function Dashboard() {
   const { selectedMonth, setSelectedMonth } = useMonth();
   const [totalRooms, setTotalRooms] = useState(80);
   const [monthlyTargets, setMonthlyTargets] = useState<Record<string, MonthlyTarget>>({});
-  const [otherIncomeTotal, setOtherIncomeTotal] = useState(0);
-  const handleOtherIncomeChange = useCallback((total: number) => setOtherIncomeTotal(total), []);
+  const [otherIncomeItems, setOtherIncomeItems] = useState<OtherIncomeItem[]>([]);
+  const otherIncomeTotal = useMemo(
+    () => otherIncomeItems.reduce((sum, i) => sum + Number(i.revenue), 0),
+    [otherIncomeItems],
+  );
 
   // Get target for selected month
   const currentTarget = useMemoTracked(() => {
