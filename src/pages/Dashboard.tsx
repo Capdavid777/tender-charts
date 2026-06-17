@@ -239,7 +239,7 @@ export default function Dashboard() {
     }
 
     setLoading(false);
-  }, []);
+  }, [selectedMonth]);
 
   useEffect(() => {
     fetchData();
