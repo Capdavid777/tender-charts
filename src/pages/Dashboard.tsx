@@ -194,12 +194,21 @@ export default function Dashboard() {
   const fetchData = useCallback(async () => {
     setLoading(true);
 
-    const [uploadsRes, revenueRes, roomTypesRes, targetsRes] = await Promise.all([
+    const [year, month] = (selectedMonth || '').split('-').map(Number);
+    const hasMonth = !!selectedMonth;
+    const otherIncomeQuery = hasMonth
+      ? supabase.from('other_income').select('product_type, revenue').eq('year', year).eq('month', month).order('revenue', { ascending: false })
+      : Promise.resolve({ data: [] as OtherIncomeItem[] });
+
+    const [uploadsRes, revenueRes, roomTypesRes, targetsRes, otherIncomeRes] = await Promise.all([
       supabase.from('data_uploads').select('uploaded_at').order('uploaded_at', { ascending: false }).limit(1),
       supabase.from('daily_revenue').select('*').is('room_type_id', null).order('date', { ascending: true }),
       supabase.from('room_types').select('total_rooms'),
       supabase.from('monthly_targets').select('*'),
+      otherIncomeQuery,
     ]);
+
+    setOtherIncomeItems(((otherIncomeRes as any).data as OtherIncomeItem[]) || []);
 
     if (uploadsRes.data && uploadsRes.data.length > 0) {
       const date = new Date(uploadsRes.data[0].uploaded_at);
