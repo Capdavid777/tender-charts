@@ -490,7 +490,7 @@ export default function Dashboard() {
 
             {/* Other Income Breakdown */}
             <div className="animate-fade-in-up" style={{ animationDelay: '600ms' }}>
-              <OtherIncomeSummary items={otherIncomeItems} />
+              <OtherIncomeSummary items={otherIncomeItems} loading={loading} error={error} onRetry={fetchData} />
             </div>
 
             {/* Month-End Projection Summary */}
