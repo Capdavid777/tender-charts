@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { formatCurrency, formatPercent } from '@/lib/format';
-import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { BarChart3, AlertTriangle, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface RawDailyData {
@@ -20,6 +21,22 @@ interface MonthProjectionSummaryProps {
   availableRooms: number;
   otherIncomeTotal?: number;
   loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
+}
+
+function HeaderShell({ children }: { children: React.ReactNode }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-primary" />
+          Month-End Projection
+        </CardTitle>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  );
 }
 
 export default function MonthProjectionSummary({
@@ -30,17 +47,13 @@ export default function MonthProjectionSummary({
   availableRooms,
   otherIncomeTotal = 0,
   loading = false,
+  error = null,
+  onRetry,
 }: MonthProjectionSummaryProps) {
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-primary" />
-            Month-End Projection
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <HeaderShell>
+        <div className="space-y-6" aria-busy="true" aria-live="polite">
           <div className="mb-6 space-y-2">
             <Skeleton className="h-4 w-1/3" />
             <Skeleton className="h-3 w-3/4" />
@@ -54,10 +67,29 @@ export default function MonthProjectionSummary({
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </HeaderShell>
     );
   }
+
+  if (error) {
+    return (
+      <HeaderShell>
+        <div className="flex items-start justify-between gap-3 flex-wrap text-sm">
+          <div className="flex items-start gap-2 text-destructive">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>Couldn't load month-end projection: {error}</span>
+          </div>
+          {onRetry && (
+            <Button size="sm" variant="outline" onClick={onRetry} className="gap-1.5">
+              <RefreshCw className="w-3.5 h-3.5" /> Retry
+            </Button>
+          )}
+        </div>
+      </HeaderShell>
+    );
+  }
+
 
   if (actualData.length === 0 && forecastData.length === 0) return null;
 
