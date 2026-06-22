@@ -18,8 +18,9 @@ async function dnsQuery(name: string, type: string): Promise<string[]> {
   });
   if (!res.ok) return [];
   const json = await res.json();
-  const answers: Array<{ data: string; type: number }> = json.Answer ?? json.Authority ?? [];
-  return answers.map((a) => a.data);
+  // Status 0 = NOERROR, 3 = NXDOMAIN. Only use Answer records.
+  if (!json.Answer || json.Status !== 0) return [];
+  return json.Answer.map((a: { data: string }) => a.data);
 }
 
 function normalizeNs(s: string): string {
