@@ -39,18 +39,9 @@ export default function EmailDomainStatus() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('verify-email-domain', {
-        body: null,
-        method: 'GET' as never,
-        // pass via query string by appending to function URL is not supported; use body POST instead
-      });
-      // Fallback: invoke with body so the function can read JSON, but our function reads query params.
-      // Use direct fetch instead for query-string support.
-      void data;
-      void fnError;
-
-      const supabaseUrl = (import.meta as { env: { VITE_SUPABASE_URL: string } }).env.VITE_SUPABASE_URL;
-      const anonKey = (import.meta as { env: { VITE_SUPABASE_PUBLISHABLE_KEY: string } }).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const env = import.meta.env as Record<string, string>;
+      const supabaseUrl = env.VITE_SUPABASE_URL;
+      const anonKey = env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const res = await fetch(
         `${supabaseUrl}/functions/v1/verify-email-domain?domain=${encodeURIComponent(domain.trim())}`,
         { headers: { Authorization: `Bearer ${anonKey}`, apikey: anonKey } },
