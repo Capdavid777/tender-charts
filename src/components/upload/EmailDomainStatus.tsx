@@ -157,7 +157,7 @@ export default function EmailDomainStatus() {
                 <AlertTitle>Next steps</AlertTitle>
                 <AlertDescription className="text-xs">
                   At your DNS provider, ensure the subdomain has NS records pointing to
-                  {' '}<code>ns3.lovable.cloud</code> and <code>ns4.lovable.cloud</code>. MX and SPF
+                  {' '}<code>ns5.lovable.cloud</code> and <code>ns6.lovable.cloud</code>. MX and SPF
                   are managed automatically inside the delegated zone — they will appear once NS
                   delegation has propagated (can take up to 72 hours).
                 </AlertDescription>
