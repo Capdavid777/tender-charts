@@ -10,7 +10,7 @@ const corsHeaders = {
 const DOH = "https://cloudflare-dns.com/dnsQueryRequest"; // placeholder, real below
 const DOH_URL = "https://cloudflare-dns.com/dns-query";
 
-const EXPECTED_NS = ["ns3.lovable.cloud", "ns4.lovable.cloud"];
+const EXPECTED_NS = ["ns5.lovable.cloud", "ns6.lovable.cloud"];
 
 async function dnsQuery(name: string, type: string): Promise<string[]> {
   const res = await fetch(`${DOH_URL}?name=${encodeURIComponent(name)}&type=${type}`, {
