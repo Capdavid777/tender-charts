@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, XCircle, RefreshCw, ShieldCheck, AlertCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface CheckResult {
   label: string;
