@@ -26,7 +26,7 @@ interface VerifyResponse {
   };
 }
 
-const DEFAULT_DOMAIN = 'notify.reservedsuites.com';
+const DEFAULT_DOMAIN = 'notify.dashboard.reservedsuites.com';
 
 export default function EmailDomainStatus() {
   const [domain, setDomain] = useState(DEFAULT_DOMAIN);
