@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Pencil, Trash2, Plus, X, Save } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Save, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ChangelogEntry {
@@ -23,6 +23,26 @@ export default function Changelog() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const syncFromGithub = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-changelog-from-github');
+      if (error) throw error;
+      const inserted = (data as { inserted?: number } | null)?.inserted ?? 0;
+      if (inserted > 0) {
+        toast.success(`Imported ${inserted} new update${inserted === 1 ? '' : 's'} from GitHub`);
+        load();
+      } else {
+        toast.info('No new commits to import');
+      }
+    } catch (e) {
+      toast.error('Sync failed', { description: (e as Error).message });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -115,10 +135,16 @@ export default function Changelog() {
             </p>
           </div>
           {editingId === null && (
-            <Button onClick={startNew} className="gap-2">
-              <Plus className="w-4 h-4" />
-              New update
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={syncFromGithub} disabled={syncing} variant="outline" className="gap-2">
+                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Syncing…' : 'Sync from GitHub'}
+              </Button>
+              <Button onClick={startNew} className="gap-2">
+                <Plus className="w-4 h-4" />
+                New update
+              </Button>
+            </div>
           )}
         </div>
 
