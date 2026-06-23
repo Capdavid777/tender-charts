@@ -13,6 +13,7 @@ import RoomTypes from "./pages/RoomTypes";
 import Historical from "./pages/Historical";
 import Upload from "./pages/Upload";
 import Analysis from "./pages/Analysis";
+import Changelog from "./pages/Changelog";
 import NotFound from "./pages/NotFound";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
@@ -79,6 +80,11 @@ const App = () => (
               <ProtectedRoute>
                 <Analysis key="analysis" />
               </ProtectedRoute>
+            } />
+            <Route path="/changelog" element={
+              <AdminRoute>
+                <Changelog key="changelog" />
+              </AdminRoute>
             } />
             
             {/* Catch-all */}
