@@ -69,8 +69,8 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-muted ring-1 ring-border">
+            <div className="flex items-center gap-3 min-w-0 shrink-0">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted ring-1 ring-border">
                 {logoErrored ? (
                   <span className="text-xs font-semibold text-foreground">RS</span>
                 ) : (
@@ -86,9 +86,9 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
                   />
                 )}
               </div>
-              <div>
-                <h1 className="font-semibold text-foreground">Reserved Suites</h1>
-                <p className="text-xs text-muted-foreground">Revenue Dashboard</p>
+              <div className="min-w-0">
+                <h1 className="font-semibold text-foreground whitespace-nowrap">Reserved Suites</h1>
+                <p className="text-xs text-muted-foreground whitespace-nowrap">Revenue Dashboard</p>
               </div>
             </div>
 
@@ -118,7 +118,7 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
             {/* Right side */}
             <div className="flex items-center gap-4">
               {lastUpdated && (
-              <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground whitespace-nowrap">
+              <div className="hidden lg:flex items-center gap-1.5 text-sm text-muted-foreground whitespace-nowrap">
                   <Clock className="w-4 h-4 shrink-0" />
                   <span>Updated: {lastUpdated}</span>
                 </div>
