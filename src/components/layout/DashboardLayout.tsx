@@ -87,8 +87,8 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
                 )}
               </div>
               <div className="min-w-0">
-                <h1 className="font-semibold text-foreground whitespace-nowrap">Reserved Suites</h1>
-                <p className="text-xs text-muted-foreground whitespace-nowrap">Revenue Dashboard</p>
+                <h1 className="font-semibold text-foreground whitespace-nowrap text-sm lg:text-base">Reserved Suites</h1>
+                <p className="text-[11px] lg:text-xs text-muted-foreground whitespace-nowrap">Revenue Dashboard</p>
               </div>
             </div>
 
@@ -116,14 +116,14 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
             </nav>
 
             {/* Right side */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 lg:gap-4 min-w-0">
               {lastUpdated && (
-              <div className="hidden lg:flex items-center gap-1.5 text-sm text-muted-foreground whitespace-nowrap">
+              <div className="hidden md:flex items-center gap-1.5 text-xs lg:text-sm text-muted-foreground whitespace-nowrap">
                   <Clock className="w-4 h-4 shrink-0" />
-                  <span>Updated: {lastUpdated}</span>
+                  <span><span className="hidden lg:inline">Updated: </span>{lastUpdated}</span>
                 </div>
               )}
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="hidden xl:flex items-center gap-2">
                 <span className="text-[10px] text-muted-foreground/60 font-mono">v{APP_VERSION}</span>
                 <Button
                   variant="ghost"
