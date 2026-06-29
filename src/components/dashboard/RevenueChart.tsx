@@ -32,6 +32,7 @@ function getYDomain(data: DailyData[], dailyTarget: number): [number, number] {
 }
 
 export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
