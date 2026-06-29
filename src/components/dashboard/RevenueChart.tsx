@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/format';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { 
   BarChart, 
   Bar, 
@@ -31,6 +32,7 @@ function getYDomain(data: DailyData[], dailyTarget: number): [number, number] {
 }
 
 export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -107,7 +109,7 @@ export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
               <Bar
                 dataKey="revenue"
                 radius={[4, 4, 0, 0]}
-                isAnimationActive
+                isAnimationActive={!prefersReducedMotion}
                 animationDuration={900}
                 animationBegin={100}
               >

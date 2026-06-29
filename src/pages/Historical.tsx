@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ interface YearData {
 }
 
 export default function Historical() {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [sortColumn, setSortColumn] = useState<string>('year');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const { selectedMonth } = useMonth();
@@ -194,7 +196,7 @@ export default function Historical() {
                     <Line type="monotone" dataKey="revenue" name="Revenue"
                       stroke="hsl(var(--primary))" strokeWidth={3}
                       dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }} activeDot={{ r: 6 }}
-                      isAnimationActive animationDuration={1100} animationBegin={100}
+                      isAnimationActive={!prefersReducedMotion} animationDuration={1100} animationBegin={100}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -223,7 +225,7 @@ export default function Historical() {
                     <Line type="monotone" dataKey="occupancy" name="Occupancy"
                       stroke="hsl(var(--accent))" strokeWidth={3}
                       dot={{ fill: 'hsl(var(--accent))', strokeWidth: 2 }} activeDot={{ r: 6 }}
-                      isAnimationActive animationDuration={1100} animationBegin={100}
+                      isAnimationActive={!prefersReducedMotion} animationDuration={1100} animationBegin={100}
                     />
                   </LineChart>
                 </ResponsiveContainer>
