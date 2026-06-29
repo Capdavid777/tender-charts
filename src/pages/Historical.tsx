@@ -28,6 +28,7 @@ interface YearData {
 }
 
 export default function Historical() {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [sortColumn, setSortColumn] = useState<string>('year');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const { selectedMonth } = useMonth();
