@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/format';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { 
   BarChart, 
   Bar, 
