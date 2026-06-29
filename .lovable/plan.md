@@ -1,34 +1,17 @@
-# Eliminate Revenue MTD flicker on Dashboard load
+## Smooth chart entry animations
 
-## The issue (visual + minor perf)
+Every chart in the app currently renders instantly with no transition, which makes page loads feel abrupt.
 
-`Revenue MTD` briefly displays the rooms-only total, then jumps up once `OtherIncomeSummary` finishes its own separate query and calls `onTotalChange`. On slower connections this is a visible value flash (and a second re-render of all KPI cards).
+### What changes
+1. **Dashboard RevenueChart** – Add `isAnimationActive` and `animationDuration` to the `<Bar>` so daily bars grow upward on mount.
+2. **Room Types charts** – Add animation to the Pie segments (donut grows) and the horizontal Bar chart (bars slide in).
+3. **Historical Line charts** – Add `animationDuration` to the Revenue and Occupancy trend lines so they draw smoothly left-to-right.
 
-Sequence today:
-1. `Dashboard.fetchData()` runs 4 parallel queries → `loading = false`
-2. KPIs render with `otherIncomeTotal = 0` → `Revenue MTD = roomRevenue`
-3. `OtherIncomeSummary` mounts, fires its own `other_income` query
-4. `onTotalChange(total)` fires → Dashboard re-renders → Revenue MTD jumps to `roomRevenue + otherIncomeTotal`
+### Why this matters
+- Matches the polished skeleton-to-content flow already built for the dashboard.
+- Gives users a visual cue that data has refreshed after month selection or upload.
+- Zero risk — purely additive Recharts props, no logic or data changes.
 
-## The fix
-
-Move the `other_income` query into Dashboard's existing `Promise.all` in `fetchData()`, store the aggregated total in Dashboard state, and pass the items down to `OtherIncomeSummary` as a prop instead of having it fetch its own data.
-
-## Changes
-
-**`src/pages/Dashboard.tsx`**
-- Add `other_income` to the parallel `Promise.all` (5 queries instead of 4, same wall-clock time).
-- Compute `otherIncomeTotal` from the result and seed it before first paint, so `Revenue MTD` is correct on the first render.
-- Remove `onTotalChange` wiring; pass `items` down to `OtherIncomeSummary`.
-
-**`src/components/dashboard/OtherIncomeSummary.tsx`**
-- Accept `items` (and optionally `loading`) as props.
-- Remove the internal `useEffect` + supabase fetch + `app:refresh-data` listener (Dashboard already owns that listener and will re-pass new items).
-- Keep the existing card markup and skeleton state unchanged.
-
-## Result
-
-- No more Revenue MTD value flash on load.
-- One fewer round-trip on the wire (folded into the existing parallel batch).
-- One fewer Dashboard re-render after initial paint.
-- Zero visual changes when data is settled — same cards, same skeletons, same layout.
+### Scope
+- Only touches chart components (`RevenueChart.tsx`, `RoomTypes.tsx`, `Historical.tsx`).
+- No backend, no state, no API changes.

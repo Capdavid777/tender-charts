@@ -221,6 +221,9 @@ export default function RoomTypes() {
                         outerRadius={100}
                         paddingAngle={2}
                         dataKey="value"
+                        isAnimationActive
+                        animationDuration={1000}
+                        animationBegin={150}
                       >
                         {pieData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -274,8 +277,8 @@ export default function RoomTypes() {
                         borderRadius: '8px',
                       }}
                     />
-                    <Bar dataKey="occupancy" name="Occupancy %" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                    <Bar dataKey="adr" name="ADR (R)" fill="hsl(38, 92%, 50%)" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="occupancy" name="Occupancy %" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} isAnimationActive animationDuration={800} animationBegin={100} />
+                    <Bar dataKey="adr" name="ADR (R)" fill="hsl(38, 92%, 50%)" radius={[0, 4, 4, 0]} isAnimationActive animationDuration={800} animationBegin={250} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
