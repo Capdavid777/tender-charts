@@ -223,7 +223,7 @@ export default function RoomTypes() {
                         outerRadius={100}
                         paddingAngle={2}
                         dataKey="value"
-                        isAnimationActive
+                        isAnimationActive={!prefersReducedMotion}
                         animationDuration={1000}
                         animationBegin={150}
                       >
