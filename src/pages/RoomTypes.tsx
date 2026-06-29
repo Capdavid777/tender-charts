@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import KPICard from '@/components/dashboard/KPICard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
