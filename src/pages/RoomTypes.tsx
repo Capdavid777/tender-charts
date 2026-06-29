@@ -38,6 +38,7 @@ interface RoomTypeData {
 }
 
 export default function RoomTypes() {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [roomTypes, setRoomTypes] = useState<RoomTypeData[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [weightedAdr, setWeightedAdr] = useState(0);
