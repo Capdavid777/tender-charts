@@ -104,12 +104,18 @@ export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
                   className: 'text-xs fill-accent'
                 }}
               />
-              <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>
+              <Bar
+                dataKey="revenue"
+                radius={[4, 4, 0, 0]}
+                isAnimationActive
+                animationDuration={900}
+                animationBegin={100}
+              >
                 {data.map((entry, index) => (
-                  <Cell 
+                  <Cell
                     key={`cell-${index}`}
-                    fill={entry.revenue >= dailyTarget 
-                      ? 'hsl(var(--success))' 
+                    fill={entry.revenue >= dailyTarget
+                      ? 'hsl(var(--success))'
                       : 'hsl(var(--destructive))'
                     }
                   />
