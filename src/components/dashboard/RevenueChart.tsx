@@ -109,7 +109,7 @@ export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
               <Bar
                 dataKey="revenue"
                 radius={[4, 4, 0, 0]}
-                isAnimationActive
+                isAnimationActive={!prefersReducedMotion}
                 animationDuration={900}
                 animationBegin={100}
               >
