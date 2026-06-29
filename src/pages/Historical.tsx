@@ -196,7 +196,7 @@ export default function Historical() {
                     <Line type="monotone" dataKey="revenue" name="Revenue"
                       stroke="hsl(var(--primary))" strokeWidth={3}
                       dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }} activeDot={{ r: 6 }}
-                      isAnimationActive animationDuration={1100} animationBegin={100}
+                      isAnimationActive={!prefersReducedMotion} animationDuration={1100} animationBegin={100}
                     />
                   </LineChart>
                 </ResponsiveContainer>
