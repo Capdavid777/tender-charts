@@ -279,8 +279,8 @@ export default function RoomTypes() {
                         borderRadius: '8px',
                       }}
                     />
-                    <Bar dataKey="occupancy" name="Occupancy %" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} isAnimationActive animationDuration={800} animationBegin={100} />
-                    <Bar dataKey="adr" name="ADR (R)" fill="hsl(38, 92%, 50%)" radius={[0, 4, 4, 0]} isAnimationActive animationDuration={800} animationBegin={250} />
+                    <Bar dataKey="occupancy" name="Occupancy %" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} isAnimationActive={!prefersReducedMotion} animationDuration={800} animationBegin={100} />
+                    <Bar dataKey="adr" name="ADR (R)" fill="hsl(38, 92%, 50%)" radius={[0, 4, 4, 0]} isAnimationActive={!prefersReducedMotion} animationDuration={800} animationBegin={250} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
