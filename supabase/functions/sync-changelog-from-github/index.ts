@@ -128,10 +128,40 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // AuthZ: require either an admin JWT (interactive "Sync" button) or a
+    // shared cron secret. Prevents anonymous abuse of the AI gateway.
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const cronSecretHeader = req.headers.get("x-changelog-sync-secret") ?? "";
+    const cronSecret = Deno.env.get("CHANGELOG_SYNC_SECRET") ?? "";
+    let authorized = false;
+
+    if (cronSecret && cronSecretHeader && cronSecretHeader === cronSecret) {
+      authorized = true;
+    } else if (authHeader.startsWith("Bearer ")) {
+      const authClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } },
+      );
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsData } = await authClient.auth.getClaims(token);
+      const claims = claimsData?.claims as Record<string, unknown> | undefined;
+      const appMetadata = (claims?.app_metadata ?? {}) as Record<string, unknown>;
+      if (appMetadata.app_role === "admin") authorized = true;
+    }
+
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
 
     const { data: lastSetting } = await supabase
       .from("app_settings")
