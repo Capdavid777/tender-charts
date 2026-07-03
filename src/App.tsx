@@ -82,6 +82,11 @@ const App = () => (
                 <Analysis key="analysis" />
               </ProtectedRoute>
             } />
+            <Route path="/website-analytics" element={
+              <ProtectedRoute>
+                <WebsiteAnalytics key="website-analytics" />
+              </ProtectedRoute>
+            } />
             <Route path="/changelog" element={
               <AdminRoute>
                 <Changelog key="changelog" />
