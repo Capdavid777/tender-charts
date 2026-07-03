@@ -10,6 +10,7 @@ import {
   TrendingUp,
   Upload,
   FileText,
+  Globe,
   LogOut,
   Clock,
   RefreshCw
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/room-types', label: 'Room Types', icon: BedDouble, adminOnly: false },
   { href: '/historical', label: 'Historical', icon: TrendingUp, adminOnly: false },
   { href: '/analysis', label: 'Analysis', icon: FileText, adminOnly: false },
+  { href: '/website-analytics', label: 'Website', icon: Globe, adminOnly: false },
   { href: '/upload', label: 'Upload Data', icon: Upload, adminOnly: true },
 ];
 

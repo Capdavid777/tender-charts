@@ -13,6 +13,7 @@ import RoomTypes from "./pages/RoomTypes";
 import Historical from "./pages/Historical";
 import Upload from "./pages/Upload";
 import Analysis from "./pages/Analysis";
+import WebsiteAnalytics from "./pages/WebsiteAnalytics";
 import Changelog from "./pages/Changelog";
 import NotFound from "./pages/NotFound";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
@@ -79,6 +80,11 @@ const App = () => (
             <Route path="/analysis" element={
               <ProtectedRoute>
                 <Analysis key="analysis" />
+              </ProtectedRoute>
+            } />
+            <Route path="/website-analytics" element={
+              <ProtectedRoute>
+                <WebsiteAnalytics key="website-analytics" />
               </ProtectedRoute>
             } />
             <Route path="/changelog" element={

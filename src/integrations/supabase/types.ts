@@ -415,6 +415,69 @@ export type Database = {
         }
         Relationships: []
       }
+      website_analytics_reports: {
+        Row: {
+          bookings_by_country: Json
+          created_at: string
+          daily_revenue: Json
+          daily_traffic: Json
+          device_mix: Json
+          executive_summary: string | null
+          generated_on: string
+          id: string
+          insights: Json
+          month: string
+          promotions_note: string | null
+          revenue_by_payment: Json
+          revenue_by_room_type: Json
+          summary: Json
+          top_pages: Json
+          traffic_sources: Json
+          updated_at: string
+          visitor_countries: Json
+        }
+        Insert: {
+          bookings_by_country?: Json
+          created_at?: string
+          daily_revenue?: Json
+          daily_traffic?: Json
+          device_mix?: Json
+          executive_summary?: string | null
+          generated_on: string
+          id?: string
+          insights?: Json
+          month: string
+          promotions_note?: string | null
+          revenue_by_payment?: Json
+          revenue_by_room_type?: Json
+          summary?: Json
+          top_pages?: Json
+          traffic_sources?: Json
+          updated_at?: string
+          visitor_countries?: Json
+        }
+        Update: {
+          bookings_by_country?: Json
+          created_at?: string
+          daily_revenue?: Json
+          daily_traffic?: Json
+          device_mix?: Json
+          executive_summary?: string | null
+          generated_on?: string
+          id?: string
+          insights?: Json
+          month?: string
+          promotions_note?: string | null
+          revenue_by_payment?: Json
+          revenue_by_room_type?: Json
+          summary?: Json
+          top_pages?: Json
+          traffic_sources?: Json
+          updated_at?: string
+          visitor_countries?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
