@@ -208,7 +208,7 @@ export default function WebsiteAnalytics() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="day" fontSize={11} stroke="hsl(var(--muted-foreground))" interval="preserveStartEnd" />
                   <YAxis fontSize={11} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
+                  <Tooltip labelFormatter={(v: string) => `${v}, ${new Date(report.month + 'T00:00:00').getFullYear()}`} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
                   <Legend />
                   <Area type="monotone" dataKey="pageviews" stroke="hsl(var(--accent))" fill="url(#pvGrad)" strokeWidth={2} animationDuration={anim} />
                   <Area type="monotone" dataKey="visitors" stroke="hsl(var(--primary))" fill="url(#visGrad)" strokeWidth={2} animationDuration={anim} />
