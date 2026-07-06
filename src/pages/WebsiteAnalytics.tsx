@@ -229,7 +229,7 @@ export default function WebsiteAnalytics() {
                   <XAxis dataKey="day" fontSize={11} stroke="hsl(var(--muted-foreground))" interval="preserveStartEnd" />
                   <YAxis yAxisId="left" fontSize={11} stroke="hsl(var(--muted-foreground))" unit="%" />
                   <YAxis yAxisId="right" orientation="right" fontSize={11} stroke="hsl(var(--muted-foreground))" unit="m" />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
+                  <Tooltip labelFormatter={(v: string) => `${v}, ${new Date(report.month + 'T00:00:00').getFullYear()}`} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
                   <Legend />
                   <Bar yAxisId="left" dataKey="bounce" name="Bounce %" fill="hsl(var(--primary))" opacity={0.7} radius={[4, 4, 0, 0]} animationDuration={anim} />
                   <Line yAxisId="right" type="monotone" dataKey="session_min" name="Session (min)" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 3 }} animationDuration={anim} />
