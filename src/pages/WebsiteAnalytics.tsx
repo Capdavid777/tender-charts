@@ -117,9 +117,9 @@ export default function WebsiteAnalytics() {
 
   const chartColors = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
-  const monthLabel = new Date(report.month + 'T00:00:00').toLocaleString('en-ZA', { month: 'short' });
+  const monthShort = new Date(report.month + 'T00:00:00').toLocaleString('en-ZA', { month: 'short' });
   const traffic = report.daily_traffic.map(d => ({
-    day: `${monthLabel} ${String(d.day).padStart(2, '0')}`,
+    day: `${monthShort} ${String(d.day).padStart(2, '0')}`,
     visitors: d.visitors,
     pageviews: d.pageviews,
     bounce: d.bounce,
