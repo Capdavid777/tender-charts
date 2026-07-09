@@ -2,7 +2,7 @@
 // actual code diff into a user-facing changelog entry, and skips commits that
 // don't change anything end users would notice.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
