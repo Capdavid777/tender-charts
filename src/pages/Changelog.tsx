@@ -6,8 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Pencil, Trash2, Plus, X, Save, RefreshCw } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Save, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+
+interface SyncStatus {
+  at: string;
+  status: 'succeeded' | 'failed';
+  message?: string;
+  inserted?: number;
+  scanned?: number;
+  hardSkipped?: number;
+  aiSkipped?: number;
+}
 
 interface ChangelogEntry {
   id: string;
@@ -24,6 +34,20 @@ export default function Changelog() {
   const [body, setBody] = useState('');
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+
+  const loadSyncStatus = async () => {
+    const { data } = await supabase
+      .from('app_settings')
+      .select('setting_value')
+      .eq('setting_key', 'changelog_last_sync')
+      .maybeSingle();
+    if (data?.setting_value) {
+      try {
+        setSyncStatus(JSON.parse(data.setting_value) as SyncStatus);
+      } catch { /* ignore */ }
+    }
+  };
 
   const syncFromGithub = async () => {
     setSyncing(true);
@@ -41,6 +65,7 @@ export default function Changelog() {
       toast.error('Sync failed', { description: (e as Error).message });
     } finally {
       setSyncing(false);
+      loadSyncStatus();
     }
   };
 
@@ -60,6 +85,7 @@ export default function Changelog() {
 
   useEffect(() => {
     load();
+    loadSyncStatus();
   }, []);
 
   const startNew = () => {
@@ -147,6 +173,36 @@ export default function Changelog() {
             </div>
           )}
         </div>
+
+        {syncStatus && (
+          <div
+            className={`flex items-start gap-2.5 rounded-md border px-3 py-2 text-sm ${
+              syncStatus.status === 'succeeded'
+                ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400'
+                : 'border-destructive/30 bg-destructive/5 text-destructive'
+            }`}
+          >
+            {syncStatus.status === 'succeeded' ? (
+              <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="font-medium">
+                Last sync {syncStatus.status === 'succeeded' ? 'succeeded' : 'failed'} —{' '}
+                <span className="font-normal text-foreground/80">
+                  {new Date(syncStatus.at).toLocaleString()}
+                </span>
+              </div>
+              <div className="text-xs mt-0.5 text-foreground/70">
+                {syncStatus.status === 'succeeded'
+                  ? `Scanned ${syncStatus.scanned ?? 0} commit${syncStatus.scanned === 1 ? '' : 's'}, imported ${syncStatus.inserted ?? 0}, skipped ${(syncStatus.hardSkipped ?? 0) + (syncStatus.aiSkipped ?? 0)}.`
+                  : syncStatus.message ?? 'Unknown error'}
+              </div>
+            </div>
+          </div>
+        )}
+
 
         {editingId !== null && (
           <Card>
