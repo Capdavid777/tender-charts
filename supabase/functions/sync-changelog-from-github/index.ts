@@ -230,6 +230,7 @@ Deno.serve(async (req) => {
     if (entries.length > 0) {
       const { error: insertError } = await supabase.from("changelog_entries").insert(entries);
       if (insertError) {
+        await recordSync(supabase, { status: "failed", message: `Insert failed: ${insertError.message}` });
         return new Response(
           JSON.stringify({ error: "Insert failed", detail: insertError.message }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -247,6 +248,14 @@ Deno.serve(async (req) => {
         );
     }
 
+    await recordSync(supabase, {
+      status: "succeeded",
+      inserted,
+      scanned: newCommits.length,
+      hardSkipped,
+      aiSkipped,
+    });
+
     return new Response(
       JSON.stringify({
         repo: REPO,
@@ -261,9 +270,27 @@ Deno.serve(async (req) => {
   } catch (err) {
     const e = err as Error;
     console.error("sync-changelog failed:", e.message, e.stack);
+    try {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      await recordSync(supabase, { status: "failed", message: e.message });
+    } catch { /* ignore */ }
     return new Response(
       JSON.stringify({ error: e.message, stack: e.stack?.split("\n").slice(0, 5) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
+
+// deno-lint-ignore no-explicit-any
+async function recordSync(supabase: any, info: Record<string, unknown>) {
+  const payload = { at: new Date().toISOString(), ...info };
+  await supabase
+    .from("app_settings")
+    .upsert(
+      { setting_key: LAST_SYNC_KEY, setting_value: JSON.stringify(payload) },
+      { onConflict: "setting_key" },
+    );
+}
