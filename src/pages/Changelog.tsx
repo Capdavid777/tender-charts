@@ -85,6 +85,7 @@ export default function Changelog() {
 
   useEffect(() => {
     load();
+    loadSyncStatus();
   }, []);
 
   const startNew = () => {
