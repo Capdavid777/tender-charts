@@ -11,6 +11,7 @@ const corsHeaders = {
 
 const REPO = "Capdavid777/tender-charts";
 const LAST_SHA_KEY = "changelog_last_sha";
+const LAST_SYNC_KEY = "changelog_last_sync";
 const MAX_PAGES = 3;
 const PER_PAGE = 30;
 const MAX_COMMITS_PER_RUN = 25;
