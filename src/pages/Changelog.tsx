@@ -174,6 +174,36 @@ export default function Changelog() {
           )}
         </div>
 
+        {syncStatus && (
+          <div
+            className={`flex items-start gap-2.5 rounded-md border px-3 py-2 text-sm ${
+              syncStatus.status === 'succeeded'
+                ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400'
+                : 'border-destructive/30 bg-destructive/5 text-destructive'
+            }`}
+          >
+            {syncStatus.status === 'succeeded' ? (
+              <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="font-medium">
+                Last sync {syncStatus.status === 'succeeded' ? 'succeeded' : 'failed'} —{' '}
+                <span className="font-normal text-foreground/80">
+                  {new Date(syncStatus.at).toLocaleString()}
+                </span>
+              </div>
+              <div className="text-xs mt-0.5 text-foreground/70">
+                {syncStatus.status === 'succeeded'
+                  ? `Scanned ${syncStatus.scanned ?? 0} commit${syncStatus.scanned === 1 ? '' : 's'}, imported ${syncStatus.inserted ?? 0}, skipped ${(syncStatus.hardSkipped ?? 0) + (syncStatus.aiSkipped ?? 0)}.`
+                  : syncStatus.message ?? 'Unknown error'}
+              </div>
+            </div>
+          </div>
+        )}
+
+
         {editingId !== null && (
           <Card>
             <CardHeader>
