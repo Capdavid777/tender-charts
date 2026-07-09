@@ -6,8 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Pencil, Trash2, Plus, X, Save, RefreshCw } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Save, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+
+interface SyncStatus {
+  at: string;
+  status: 'succeeded' | 'failed';
+  message?: string;
+  inserted?: number;
+  scanned?: number;
+  hardSkipped?: number;
+  aiSkipped?: number;
+}
 
 interface ChangelogEntry {
   id: string;
