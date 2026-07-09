@@ -2,7 +2,7 @@
 // actual code diff into a user-facing changelog entry, and skips commits that
 // don't change anything end users would notice.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -258,9 +258,11 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const e = err as Error;
+    console.error("sync-changelog failed:", e.message, e.stack);
+    return new Response(
+      JSON.stringify({ error: e.message, stack: e.stack?.split("\n").slice(0, 5) }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 });
