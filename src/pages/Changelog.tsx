@@ -34,6 +34,20 @@ export default function Changelog() {
   const [body, setBody] = useState('');
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+
+  const loadSyncStatus = async () => {
+    const { data } = await supabase
+      .from('app_settings')
+      .select('setting_value')
+      .eq('setting_key', 'changelog_last_sync')
+      .maybeSingle();
+    if (data?.setting_value) {
+      try {
+        setSyncStatus(JSON.parse(data.setting_value) as SyncStatus);
+      } catch { /* ignore */ }
+    }
+  };
 
   const syncFromGithub = async () => {
     setSyncing(true);
@@ -51,6 +65,7 @@ export default function Changelog() {
       toast.error('Sync failed', { description: (e as Error).message });
     } finally {
       setSyncing(false);
+      loadSyncStatus();
     }
   };
 
