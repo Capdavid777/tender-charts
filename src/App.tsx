@@ -64,7 +64,6 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <MonthProvider>
-          <Suspense fallback={<PageFallback />}>
           <Routes>
             {/* Public route - Login */}
             <Route path="/" element={
@@ -76,44 +75,43 @@ const App = () => (
             {/* Protected routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
-                <Dashboard key="dashboard" />
+                {withSuspense(<Dashboard key="dashboard" />, <DashboardSkeleton />)}
               </ProtectedRoute>
             } />
             <Route path="/room-types" element={
               <ProtectedRoute>
-                <RoomTypes key="room-types" />
+                {withSuspense(<RoomTypes key="room-types" />, <RoomTypesSkeleton />)}
               </ProtectedRoute>
             } />
             <Route path="/historical" element={
               <ProtectedRoute>
-                <Historical key="historical" />
+                {withSuspense(<Historical key="historical" />, <HistoricalSkeleton />)}
               </ProtectedRoute>
             } />
             <Route path="/upload" element={
               <AdminRoute>
-                <Upload key="upload" />
+                {withSuspense(<Upload key="upload" />, <UploadSkeleton />)}
               </AdminRoute>
             } />
             <Route path="/analysis" element={
               <ProtectedRoute>
-                <Analysis key="analysis" />
+                {withSuspense(<Analysis key="analysis" />, <AnalysisSkeleton />)}
               </ProtectedRoute>
             } />
             <Route path="/website-analytics" element={
               <ProtectedRoute>
-                <WebsiteAnalytics key="website-analytics" />
+                {withSuspense(<WebsiteAnalytics key="website-analytics" />, <WebsiteAnalyticsSkeleton />)}
               </ProtectedRoute>
             } />
             <Route path="/changelog" element={
               <AdminRoute>
-                <Changelog key="changelog" />
+                {withSuspense(<Changelog key="changelog" />, <ChangelogSkeleton />)}
               </AdminRoute>
             } />
             
             {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={withSuspense(<NotFound />, <NotFoundSkeleton />)} />
           </Routes>
-          </Suspense>
           </MonthProvider>
         </AuthProvider>
       </BrowserRouter>
