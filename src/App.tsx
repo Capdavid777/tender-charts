@@ -58,6 +58,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <MonthProvider>
+          <Suspense fallback={<PageFallback />}>
           <Routes>
             {/* Public route - Login */}
             <Route path="/" element={
@@ -106,6 +107,7 @@ const App = () => (
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
           </MonthProvider>
         </AuthProvider>
       </BrowserRouter>
