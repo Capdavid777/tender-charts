@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,15 +9,24 @@ import AdminRoute from "@/components/auth/AdminRoute";
 import { MonthProvider } from "@/contexts/MonthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import RoomTypes from "./pages/RoomTypes";
-import Historical from "./pages/Historical";
-import Upload from "./pages/Upload";
-import Analysis from "./pages/Analysis";
-import WebsiteAnalytics from "./pages/WebsiteAnalytics";
-import Changelog from "./pages/Changelog";
-import NotFound from "./pages/NotFound";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const RoomTypes = lazy(() => import("./pages/RoomTypes"));
+const Historical = lazy(() => import("./pages/Historical"));
+const Upload = lazy(() => import("./pages/Upload"));
+const Analysis = lazy(() => import("./pages/Analysis"));
+const WebsiteAnalytics = lazy(() => import("./pages/WebsiteAnalytics"));
+const Changelog = lazy(() => import("./pages/Changelog"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+function PageFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 const queryClient = new QueryClient();
 
