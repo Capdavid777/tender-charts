@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,26 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Prefetch likely post-login chunks during idle time so navigation feels instant.
+  useEffect(() => {
+    const prefetch = () => {
+      import('./Dashboard')
+        .then(() => import('./RoomTypes'))
+        .catch(() => {
+          /* ignore — normal lazy path will run on navigation */
+        });
+    };
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void) => number;
+    };
+    if (typeof w.requestIdleCallback === 'function') {
+      w.requestIdleCallback(prefetch);
+    } else {
+      const t = setTimeout(prefetch, 200);
+      return () => clearTimeout(t);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
