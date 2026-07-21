@@ -47,22 +47,21 @@ export default function RoomTypes() {
   const [avgOccupancy, setAvgOccupancy] = useState(0);
   const { selectedMonth } = useMonth();
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const roomTypesQuery = useQuery({
+    queryKey: ['roomTypes', 'summary', selectedMonth ?? 'latest'],
+    queryFn: async () => {
       const { data: rtData } = await supabase
         .from('room_types')
         .select('*')
         .order('name');
 
-      // Use shared selectedMonth or fall back to latest month with data
       let year: number, monthIdx: number;
-      
+
       if (selectedMonth) {
         const parts = selectedMonth.split('-').map(Number);
         year = parts[0];
         monthIdx = parts[1] - 1;
       } else {
-        // Fallback: find most recent month with data
         const { data: latestRecord } = await supabase
           .from('daily_revenue')
           .select('date')
@@ -80,7 +79,6 @@ export default function RoomTypes() {
       const startDate = `${year}-${month}-01`;
       const endDate = `${year}-${month}-${new Date(year, monthIdx + 1, 0).getDate()}`;
 
-      // Fetch aggregate daily data (room_type_id is null)
       const { data: revenueData } = await supabase
         .from('daily_revenue')
         .select('revenue, rooms_sold, average_rate, occupancy')
@@ -89,19 +87,14 @@ export default function RoomTypes() {
         .lte('date', endDate);
 
       const totalRev = revenueData?.reduce((sum, d) => sum + Number(d.revenue || 0), 0) || 0;
-      setTotalRevenue(totalRev);
-
       const totalRoomsSold = revenueData?.reduce((sum, d) => sum + Number(d.rooms_sold || 0), 0) || 0;
       const calculatedWeightedAdr = totalRoomsSold > 0 ? totalRev / totalRoomsSold : 0;
-      setWeightedAdr(calculatedWeightedAdr);
 
       const daysWithOccupancy = revenueData?.filter(d => (d.occupancy ?? 0) > 0) || [];
-      if (daysWithOccupancy.length > 0) {
-        const avg = daysWithOccupancy.reduce((sum, d) => sum + Number(d.occupancy || 0), 0) / daysWithOccupancy.length;
-        setAvgOccupancy(Number((avg * 100).toFixed(2)));
-      }
+      const avgOcc = daysWithOccupancy.length > 0
+        ? Number(((daysWithOccupancy.reduce((sum, d) => sum + Number(d.occupancy || 0), 0) / daysWithOccupancy.length) * 100).toFixed(2))
+        : 0;
 
-      // Fetch per-room-type revenue data
       const { data: rtRevenueData } = await supabase
         .from('daily_revenue')
         .select('room_type_id, revenue, rooms_sold, average_rate, occupancy')
@@ -109,9 +102,9 @@ export default function RoomTypes() {
         .gte('date', startDate)
         .lte('date', endDate);
 
+      let roomTypesResult: RoomTypeData[] = [];
       if (rtData && rtData.length > 0) {
         const validRtData = rtData.filter(rt => rt.name && rt.name.trim() !== '');
-        // Build a map of room_type_id -> aggregated data
         const rtRevenueMap = new Map<string, { revenue: number; roomsSold: number; occupancy: number }>();
         rtRevenueData?.forEach(d => {
           const id = d.room_type_id!;
@@ -122,7 +115,7 @@ export default function RoomTypes() {
           rtRevenueMap.set(id, existing);
         });
 
-        setRoomTypes(validRtData.map(rt => {
+        roomTypesResult = validRtData.map(rt => {
           const data = rtRevenueMap.get(rt.id);
           return {
             name: rt.name,
@@ -131,12 +124,21 @@ export default function RoomTypes() {
             adr: data && data.roomsSold > 0 ? Number((data.revenue / data.roomsSold).toFixed(2)) : 0,
             rooms: rt.total_rooms,
           };
-        }));
+        });
       }
-    };
 
-    fetchData();
-  }, [selectedMonth]);
+      return { roomTypes: roomTypesResult, totalRevenue: totalRev, weightedAdr: calculatedWeightedAdr, avgOccupancy: avgOcc };
+    },
+  });
+
+  useEffect(() => {
+    if (!roomTypesQuery.data) return;
+    setRoomTypes(roomTypesQuery.data.roomTypes);
+    setTotalRevenue(roomTypesQuery.data.totalRevenue);
+    setWeightedAdr(roomTypesQuery.data.weightedAdr);
+    setAvgOccupancy(roomTypesQuery.data.avgOccupancy);
+  }, [roomTypesQuery.data]);
+
 
   const totalRoomTypes = roomTypes.length;
 
