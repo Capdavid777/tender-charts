@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import KPICard from '@/components/dashboard/KPICard';
 import AlertBanner from '@/components/dashboard/AlertBanner';
@@ -194,12 +196,11 @@ export default function Dashboard() {
   }, [actualFilteredData], PERF_SCOPE, 'adr');
 
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
+  const dashboardQuery = useQuery({
+    queryKey: ['dashboard', 'core'],
+    queryFn: async () => {
       const [uploadsRes, revenueRes, roomTypesRes, targetsRes] = await Promise.all([
         supabase.from('data_uploads').select('uploaded_at').order('uploaded_at', { ascending: false }).limit(1),
         supabase.from('daily_revenue').select('*').is('room_type_id', null).order('date', { ascending: true }),
@@ -212,47 +213,62 @@ export default function Dashboard() {
         .find(Boolean);
       if (firstError) throw firstError;
 
-      if (uploadsRes.data && uploadsRes.data.length > 0) {
-        const date = new Date(uploadsRes.data[0].uploaded_at);
-        setLastUpdated(date.toLocaleDateString('en-ZA', {
-          day: 'numeric', month: 'short', year: 'numeric',
-          hour: '2-digit', minute: '2-digit'
-        }));
-      } else {
-        setLastUpdated('No data uploaded yet');
-      }
+      const lastUpdatedStr = uploadsRes.data && uploadsRes.data.length > 0
+        ? new Date(uploadsRes.data[0].uploaded_at).toLocaleDateString('en-ZA', {
+            day: 'numeric', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit',
+          })
+        : 'No data uploaded yet';
 
-      if (revenueRes.data && revenueRes.data.length > 0) {
-        setAllData(revenueRes.data as RawDailyData[]);
-      }
+      const allDataResult = (revenueRes.data || []) as RawDailyData[];
+      const totalRoomsResult = (roomTypesRes.data || []).reduce((sum, rt) => sum + (rt.total_rooms || 0), 0) || 80;
 
-      if (roomTypesRes.data) {
-        const total = roomTypesRes.data.reduce((sum, rt) => sum + (rt.total_rooms || 0), 0);
-        setTotalRooms(total);
-      }
+      const targetsMap: Record<string, MonthlyTarget> = {};
+      (targetsRes.data || []).forEach(t => {
+        const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
+        targetsMap[key] = {
+          target_revenue: Number(t.target_revenue),
+          target_occupancy: Number(t.target_occupancy),
+          available_rooms: Number((t as any).available_rooms || 0),
+          breakeven_rate: Number((t as any).breakeven_rate || 0),
+          breakeven_occupancy: Number((t as any).breakeven_occupancy || 0),
+          room_cost_per_occupied: Number((t as any).room_cost_per_occupied || 0),
+        };
+      });
 
-      if (targetsRes.data) {
-        const map: Record<string, MonthlyTarget> = {};
-        targetsRes.data.forEach(t => {
-          const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
-          map[key] = { target_revenue: Number(t.target_revenue), target_occupancy: Number(t.target_occupancy), available_rooms: Number((t as any).available_rooms || 0), breakeven_rate: Number((t as any).breakeven_rate || 0), breakeven_occupancy: Number((t as any).breakeven_occupancy || 0), room_cost_per_occupied: Number((t as any).room_cost_per_occupied || 0) };
-        });
-        setMonthlyTargets(map);
-      }
-    } catch (e: any) {
-      console.error('[Dashboard] fetchData failed', e);
-      setError(e?.message || 'Failed to load dashboard data. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return { lastUpdated: lastUpdatedStr, allData: allDataResult, totalRooms: totalRoomsResult, monthlyTargets: targetsMap };
+    },
+  });
+
+  // Mirror query results into existing local state so downstream memos stay untouched.
+  // Show cached data instantly on load; refresh in the background.
+  useEffect(() => {
+    if (!dashboardQuery.data) return;
+    setLastUpdated(dashboardQuery.data.lastUpdated);
+    setAllData(dashboardQuery.data.allData);
+    setTotalRooms(dashboardQuery.data.totalRooms);
+    setMonthlyTargets(dashboardQuery.data.monthlyTargets);
+  }, [dashboardQuery.data]);
+
+  // Only show the skeleton if we have no data at all (cold cache); otherwise render cached data.
+  useEffect(() => {
+    setLoading(dashboardQuery.isPending && !dashboardQuery.data);
+  }, [dashboardQuery.isPending, dashboardQuery.data]);
 
   useEffect(() => {
-    fetchData();
+    setError(dashboardQuery.error ? (dashboardQuery.error as any)?.message || 'Failed to load dashboard data. Please try again.' : null);
+  }, [dashboardQuery.error]);
+
+  const fetchData = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['dashboard', 'core'] });
+  }, [queryClient]);
+
+  useEffect(() => {
     const handler = () => fetchData();
     window.addEventListener('app:refresh-data', handler);
     return () => window.removeEventListener('app:refresh-data', handler);
   }, [fetchData]);
+
 
   // Fetch other income per selected month without blanking the dashboard
   useEffect(() => {

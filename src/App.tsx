@@ -2,7 +2,9 @@ import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AdminRoute from "@/components/auth/AdminRoute";
@@ -34,7 +36,25 @@ function withSuspense(node: React.ReactNode, fallback: React.ReactNode) {
   return <Suspense fallback={fallback}>{node}</Suspense>;
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Keep cached data for 24h so persisted entries survive reloads.
+      gcTime: 1000 * 60 * 60 * 24,
+      staleTime: 1000 * 30,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+const persister = createSyncStoragePersister({
+  storage: typeof window !== "undefined" ? window.localStorage : undefined,
+  key: "rs-dashboard-query-cache",
+});
+
+// Bump when query shapes change to invalidate old persisted data.
+const CACHE_BUSTER = "v1";
+
 
 // Redirect authenticated users away from login
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -56,7 +76,10 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider
+    client={queryClient}
+    persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24, buster: CACHE_BUSTER }}
+  >
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -116,7 +139,7 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;
