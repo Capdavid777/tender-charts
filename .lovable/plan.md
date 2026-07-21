@@ -1,26 +1,28 @@
-## Performance: Preload the Dashboard chunk after login paint
+## Performance: Preconnect to the Supabase backend on initial HTML
 
 ### Problem
-Route-level code splitting is in place, so the Dashboard chunk (Recharts + KPI components) is no longer in the initial bundle. Great for `/`, but it means every login now pays a visible skeleton-then-content flash on `/dashboard` while that chunk downloads on a cold cache.
-
-Since ~100% of authenticated users land on `/dashboard` immediately after login, we can hide that latency entirely by prefetching the chunk in the background while the login page is idle.
+The first data request on any page (auth check, dashboard fetch, changelog bell, etc.) has to open a fresh TLS connection to the Supabase project host. That handshake — DNS → TCP → TLS — typically costs 150–400ms on mobile before a single byte of API response comes back. Right now the browser only starts that handshake when the JS bundle runs and Supabase is called.
 
 ### Change
-In `src/pages/Login.tsx`, kick off `import('./Dashboard')` inside a `useEffect` after mount (wrapped in `requestIdleCallback` with a `setTimeout` fallback). The dynamic import is fire-and-forget — Vite will fetch and cache the chunk, and when the user submits credentials and navigates to `/dashboard`, `React.lazy` resolves instantly from cache.
+Add two resource hints to `index.html`'s `<head>` pointing at the Supabase project host:
 
-Same pattern for `RoomTypes` as a secondary prefetch (most common second click), triggered after Dashboard's prefetch resolves.
+```html
+<link rel="preconnect" href="https://vkmvhpltdocfksdezwqp.supabase.co" crossorigin />
+<link rel="dns-prefetch" href="https://vkmvhpltdocfksdezwqp.supabase.co" />
+```
+
+`preconnect` warms up DNS + TCP + TLS in parallel with JS parsing. `dns-prefetch` is the safe fallback for older browsers that ignore preconnect. `crossorigin` is required because Supabase requests are CORS.
 
 ### Expected impact
-- Post-login navigation to `/dashboard` feels instant on cold loads — no skeleton flash for users on decent connections.
-- Zero cost to the initial `/` paint (prefetch runs during idle time, after Login is interactive).
-- No change to bundle size, no new dependencies, no visual changes.
+- First Supabase request (auth session check on `/`, dashboard fetch after login) returns 100–300ms sooner on cold loads.
+- Measurable improvement in LCP on the Dashboard for users on slower networks (the web-vitals logger already in place will show it).
+- Zero JS cost, zero bundle change, no visual change.
 
 ### Technical details
-- File touched: `src/pages/Login.tsx` only.
-- Add a `useEffect(() => { ... }, [])` that schedules `import('./Dashboard').then(() => import('./RoomTypes'))` via `requestIdleCallback` (fallback: `setTimeout(..., 200)`).
-- Swallow errors silently — a failed prefetch just means the normal lazy path runs on navigation.
+- File touched: `index.html` only. Two `<link>` tags inserted in `<head>`.
+- Host is the project's Supabase URL, hardcoded (same value already baked into `VITE_SUPABASE_URL`).
+- No effect on functionality — hints are advisory to the browser.
 
 ### Out of scope
-- No changes to Dashboard, RoomTypes, or any other page internals.
-- No changes to routing, auth, or data fetching.
-- No design/visual changes.
+- No code changes, no routing/auth changes, no design changes.
+- Not adding preconnect for other origins (fonts, R2) — none are hot-path today.
