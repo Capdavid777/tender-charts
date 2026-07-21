@@ -195,6 +195,7 @@ export default function Dashboard() {
     return Math.round(avgRate);
   }, [actualFilteredData], PERF_SCOPE, 'adr');
 
+  const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const dashboardQuery = useQuery({
