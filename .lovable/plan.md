@@ -1,28 +1,24 @@
-## Performance: Preconnect to the Supabase backend on initial HTML
+## Smooth route transitions with the View Transitions API
 
-### Problem
-The first data request on any page (auth check, dashboard fetch, changelog bell, etc.) has to open a fresh TLS connection to the Supabase project host. That handshake — DNS → TCP → TLS — typically costs 150–400ms on mobile before a single byte of API response comes back. Right now the browser only starts that handshake when the JS bundle runs and Supabase is called.
+### What
+Add cross-fade + subtle slide animations when navigating between dashboard pages (Overview → Room Types → Historical, etc.), using the browser's native View Transitions API. Falls back silently to instant navigation on browsers that don't support it (Safari < 18).
 
-### Change
-Add two resource hints to `index.html`'s `<head>` pointing at the Supabase project host:
+### Why this one
+- Not already implemented — current route changes are an abrupt swap between skeleton and content.
+- Pure presentation layer, no business logic touched.
+- Native API — no bundle cost, GPU-accelerated, respects `prefers-reduced-motion` automatically via the CSS we already have.
+- Pairs well with the existing lazy-loading + skeleton work: the transition masks the tiny gap between skeleton unmount and real content mount.
 
-```html
-<link rel="preconnect" href="https://vkmvhpltdocfksdezwqp.supabase.co" crossorigin />
-<link rel="dns-prefetch" href="https://vkmvhpltdocfksdezwqp.supabase.co" />
-```
-
-`preconnect` warms up DNS + TCP + TLS in parallel with JS parsing. `dns-prefetch` is the safe fallback for older browsers that ignore preconnect. `crossorigin` is required because Supabase requests are CORS.
-
-### Expected impact
-- First Supabase request (auth session check on `/`, dashboard fetch after login) returns 100–300ms sooner on cold loads.
-- Measurable improvement in LCP on the Dashboard for users on slower networks (the web-vitals logger already in place will show it).
-- Zero JS cost, zero bundle change, no visual change.
-
-### Technical details
-- File touched: `index.html` only. Two `<link>` tags inserted in `<head>`.
-- Host is the project's Supabase URL, hardcoded (same value already baked into `VITE_SUPABASE_URL`).
-- No effect on functionality — hints are advisory to the browser.
+### Files touched
+- `src/App.tsx` — wrap the `navigate` calls (or add a small `useViewTransitionRouter` hook) so route changes run inside `document.startViewTransition(...)`. Since we use `react-router-dom`, the cleanest hook point is a custom `<Router>`-level effect that intercepts `location` changes and defers the React render into a view transition.
+- `src/index.css` — add ~15 lines defining `::view-transition-old(root)` and `::view-transition-new(root)` keyframes (200ms cross-fade + 4px upward slide on the incoming view). Wrap in `@media (prefers-reduced-motion: no-preference)` so reduced-motion users get an instant swap.
 
 ### Out of scope
-- No code changes, no routing/auth changes, no design changes.
-- Not adding preconnect for other origins (fonts, R2) — none are hot-path today.
+- No changes to individual pages, data fetching, or components.
+- No new dependencies.
+- No named view-transitions (shared element morphs) — just the root cross-fade for this pass.
+
+### Verification
+- Click through Overview → Room Types → Historical → Analysis in the preview; confirm a smooth 200ms cross-fade.
+- Toggle "Reduce motion" in OS settings; confirm transitions disappear.
+- Confirm Safari (which lacks the API) still navigates normally with no console errors.
