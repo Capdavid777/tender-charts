@@ -113,54 +113,59 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <MonthProvider>
-          <Routes>
-            {/* Public route - Login */}
-            <Route path="/" element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            } />
-            
-            {/* Protected routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                {withSuspense(<Dashboard key="dashboard" />, <DashboardSkeleton />)}
-              </ProtectedRoute>
-            } />
-            <Route path="/room-types" element={
-              <ProtectedRoute>
-                {withSuspense(<RoomTypes key="room-types" />, <RoomTypesSkeleton />)}
-              </ProtectedRoute>
-            } />
-            <Route path="/historical" element={
-              <ProtectedRoute>
-                {withSuspense(<Historical key="historical" />, <HistoricalSkeleton />)}
-              </ProtectedRoute>
-            } />
-            <Route path="/upload" element={
-              <AdminRoute>
-                {withSuspense(<Upload key="upload" />, <UploadSkeleton />)}
-              </AdminRoute>
-            } />
-            <Route path="/analysis" element={
-              <ProtectedRoute>
-                {withSuspense(<Analysis key="analysis" />, <AnalysisSkeleton />)}
-              </ProtectedRoute>
-            } />
-            <Route path="/website-analytics" element={
-              <ProtectedRoute>
-                {withSuspense(<WebsiteAnalytics key="website-analytics" />, <WebsiteAnalyticsSkeleton />)}
-              </ProtectedRoute>
-            } />
-            <Route path="/changelog" element={
-              <AdminRoute>
-                {withSuspense(<Changelog key="changelog" />, <ChangelogSkeleton />)}
-              </AdminRoute>
-            } />
-            
-            {/* Catch-all */}
-            <Route path="*" element={withSuspense(<NotFound />, <NotFoundSkeleton />)} />
-          </Routes>
+          <ViewTransitionRoutes>
+            {(loc) => (
+              <Routes location={loc}>
+                {/* Public route - Login */}
+                <Route path="/" element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                } />
+
+                {/* Protected routes */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    {withSuspense(<Dashboard key="dashboard" />, <DashboardSkeleton />)}
+                  </ProtectedRoute>
+                } />
+                <Route path="/room-types" element={
+                  <ProtectedRoute>
+                    {withSuspense(<RoomTypes key="room-types" />, <RoomTypesSkeleton />)}
+                  </ProtectedRoute>
+                } />
+                <Route path="/historical" element={
+                  <ProtectedRoute>
+                    {withSuspense(<Historical key="historical" />, <HistoricalSkeleton />)}
+                  </ProtectedRoute>
+                } />
+                <Route path="/upload" element={
+                  <AdminRoute>
+                    {withSuspense(<Upload key="upload" />, <UploadSkeleton />)}
+                  </AdminRoute>
+                } />
+                <Route path="/analysis" element={
+                  <ProtectedRoute>
+                    {withSuspense(<Analysis key="analysis" />, <AnalysisSkeleton />)}
+                  </ProtectedRoute>
+                } />
+                <Route path="/website-analytics" element={
+                  <ProtectedRoute>
+                    {withSuspense(<WebsiteAnalytics key="website-analytics" />, <WebsiteAnalyticsSkeleton />)}
+                  </ProtectedRoute>
+                } />
+                <Route path="/changelog" element={
+                  <AdminRoute>
+                    {withSuspense(<Changelog key="changelog" />, <ChangelogSkeleton />)}
+                  </AdminRoute>
+                } />
+
+                {/* Catch-all */}
+                <Route path="*" element={withSuspense(<NotFound />, <NotFoundSkeleton />)} />
+              </Routes>
+            )}
+          </ViewTransitionRoutes>
+
           </MonthProvider>
         </AuthProvider>
       </BrowserRouter>
