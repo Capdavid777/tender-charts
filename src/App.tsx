@@ -77,7 +77,31 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Wraps <Routes> so that route changes are rendered inside a
+// document.startViewTransition() call, producing a smooth cross-fade.
+// Falls back to instant navigation on browsers without the API.
+function ViewTransitionRoutes({ children }: { children: (loc: ReturnType<typeof useLocation>) => React.ReactNode }) {
+  const location = useLocation();
+  const [displayed, setDisplayed] = useState(location);
+
+  useEffect(() => {
+    if (location === displayed) return;
+    const startVT = (document as unknown as { startViewTransition?: (cb: () => void) => unknown }).startViewTransition;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (!startVT || reduce) {
+      setDisplayed(location);
+      return;
+    }
+    startVT.call(document, () => {
+      flushSync(() => setDisplayed(location));
+    });
+  }, [location, displayed]);
+
+  return <>{children(displayed)}</>;
+}
+
 const App = () => (
+
   <PersistQueryClientProvider
     client={queryClient}
     persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24, buster: CACHE_BUSTER }}
