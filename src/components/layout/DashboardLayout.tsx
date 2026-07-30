@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import rsLogo from '@/assets/rs-logo.png';
 import WhatsNewBell from '@/components/WhatsNewBell';
+import ThemeToggle from '@/components/ThemeToggle';
 
 import { cn } from '@/lib/utils';
 
@@ -139,6 +140,7 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
                   {refreshing ? 'Refreshing…' : 'Refresh'}
                 </Button>
               </div>
+              <ThemeToggle />
               <WhatsNewBell />
               <Button 
                 variant="outline" 

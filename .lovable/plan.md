@@ -1,24 +1,22 @@
-## Smooth route transitions with the View Transitions API
+## Dark mode toggle for the dashboard
 
-### What
-Add cross-fade + subtle slide animations when navigating between dashboard pages (Overview → Room Types → Historical, etc.), using the browser's native View Transitions API. Falls back silently to instant navigation on browsers that don't support it (Safari < 18).
+### What's true today
+- `tailwind.config.ts` is set to `darkMode: ["class"]`.
+- `src/index.css` already defines a complete `.dark` palette (navy background, gold primary, sidebar, charts, borders).
+- Nothing ever adds the `dark` class: there is no theme provider and no toggle anywhere in `src`. The only `next-themes` usage is inside `src/components/ui/sonner.tsx`, which currently always falls back to `"system"` with no provider above it.
 
-### Why this one
-- Not already implemented — current route changes are an abrupt swap between skeleton and content.
-- Pure presentation layer, no business logic touched.
-- Native API — no bundle cost, GPU-accelerated, respects `prefers-reduced-motion` automatically via the CSS we already have.
-- Pairs well with the existing lazy-loading + skeleton work: the transition masks the tiny gap between skeleton unmount and real content mount.
+So the dark theme is fully designed but unreachable — this makes it work.
 
-### Files touched
-- `src/App.tsx` — wrap the `navigate` calls (or add a small `useViewTransitionRouter` hook) so route changes run inside `document.startViewTransition(...)`. Since we use `react-router-dom`, the cleanest hook point is a custom `<Router>`-level effect that intercepts `location` changes and defers the React render into a view transition.
-- `src/index.css` — add ~15 lines defining `::view-transition-old(root)` and `::view-transition-new(root)` keyframes (200ms cross-fade + 4px upward slide on the incoming view). Wrap in `@media (prefers-reduced-motion: no-preference)` so reduced-motion users get an instant swap.
+### What to build
+1. **Theme provider** — wrap the app in `next-themes`' `ThemeProvider` (already a dependency via the sonner component) with `attribute="class"`, `defaultTheme="system"`, `enableSystem`, and `disableTransitionOnChange`. Placed in `src/App.tsx` above `TooltipProvider` so both the toaster and the pages read it.
+2. **Toggle control** — a small icon button (sun/moon from lucide, already used) in the `DashboardLayout` header, sitting next to the "What's New" bell so the existing header layout fixes stay intact. Cycles light → dark → system with an accessible label and tooltip.
+3. **Contrast pass** — walk the dashboard, room types, historical, analysis and website analytics pages in dark mode and fix any spots that hardcode light-only colors (e.g. `bg-white`, `text-black`, literal hex) by swapping to the existing semantic tokens. Chart series already read from `--chart-*`, which are themed.
+4. **No flash on load** — a tiny inline script in `index.html` that applies the stored/system theme class before React mounts, so a dark-mode user never sees a white flash.
 
 ### Out of scope
-- No changes to individual pages, data fetching, or components.
-- No new dependencies.
-- No named view-transitions (shared element morphs) — just the root cross-fade for this pass.
+- No new colour design; uses the `.dark` palette already in `index.css`.
+- No per-user persistence in the database — theme is stored in localStorage on the device.
+- No changes to data fetching, targets, or business logic.
 
 ### Verification
-- Click through Overview → Room Types → Historical → Analysis in the preview; confirm a smooth 200ms cross-fade.
-- Toggle "Reduce motion" in OS settings; confirm transitions disappear.
-- Confirm Safari (which lacks the API) still navigates normally with no console errors.
+Toggle in the header and confirm every page (including charts, tables, skeletons and dialogs) reads correctly in dark mode; reload to confirm the choice sticks with no white flash; set the OS to dark and confirm "system" follows it.
