@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/format';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { axisProps, gridProps, barCursor, CHART_POSITIVE, CHART_NEGATIVE } from '@/lib/chartTheme';
 import { 
   BarChart, 
   Bar, 
@@ -41,7 +42,7 @@ export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
       const isAboveTarget = variance >= 0;
       
       return (
-        <div className="bg-card border rounded-lg shadow-lg p-3">
+        <div className="bg-popover text-popover-foreground border border-border rounded-lg shadow-lg p-3">
           <p className="font-medium text-foreground">{label}</p>
           <p className="text-sm text-muted-foreground">
             Revenue: <span className="font-semibold">{formatCurrency(revenue)}</span>
@@ -79,23 +80,17 @@ export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <CartesianGrid {...gridProps} />
               <XAxis 
-                dataKey="date" 
-                tick={{ fontSize: 12 }}
-                tickLine={false}
-                axisLine={false}
-                className="text-muted-foreground"
+                dataKey="date"
+                {...axisProps}
               />
               <YAxis 
                 domain={dailyTarget > 0 ? getYDomain(data, dailyTarget) : undefined}
                 tickFormatter={(value) => `R${(value / 1000).toFixed(0)}k`}
-                tick={{ fontSize: 12 }}
-                tickLine={false}
-                axisLine={false}
-                className="text-muted-foreground"
+                {...axisProps}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} cursor={barCursor} />
               <ReferenceLine 
                 y={dailyTarget} 
                 stroke="hsl(var(--accent))" 
@@ -117,8 +112,8 @@ export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.revenue >= dailyTarget
-                      ? 'hsl(var(--success))'
-                      : 'hsl(var(--destructive))'
+                      ? CHART_POSITIVE
+                      : CHART_NEGATIVE
                     }
                   />
                 ))}

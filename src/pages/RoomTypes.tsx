@@ -23,13 +23,9 @@ import {
   YAxis,
   CartesianGrid,
 } from 'recharts';
+import { axisProps, gridProps, barCursor, tooltipProps, CHART_COLORS } from '@/lib/chartTheme';
 
-const COLORS = [
-  'hsl(222, 47%, 20%)',
-  'hsl(38, 92%, 50%)',
-  'hsl(142, 76%, 36%)',
-  'hsl(199, 89%, 48%)',
-];
+const COLORS = CHART_COLORS;
 
 interface RoomTypeData {
   name: string;
@@ -235,7 +231,7 @@ export default function RoomTypes() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip content={<CustomTooltip />} cursor={barCursor} />
                       <Legend 
                         verticalAlign="bottom" 
                         height={36}
@@ -266,25 +262,17 @@ export default function RoomTypes() {
                     layout="vertical"
                     margin={{ top: 10, right: 30, left: 100, bottom: 10 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis type="number" tickLine={false} axisLine={false} />
+                    <CartesianGrid {...gridProps} />
+                    <XAxis type="number" {...axisProps} />
                     <YAxis 
                       type="category" 
-                      dataKey="name" 
-                      tick={{ fontSize: 12 }}
-                      tickLine={false}
-                      axisLine={false}
+                      dataKey="name"
+                      {...axisProps}
                       width={90}
                     />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <Bar dataKey="occupancy" name="Occupancy %" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} isAnimationActive={!prefersReducedMotion} animationDuration={800} animationBegin={100} />
-                    <Bar dataKey="adr" name="ADR (R)" fill="hsl(38, 92%, 50%)" radius={[0, 4, 4, 0]} isAnimationActive={!prefersReducedMotion} animationDuration={800} animationBegin={250} />
+                    <Tooltip {...tooltipProps} />
+                    <Bar dataKey="occupancy" name="Occupancy %" fill={CHART_COLORS[0]} radius={[0, 4, 4, 0]} isAnimationActive={!prefersReducedMotion} animationDuration={800} animationBegin={100} />
+                    <Bar dataKey="adr" name="ADR (R)" fill={CHART_COLORS[1]} radius={[0, 4, 4, 0]} isAnimationActive={!prefersReducedMotion} animationDuration={800} animationBegin={250} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
