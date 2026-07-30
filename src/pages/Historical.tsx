@@ -18,6 +18,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { axisProps, gridProps, lineCursor, CHART_COLORS } from '@/lib/chartTheme';
 
 interface YearData {
   year: string;
@@ -186,16 +187,16 @@ export default function Historical() {
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={historicalData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="year" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                    <CartesianGrid {...gridProps} />
+                    <XAxis dataKey="year" {...axisProps} />
                     <YAxis
                       tickFormatter={(value) => `R${(value / 1000000).toFixed(1)}M`}
-                      tick={{ fontSize: 12 }} tickLine={false} axisLine={false}
+                      {...axisProps}
                     />
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip />} cursor={lineCursor} />
                     <Line type="monotone" dataKey="revenue" name="Revenue"
-                      stroke="hsl(var(--primary))" strokeWidth={3}
-                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }} activeDot={{ r: 6 }}
+                      stroke={CHART_COLORS[0]} strokeWidth={3}
+                      dot={{ fill: CHART_COLORS[0], strokeWidth: 2 }} activeDot={{ r: 6 }}
                       isAnimationActive={!prefersReducedMotion} animationDuration={1100} animationBegin={100}
                     />
                   </LineChart>
@@ -215,16 +216,16 @@ export default function Historical() {
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={historicalData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="year" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                    <CartesianGrid {...gridProps} />
+                    <XAxis dataKey="year" {...axisProps} />
                     <YAxis
                       tickFormatter={(value) => `${value}%`}
-                      tick={{ fontSize: 12 }} tickLine={false} axisLine={false} domain={[0, 100]}
+                      {...axisProps} domain={[0, 100]}
                     />
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip />} cursor={lineCursor} />
                     <Line type="monotone" dataKey="occupancy" name="Occupancy"
-                      stroke="hsl(var(--accent))" strokeWidth={3}
-                      dot={{ fill: 'hsl(var(--accent))', strokeWidth: 2 }} activeDot={{ r: 6 }}
+                      stroke={CHART_COLORS[1]} strokeWidth={3}
+                      dot={{ fill: CHART_COLORS[1], strokeWidth: 2 }} activeDot={{ r: 6 }}
                       isAnimationActive={!prefersReducedMotion} animationDuration={1100} animationBegin={100}
                     />
                   </LineChart>

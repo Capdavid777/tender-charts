@@ -17,6 +17,7 @@ import {
   ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar, PieChart, Pie, Cell, Legend, LabelList,
 } from 'recharts';
+import { axisProps, gridProps, barCursor, lineCursor, tooltipStyle, tooltipLabelStyle, tooltipItemStyle, CHART_COLORS } from '@/lib/chartTheme';
 
 interface Report {
   id: string;
@@ -115,7 +116,7 @@ export default function WebsiteAnalytics() {
     { name: 'Tablet', value: report.device_mix.tablet, icon: Tablet },
   ].filter(d => d.value > 0);
 
-  const chartColors = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+  const chartColors = CHART_COLORS;
 
   const monthShort = new Date(report.month + 'T00:00:00').toLocaleString('en-ZA', { month: 'short' });
   const traffic = report.daily_traffic.map(d => ({
@@ -197,21 +198,21 @@ export default function WebsiteAnalytics() {
                 <ComposedChart data={traffic}>
                   <defs>
                     <linearGradient id="visGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      <stop offset="5%" stopColor={CHART_COLORS[0]} stopOpacity={0.4} />
+                      <stop offset="95%" stopColor={CHART_COLORS[0]} stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="pvGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0} />
+                      <stop offset="5%" stopColor={CHART_COLORS[1]} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={CHART_COLORS[1]} stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="day" fontSize={11} stroke="hsl(var(--muted-foreground))" interval="preserveStartEnd" />
-                  <YAxis fontSize={11} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip labelFormatter={(v: string) => `${v}, ${new Date(report.month + 'T00:00:00').getFullYear()}`} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
+                  <CartesianGrid {...gridProps} />
+                  <XAxis dataKey="day" {...axisProps} interval="preserveStartEnd" />
+                  <YAxis {...axisProps} />
+                  <Tooltip labelFormatter={(v: string) => `${v}, ${new Date(report.month + 'T00:00:00').getFullYear()}`} contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={barCursor} />
                   <Legend />
-                  <Area type="monotone" dataKey="pageviews" stroke="hsl(var(--accent))" fill="url(#pvGrad)" strokeWidth={2} animationDuration={anim} />
-                  <Area type="monotone" dataKey="visitors" stroke="hsl(var(--primary))" fill="url(#visGrad)" strokeWidth={2} animationDuration={anim} />
+                  <Area type="monotone" dataKey="pageviews" stroke={CHART_COLORS[1]} fill="url(#pvGrad)" strokeWidth={2} animationDuration={anim} />
+                  <Area type="monotone" dataKey="visitors" stroke={CHART_COLORS[0]} fill="url(#visGrad)" strokeWidth={2} animationDuration={anim} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -225,14 +226,14 @@ export default function WebsiteAnalytics() {
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={traffic}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="day" fontSize={11} stroke="hsl(var(--muted-foreground))" interval="preserveStartEnd" />
-                  <YAxis yAxisId="left" fontSize={11} stroke="hsl(var(--muted-foreground))" unit="%" />
-                  <YAxis yAxisId="right" orientation="right" fontSize={11} stroke="hsl(var(--muted-foreground))" unit="m" />
-                  <Tooltip labelFormatter={(v: string) => `${v}, ${new Date(report.month + 'T00:00:00').getFullYear()}`} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
+                  <CartesianGrid {...gridProps} />
+                  <XAxis dataKey="day" {...axisProps} interval="preserveStartEnd" />
+                  <YAxis yAxisId="left" {...axisProps} unit="%" />
+                  <YAxis yAxisId="right" orientation="right" {...axisProps} unit="m" />
+                  <Tooltip labelFormatter={(v: string) => `${v}, ${new Date(report.month + 'T00:00:00').getFullYear()}`} contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={barCursor} />
                   <Legend />
-                  <Bar yAxisId="left" dataKey="bounce" name="Bounce %" fill="hsl(var(--primary))" opacity={0.7} radius={[4, 4, 0, 0]} animationDuration={anim} />
-                  <Line yAxisId="right" type="monotone" dataKey="session_min" name="Session (min)" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 3 }} animationDuration={anim} />
+                  <Bar yAxisId="left" dataKey="bounce" name="Bounce %" fill={CHART_COLORS[0]} opacity={0.7} radius={[4, 4, 0, 0]} animationDuration={anim} />
+                  <Line yAxisId="right" type="monotone" dataKey="session_min" name="Session (min)" stroke={CHART_COLORS[1]} strokeWidth={2} dot={{ r: 3 }} animationDuration={anim} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -265,20 +266,20 @@ export default function WebsiteAnalytics() {
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={report.daily_revenue}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <CartesianGrid {...gridProps} />
                   <XAxis
                     dataKey="date"
                     fontSize={11}
-                    stroke="hsl(var(--muted-foreground))"
+                    {...axisProps}
                     tickFormatter={(v: string) => new Date(v + 'T00:00:00').toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' })}
                   />
-                  <YAxis fontSize={11} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `R${v}`} />
+                  <YAxis {...axisProps} tickFormatter={(v) => `R${v}`} />
                   <Tooltip
                     formatter={(v: number) => formatCurrency(v)}
                     labelFormatter={(v: string) => new Date(v + 'T00:00:00').toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
+                    contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={barCursor}
                   />
-                  <Bar dataKey="revenue" fill="hsl(var(--accent))" radius={[6, 6, 0, 0]} animationDuration={anim}>
+                  <Bar dataKey="revenue" fill={CHART_COLORS[1]} radius={[6, 6, 0, 0]} animationDuration={anim}>
                     <LabelList dataKey="revenue" position="top" formatter={(v: number) => `R${v.toLocaleString('en-ZA')}`} fontSize={11} />
                   </Bar>
                 </BarChart>
@@ -307,7 +308,7 @@ export default function WebsiteAnalytics() {
                     >
                       {deviceData.map((_, i) => <Cell key={i} fill={chartColors[i]} />)}
                     </Pie>
-                    <Tooltip formatter={(v: number) => `${v}%`} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
+                    <Tooltip formatter={(v: number) => `${v}%`} contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={barCursor} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
