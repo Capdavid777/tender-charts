@@ -107,6 +107,7 @@ const App = () => (
     client={queryClient}
     persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24, buster: CACHE_BUSTER }}
   >
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -171,6 +172,7 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
+    </ThemeProvider>
   </PersistQueryClientProvider>
 );
 
