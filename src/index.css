@@ -57,6 +57,11 @@
     --chart-3: 142 76% 36%;
     --chart-4: 199 89% 48%;
     --chart-5: 280 65% 60%;
+    --chart-grid: 220 13% 85%;
+    --chart-axis: 220 9% 40%;
+    --chart-positive: 142 76% 36%;
+    --chart-negative: 0 72% 51%;
+
 
     /* Sidebar */
     --sidebar-background: 222 47% 15%;
