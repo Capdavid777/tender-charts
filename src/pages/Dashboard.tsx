@@ -5,7 +5,11 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import KPICard from '@/components/dashboard/KPICard';
 import AlertBanner from '@/components/dashboard/AlertBanner';
 import RevenueChart from '@/components/dashboard/RevenueChart';
-import { DollarSign, Percent, TrendingUp, Target, TrendingUpDown, AlertTriangle, RefreshCw } from 'lucide-react';
+import { DollarSign, Percent, TrendingUp, Target, TrendingUpDown, AlertTriangle, RefreshCw, CalendarX, Inbox, LineChart } from 'lucide-react';
+import EmptyState from '@/components/EmptyState';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
