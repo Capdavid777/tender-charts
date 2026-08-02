@@ -32,10 +32,10 @@ export function useCountUp(value: string): string {
 
     const raw = match[0];
 
-    // en-ZA formats numbers as "389 930,55" (space groups, comma decimal),
-    // while plain toFixed output is "21.67". Detect which is in play so the
-    // value isn't mis-parsed (e.g. "389 930,55" -> 38993055).
-    const commaIsDecimal = /\s/.test(raw) && /,\d{1,2}$/.test(raw);
+    // en-ZA formats numbers as "389 930,55" (space groups, comma decimal) and
+    // "850,00" below 1000, while plain toFixed output is "21.67". Detect which
+    // is in play so the value isn't mis-parsed (e.g. "850,00" -> 85000).
+    const commaIsDecimal = !raw.includes('.') && /,\d{1,2}$/.test(raw);
     const normalized = commaIsDecimal
       ? raw.replace(/\s/g, '').replace(',', '.')
       : raw.replace(/[,\s]/g, '');
@@ -47,7 +47,7 @@ export function useCountUp(value: string): string {
     }
 
     const decimals = normalized.includes('.') ? normalized.split('.')[1].length : 0;
-    const grouped = /[,\s]/.test(raw) && !(commaIsDecimal && !/\s/.test(raw));
+    const grouped = /\s/.test(raw) || (!commaIsDecimal && raw.includes(','));
     const prefix = value.slice(0, match.index ?? 0);
     const suffix = value.slice((match.index ?? 0) + raw.length);
 
