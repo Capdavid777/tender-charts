@@ -448,7 +448,43 @@ export default function Dashboard() {
             <TableSkeleton rows={8} columns={5} withProgressColumn titleWidth="w-36" />
           </>
 
+        ) : filteredData.length === 0 ? (
+          allData.length === 0 ? (
+            <EmptyState
+              icon={<Inbox className="w-6 h-6" />}
+              title="No data uploaded yet"
+              description="Once the monthly Excel file has been uploaded, your revenue, occupancy and forecast figures will appear here."
+              action={isAdmin ? (
+                <Button asChild size="sm" className="gap-1.5">
+                  <Link to="/upload">Upload data</Link>
+                </Button>
+              ) : (
+                <span className="text-sm text-muted-foreground">Ask an administrator to upload the latest file.</span>
+              )}
+            />
+          ) : (
+            <EmptyState
+              icon={<CalendarX className="w-6 h-6" />}
+              title={`No data for ${monthLabel}`}
+              description="Nothing has been uploaded for this month yet. Pick a month that already has data, or upload the latest file."
+              action={
+                <>
+                  {availableMonths.slice(0, 3).map(m => (
+                    <Button key={m} size="sm" variant="outline" onClick={() => setSelectedMonth(m)}>
+                      {formatMonthLabel(m)}
+                    </Button>
+                  ))}
+                  {isAdmin && (
+                    <Button asChild size="sm" className="gap-1.5">
+                      <Link to="/upload">Upload data</Link>
+                    </Button>
+                  )}
+                </>
+              }
+            />
+          )
         ) : (
+
           <>
             {/* KPI Cards */}
             <div className="space-y-2">
@@ -514,11 +550,16 @@ export default function Dashboard() {
               <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
                 <RevenueChart data={dailyData} dailyTarget={dailyData[0]?.target || 0} />
               </div>
-            ) : !loading && (
-              <div className="text-center py-12 text-muted-foreground">
-                No revenue data available. Upload an Excel file to see your dashboard.
+            ) : (
+              <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
+                <EmptyState
+                  icon={<LineChart className="w-6 h-6" />}
+                  title="No revenue to chart for this month"
+                  description={`There are no daily revenue figures recorded for ${monthLabel} yet.`}
+                />
               </div>
             )}
+
 
             {/* Other Income Breakdown */}
             <div className="animate-fade-in-up" style={{ animationDelay: '600ms' }}>
@@ -541,18 +582,35 @@ export default function Dashboard() {
             </div>
 
             {/* Daily Breakdown Table (Actual only) */}
-            {actualFilteredData.length > 0 && (
+            {actualFilteredData.length > 0 ? (
               <div className="animate-fade-in-up" style={{ animationDelay: '800ms' }}>
                 <DailyDataTable data={actualFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Daily Breakdown" />
+              </div>
+            ) : (
+              <div className="animate-fade-in-up" style={{ animationDelay: '800ms' }}>
+                <EmptyState
+                  icon={<CalendarX className="w-6 h-6" />}
+                  title="No actuals yet for this month"
+                  description={`${monthLabel} hasn't started recording completed days yet — only forecast figures are available so far.`}
+                />
               </div>
             )}
 
             {/* Forecast Table */}
-            {forecastFilteredData.length > 0 && (
+            {forecastFilteredData.length > 0 ? (
               <div className="animate-fade-in-up" style={{ animationDelay: '900ms' }}>
                 <DailyDataTable data={forecastFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Forecast" icon={<TrendingUpDown className="w-5 h-5 text-primary" />} variant="forecast" />
               </div>
+            ) : (
+              <div className="animate-fade-in-up" style={{ animationDelay: '900ms' }}>
+                <EmptyState
+                  icon={<TrendingUpDown className="w-6 h-6" />}
+                  title="No forecast days remaining"
+                  description={`Every day in ${monthLabel} has already been recorded as actuals, so there is nothing left to forecast.`}
+                />
+              </div>
             )}
+
           </>
         )}
       </div>
