@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useCountUp } from '@/hooks/useCountUp';
 import { cn } from '@/lib/utils';
+
 
 interface KPICardProps {
   title: string;
