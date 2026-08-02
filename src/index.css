@@ -96,11 +96,12 @@
     --accent: 38 92% 50%;
     --accent-foreground: 222 47% 8%;
 
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 220 14% 96%;
+    --destructive: 0 84% 66%;
+    --destructive-foreground: 222 47% 8%;
 
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
+    --success: 142 66% 52%;
+    --success-foreground: 222 47% 8%;
+
 
     --warning: 38 92% 50%;
     --warning-foreground: 222 47% 8%;
