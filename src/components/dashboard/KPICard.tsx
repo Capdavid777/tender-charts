@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useCountUp } from '@/hooks/useCountUp';
 import { cn } from '@/lib/utils';
+
 
 interface KPICardProps {
   title: string;
@@ -28,12 +30,15 @@ export default function KPICard({
   progress,
   variant = 'default' 
 }: KPICardProps) {
+  const animatedValue = useCountUp(value);
+
   const variantStyles = {
     default: 'border-l-primary',
     success: 'border-l-success',
     warning: 'border-l-warning',
     danger: 'border-l-destructive',
   };
+
 
   const trendColor = trend && trend.value >= 0 ? 'text-success' : 'text-destructive';
 
@@ -48,7 +53,7 @@ export default function KPICard({
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold text-foreground">{value}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{animatedValue}</p>
             {subtitle && (
               <p className="text-sm text-muted-foreground">{subtitle}</p>
             )}
