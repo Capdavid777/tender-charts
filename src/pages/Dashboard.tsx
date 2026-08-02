@@ -50,7 +50,16 @@ interface MonthlyTarget {
   breakeven_occupancy: number;
   room_cost_per_occupied: number;
 }
+
+function formatMonthLabel(key: string): string {
+  if (!key) return 'this month';
+  const [year, month] = key.split('-').map(Number);
+  if (!year || !month) return key;
+  return new Date(year, month - 1, 1).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' });
+}
+
 export default function Dashboard() {
+
   // Render timing: mark start synchronously, record duration after commit.
   const renderStart = useRef(performance.now());
   renderStart.current = performance.now();
