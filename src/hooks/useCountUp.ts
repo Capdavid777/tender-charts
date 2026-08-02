@@ -31,25 +31,35 @@ export function useCountUp(value: string): string {
     }
 
     const raw = match[0];
-    const target = Number(raw.replace(/[,\s]/g, ''));
+
+    // en-ZA formats numbers as "389 930,55" (space groups, comma decimal),
+    // while plain toFixed output is "21.67". Detect which is in play so the
+    // value isn't mis-parsed (e.g. "389 930,55" -> 38993055).
+    const commaIsDecimal = /\s/.test(raw) && /,\d{1,2}$/.test(raw);
+    const normalized = commaIsDecimal
+      ? raw.replace(/\s/g, '').replace(',', '.')
+      : raw.replace(/[,\s]/g, '');
+
+    const target = Number(normalized);
     if (!Number.isFinite(target)) {
       setDisplay(value);
       return;
     }
 
-    const decimals = raw.includes('.') ? raw.split('.')[1].length : 0;
-    const grouped = /[,\s]/.test(raw);
+    const decimals = normalized.includes('.') ? normalized.split('.')[1].length : 0;
+    const grouped = /[,\s]/.test(raw) && !(commaIsDecimal && !/\s/.test(raw));
     const prefix = value.slice(0, match.index ?? 0);
     const suffix = value.slice((match.index ?? 0) + raw.length);
 
     const format = (n: number) =>
       prefix +
-      n.toLocaleString('en-ZA', {
+      n.toLocaleString(commaIsDecimal ? 'en-ZA' : 'en-US', {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
         useGrouping: grouped,
       }) +
       suffix;
+
 
     const start = performance.now();
     const tick = (now: number) => {
