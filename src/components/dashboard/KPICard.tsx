@@ -30,12 +30,15 @@ export default function KPICard({
   progress,
   variant = 'default' 
 }: KPICardProps) {
+  const animatedValue = useCountUp(value);
+
   const variantStyles = {
     default: 'border-l-primary',
     success: 'border-l-success',
     warning: 'border-l-warning',
     danger: 'border-l-destructive',
   };
+
 
   const trendColor = trend && trend.value >= 0 ? 'text-success' : 'text-destructive';
 
