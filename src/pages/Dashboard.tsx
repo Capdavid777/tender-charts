@@ -72,6 +72,9 @@ export default function Dashboard() {
   const [allData, setAllData] = useState<RawDailyData[]>([]);
   const [loading, setLoading] = useState(true);
   const { selectedMonth, setSelectedMonth } = useMonth();
+  const { isAdmin } = useAuth();
+  const monthLabel = useMemo(() => formatMonthLabel(selectedMonth), [selectedMonth]);
+
   const [totalRooms, setTotalRooms] = useState(80);
   const [monthlyTargets, setMonthlyTargets] = useState<Record<string, MonthlyTarget>>({});
   const [otherIncomeItems, setOtherIncomeItems] = useState<OtherIncomeItem[]>([]);
