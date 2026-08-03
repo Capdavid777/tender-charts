@@ -263,28 +263,35 @@ export default function WebsiteAnalytics() {
                 </div>
               ))}
             </div>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={report.daily_revenue}>
-                  <CartesianGrid {...gridProps} />
-                  <XAxis
-                    dataKey="date"
-                    fontSize={11}
-                    {...axisProps}
-                    tickFormatter={(v: string) => new Date(v + 'T00:00:00').toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' })}
-                  />
-                  <YAxis {...axisProps} tickFormatter={(v) => `R${v}`} />
-                  <Tooltip
-                    formatter={(v: number) => formatCurrency(v)}
-                    labelFormatter={(v: string) => new Date(v + 'T00:00:00').toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={barCursor}
-                  />
-                  <Bar dataKey="revenue" fill={CHART_COLORS[1]} radius={[6, 6, 0, 0]} animationDuration={anim}>
-                    <LabelList dataKey="revenue" position="top" formatter={(v: number) => `R${v.toLocaleString('en-ZA')}`} fontSize={11} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {report.daily_revenue?.length ? (
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={report.daily_revenue}>
+                    <CartesianGrid {...gridProps} />
+                    <XAxis
+                      dataKey="date"
+                      fontSize={11}
+                      {...axisProps}
+                      tickFormatter={(v: string) => new Date(v + 'T00:00:00').toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' })}
+                    />
+                    <YAxis {...axisProps} tickFormatter={(v) => `R${v}`} />
+                    <Tooltip
+                      formatter={(v: number) => formatCurrency(v)}
+                      labelFormatter={(v: string) => new Date(v + 'T00:00:00').toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={barCursor}
+                    />
+                    <Bar dataKey="revenue" fill={CHART_COLORS[1]} radius={[6, 6, 0, 0]} animationDuration={anim}>
+                      <LabelList dataKey="revenue" position="top" formatter={(v: number) => `R${v.toLocaleString('en-ZA')}`} fontSize={11} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-24 flex items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
+                No per-day booking breakdown in this month's report
+              </div>
+            )}
+
           </CardContent>
         </Card>
 
