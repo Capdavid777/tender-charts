@@ -102,7 +102,7 @@ export default function WebsiteAnalytics() {
   const kpis = [
     { title: 'Visitors', value: s.visitors?.toLocaleString('en-ZA'), icon: <Users className="w-5 h-5 text-primary" /> },
     { title: 'Pageviews', value: s.pageviews?.toLocaleString('en-ZA'), icon: <Eye className="w-5 h-5 text-primary" /> },
-    { title: 'Avg session', value: `${s.avg_session_min} min`, icon: <Clock className="w-5 h-5 text-primary" /> },
+    { title: 'Avg session', value: `${s.avg_session_min} sec`, icon: <Clock className="w-5 h-5 text-primary" /> },
     { title: 'Bounce rate', value: `${s.bounce_rate}%`, icon: <TrendingDown className="w-5 h-5 text-primary" /> },
     { title: 'Bookings', value: s.bookings, icon: <CalendarCheck className="w-5 h-5 text-accent" /> },
     { title: 'Gross revenue', value: formatCurrency(s.gross_revenue), icon: <Wallet className="w-5 h-5 text-accent" /> },
