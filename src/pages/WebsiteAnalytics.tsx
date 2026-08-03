@@ -229,11 +229,11 @@ export default function WebsiteAnalytics() {
                   <CartesianGrid {...gridProps} />
                   <XAxis dataKey="day" {...axisProps} interval="preserveStartEnd" />
                   <YAxis yAxisId="left" {...axisProps} unit="%" />
-                  <YAxis yAxisId="right" orientation="right" {...axisProps} unit="m" />
+                  <YAxis yAxisId="right" orientation="right" {...axisProps} unit="s" />
                   <Tooltip labelFormatter={(v: string) => `${v}, ${new Date(report.month + 'T00:00:00').getFullYear()}`} contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={barCursor} />
                   <Legend />
                   <Bar yAxisId="left" dataKey="bounce" name="Bounce %" fill={CHART_COLORS[0]} opacity={0.7} radius={[4, 4, 0, 0]} animationDuration={anim} />
-                  <Line yAxisId="right" type="monotone" dataKey="session_min" name="Session (min)" stroke={CHART_COLORS[1]} strokeWidth={2} dot={{ r: 3 }} animationDuration={anim} />
+                  <Line yAxisId="right" type="monotone" dataKey="session_min" name="Session (sec)" stroke={CHART_COLORS[1]} strokeWidth={2} dot={{ r: 3 }} animationDuration={anim} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
