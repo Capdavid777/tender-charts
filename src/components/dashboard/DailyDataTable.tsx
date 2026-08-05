@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency, formatPercent } from '@/lib/format';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+
 
 
 interface DailyRecord {
@@ -22,16 +24,40 @@ interface DailyDataTableProps {
   variant?: 'default' | 'forecast';
 }
 
+type SortKey = 'date' | 'revenue' | 'rooms_sold' | 'occupancy' | 'average_rate';
+type SortDir = 'asc' | 'desc';
+
 export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily Breakdown', icon, variant = 'default' }: DailyDataTableProps) {
   const prefersReduced = usePrefersReducedMotion();
+  const [sortKey, setSortKey] = useState<SortKey>('date');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   if (data.length === 0) return null;
 
+  const toggleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      // Numeric columns are most useful highest-first on the first click
+      setSortDir(key === 'date' ? 'asc' : 'desc');
+    }
+  };
 
-  // Only show days with actual data, sorted ascending
-  const sorted = [...data]
-    .filter(d => d.revenue > 0 || (d.rooms_sold ?? 0) > 0 || (d.occupancy ?? 0) > 0)
-    .sort((a, b) => a.date.localeCompare(b.date));
+  // Only show days with actual data
+  const rows = [...data].filter(
+    d => d.revenue > 0 || (d.rooms_sold ?? 0) > 0 || (d.occupancy ?? 0) > 0
+  );
+
+  const dir = sortDir === 'asc' ? 1 : -1;
+  const sorted = rows.sort((a, b) => {
+    if (sortKey === 'date') return a.date.localeCompare(b.date) * dir;
+    const av = (a[sortKey] ?? 0) as number;
+    const bv = (b[sortKey] ?? 0) as number;
+    if (av === bv) return a.date.localeCompare(b.date);
+    return (av - bv) * dir;
+  });
+
 
   // Totals / averages
   const totalRevenue = sorted.reduce((s, d) => s + d.revenue, 0);
@@ -62,7 +88,29 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
   const stickyFoot = 'sticky bottom-0 z-20 bg-secondary border-t-2 border-border';
 
 
-
+  const SortHead = ({ label, colKey, align = 'right' }: { label: string; colKey: SortKey; align?: 'left' | 'right' }) => {
+    const active = sortKey === colKey;
+    const Icon = active ? (sortDir === 'asc' ? ArrowUp : ArrowDown) : ChevronsUpDown;
+    return (
+      <TableHead className={cn(stickyHead, 'p-0')}>
+        <button
+          type="button"
+          onClick={() => toggleSort(colKey)}
+          aria-label={`Sort by ${label}`}
+          aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+          className={cn(
+            'w-full h-12 px-4 flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-foreground',
+            active ? 'text-foreground' : 'text-muted-foreground',
+            align === 'right' ? 'justify-end' : 'justify-start'
+          )}
+        >
+          {align === 'right' && <Icon className={cn('w-3.5 h-3.5', !active && 'opacity-40')} />}
+          {label}
+          {align === 'left' && <Icon className={cn('w-3.5 h-3.5', !active && 'opacity-40')} />}
+        </button>
+      </TableHead>
+    );
+  };
 
   return (
     <Card className={cn(variant === 'forecast' && 'border-dashed border-muted-foreground/30 bg-muted/20')}>
@@ -80,11 +128,12 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className={cn(stickyHead, 'text-left')}>Date</TableHead>
-                <TableHead className={cn(stickyHead, 'text-right')}>Revenue</TableHead>
-                <TableHead className={cn(stickyHead, 'text-right')}>Rooms Sold</TableHead>
-                <TableHead className={cn(stickyHead, 'text-right')}>Occupancy</TableHead>
-                <TableHead className={cn(stickyHead, 'text-right')}>ADR</TableHead>
+                <SortHead label="Date" colKey="date" align="left" />
+                <SortHead label="Revenue" colKey="revenue" />
+                <SortHead label="Rooms Sold" colKey="rooms_sold" />
+                <SortHead label="Occupancy" colKey="occupancy" />
+                <SortHead label="ADR" colKey="average_rate" />
+
                 {dailyTarget > 0 && (
                   <TableHead className={cn(stickyHead, 'text-center min-w-[180px]')}>Daily Target Progress</TableHead>
                 )}
