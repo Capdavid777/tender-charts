@@ -3,6 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+
 
 interface DailyRecord {
   date: string;
