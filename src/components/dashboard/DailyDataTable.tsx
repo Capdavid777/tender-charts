@@ -45,6 +45,19 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
     : 0;
   const totalRoomsSold = sorted.reduce((s, d) => s + (d.rooms_sold || 0), 0);
 
+  // Best / weakest revenue day (only meaningful with more than one day)
+  let bestDate: string | null = null;
+  let worstDate: string | null = null;
+  const revenueDays = sorted.filter(d => d.revenue > 0);
+  if (revenueDays.length > 1) {
+    bestDate = revenueDays.reduce((a, b) => (b.revenue > a.revenue ? b : a)).date;
+    worstDate = revenueDays.reduce((a, b) => (b.revenue < a.revenue ? b : a)).date;
+    if (bestDate === worstDate) worstDate = null;
+  }
+
+  const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, local
+
+
   return (
     <Card className={cn(variant === 'forecast' && 'border-dashed border-muted-foreground/30 bg-muted/20')}>
       <CardHeader>
