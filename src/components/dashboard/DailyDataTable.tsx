@@ -73,19 +73,19 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
         <div className="max-h-[400px] overflow-auto">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Revenue</TableHead>
-                <TableHead className="text-right">Rooms Sold</TableHead>
-                <TableHead className="text-right">Occupancy</TableHead>
-                <TableHead className="text-right">ADR</TableHead>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className={cn(stickyHead, 'text-left')}>Date</TableHead>
+                <TableHead className={cn(stickyHead, 'text-right')}>Revenue</TableHead>
+                <TableHead className={cn(stickyHead, 'text-right')}>Rooms Sold</TableHead>
+                <TableHead className={cn(stickyHead, 'text-right')}>Occupancy</TableHead>
+                <TableHead className={cn(stickyHead, 'text-right')}>ADR</TableHead>
                 {dailyTarget > 0 && (
-                  <TableHead className="text-center min-w-[180px]">Daily Target Progress</TableHead>
+                  <TableHead className={cn(stickyHead, 'text-center min-w-[180px]')}>Daily Target Progress</TableHead>
                 )}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sorted.map((d) => {
+              {sorted.map((d, i) => {
                 const dateLabel = new Date(d.date).toLocaleDateString('en-ZA', {
                   weekday: 'short',
                   day: 'numeric',
@@ -94,10 +94,33 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
                 const occ = d.occupancy != null && d.occupancy > 0 ? d.occupancy * 100 : null;
                 const progress = dailyTarget > 0 ? Math.min((d.revenue / dailyTarget) * 100, 100) : 0;
                 const progressPct = dailyTarget > 0 ? (d.revenue / dailyTarget) * 100 : 0;
+                const isBest = d.date === bestDate;
+                const isWorst = d.date === worstDate;
+                const isToday = d.date === todayStr;
 
                 return (
-                  <TableRow key={d.date}>
-                    <TableCell className="font-medium">{dateLabel}</TableCell>
+                  <TableRow
+                    key={d.date}
+                    className={cn(
+                      isBest && 'bg-success/10',
+                      isWorst && 'bg-destructive/10',
+                      isToday && 'ring-1 ring-inset ring-primary/40',
+                      !prefersReduced && 'animate-fade-in'
+                    )}
+                    style={!prefersReduced ? { animationDelay: `${Math.min(i * 12, 300)}ms`, animationFillMode: 'both' } : undefined}
+                  >
+                    <TableCell className="font-medium">
+                      <span className="flex items-center gap-2">
+                        {dateLabel}
+                        {isBest && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-success bg-success/15 px-1.5 py-0.5 rounded">Best</span>
+                        )}
+                        {isWorst && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-destructive bg-destructive/15 px-1.5 py-0.5 rounded">Lowest</span>
+                        )}
+                      </span>
+                    </TableCell>
+
                     <TableCell className="text-right">{formatCurrency(d.revenue)}</TableCell>
                     <TableCell className="text-right">{d.rooms_sold ?? '—'}</TableCell>
                     <TableCell className="text-right">
