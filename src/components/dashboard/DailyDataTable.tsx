@@ -23,7 +23,10 @@ interface DailyDataTableProps {
 }
 
 export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily Breakdown', icon, variant = 'default' }: DailyDataTableProps) {
+  const prefersReduced = usePrefersReducedMotion();
+
   if (data.length === 0) return null;
+
 
   // Only show days with actual data, sorted ascending
   const sorted = [...data]
