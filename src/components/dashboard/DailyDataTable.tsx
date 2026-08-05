@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency, formatPercent } from '@/lib/format';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+
 
 
 interface DailyRecord {
