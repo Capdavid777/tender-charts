@@ -154,19 +154,20 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
                   </TableRow>
                 );
               })}
-              {/* Summary row */}
-              <TableRow className="border-t-2 font-semibold bg-muted/50">
-                <TableCell>Total / Avg</TableCell>
-                <TableCell className="text-right">{formatCurrency(totalRevenue)}</TableCell>
-                <TableCell className="text-right">{totalRoomsSold}</TableCell>
-                <TableCell className="text-right">
+              {/* Summary row — pinned to the bottom of the scroll area */}
+              <TableRow className="font-semibold hover:bg-transparent">
+                <TableCell className={stickyFoot}>Total / Avg</TableCell>
+                <TableCell className={cn(stickyFoot, 'text-right')}>{formatCurrency(totalRevenue)}</TableCell>
+                <TableCell className={cn(stickyFoot, 'text-right')}>{totalRoomsSold}</TableCell>
+                <TableCell className={cn(stickyFoot, 'text-right')}>
                   {avgOccupancy > 0 ? formatPercent(avgOccupancy * 100) : '—'}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className={cn(stickyFoot, 'text-right')}>
                   {avgRate > 0 ? formatCurrency(Math.round(avgRate)) : '—'}
                 </TableCell>
-                {dailyTarget > 0 && <TableCell />}
+                {dailyTarget > 0 && <TableCell className={stickyFoot} />}
               </TableRow>
+
             </TableBody>
           </Table>
         </div>
