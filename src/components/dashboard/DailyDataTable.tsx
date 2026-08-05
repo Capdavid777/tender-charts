@@ -57,6 +57,10 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
 
   const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, local
 
+  const surfaceBg = variant === 'forecast' ? 'bg-[hsl(var(--card))]' : 'bg-card';
+  const stickyHead = cn('sticky top-0 z-20 backdrop-blur supports-[backdrop-filter]:bg-card/95', surfaceBg);
+
+
 
   return (
     <Card className={cn(variant === 'forecast' && 'border-dashed border-muted-foreground/30 bg-muted/20')}>
