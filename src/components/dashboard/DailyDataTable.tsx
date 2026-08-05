@@ -88,7 +88,29 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
   const stickyFoot = 'sticky bottom-0 z-20 bg-secondary border-t-2 border-border';
 
 
-
+  const SortHead = ({ label, colKey, align = 'right' }: { label: string; colKey: SortKey; align?: 'left' | 'right' }) => {
+    const active = sortKey === colKey;
+    const Icon = active ? (sortDir === 'asc' ? ArrowUp : ArrowDown) : ChevronsUpDown;
+    return (
+      <TableHead className={cn(stickyHead, 'p-0')}>
+        <button
+          type="button"
+          onClick={() => toggleSort(colKey)}
+          aria-label={`Sort by ${label}`}
+          aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+          className={cn(
+            'w-full h-12 px-4 flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-foreground',
+            active ? 'text-foreground' : 'text-muted-foreground',
+            align === 'right' ? 'justify-end' : 'justify-start'
+          )}
+        >
+          {align === 'right' && <Icon className={cn('w-3.5 h-3.5', !active && 'opacity-40')} />}
+          {label}
+          {align === 'left' && <Icon className={cn('w-3.5 h-3.5', !active && 'opacity-40')} />}
+        </button>
+      </TableHead>
+    );
+  };
 
   return (
     <Card className={cn(variant === 'forecast' && 'border-dashed border-muted-foreground/30 bg-muted/20')}>
@@ -106,11 +128,12 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className={cn(stickyHead, 'text-left')}>Date</TableHead>
-                <TableHead className={cn(stickyHead, 'text-right')}>Revenue</TableHead>
-                <TableHead className={cn(stickyHead, 'text-right')}>Rooms Sold</TableHead>
-                <TableHead className={cn(stickyHead, 'text-right')}>Occupancy</TableHead>
-                <TableHead className={cn(stickyHead, 'text-right')}>ADR</TableHead>
+                <SortHead label="Date" colKey="date" align="left" />
+                <SortHead label="Revenue" colKey="revenue" />
+                <SortHead label="Rooms Sold" colKey="rooms_sold" />
+                <SortHead label="Occupancy" colKey="occupancy" />
+                <SortHead label="ADR" colKey="average_rate" />
+
                 {dailyTarget > 0 && (
                   <TableHead className={cn(stickyHead, 'text-center min-w-[180px]')}>Daily Target Progress</TableHead>
                 )}
