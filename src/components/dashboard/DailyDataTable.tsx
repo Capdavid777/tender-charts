@@ -59,6 +59,8 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
 
   const surfaceBg = variant === 'forecast' ? 'bg-[hsl(var(--card))]' : 'bg-card';
   const stickyHead = cn('sticky top-0 z-20 backdrop-blur supports-[backdrop-filter]:bg-card/95', surfaceBg);
+  const stickyFoot = 'sticky bottom-0 z-20 bg-secondary border-t-2 border-border';
+
 
 
 
