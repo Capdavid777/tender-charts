@@ -24,16 +24,40 @@ interface DailyDataTableProps {
   variant?: 'default' | 'forecast';
 }
 
+type SortKey = 'date' | 'revenue' | 'rooms_sold' | 'occupancy' | 'average_rate';
+type SortDir = 'asc' | 'desc';
+
 export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily Breakdown', icon, variant = 'default' }: DailyDataTableProps) {
   const prefersReduced = usePrefersReducedMotion();
+  const [sortKey, setSortKey] = useState<SortKey>('date');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   if (data.length === 0) return null;
 
+  const toggleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      // Numeric columns are most useful highest-first on the first click
+      setSortDir(key === 'date' ? 'asc' : 'desc');
+    }
+  };
 
-  // Only show days with actual data, sorted ascending
-  const sorted = [...data]
-    .filter(d => d.revenue > 0 || (d.rooms_sold ?? 0) > 0 || (d.occupancy ?? 0) > 0)
-    .sort((a, b) => a.date.localeCompare(b.date));
+  // Only show days with actual data
+  const rows = [...data].filter(
+    d => d.revenue > 0 || (d.rooms_sold ?? 0) > 0 || (d.occupancy ?? 0) > 0
+  );
+
+  const dir = sortDir === 'asc' ? 1 : -1;
+  const sorted = rows.sort((a, b) => {
+    if (sortKey === 'date') return a.date.localeCompare(b.date) * dir;
+    const av = (a[sortKey] ?? 0) as number;
+    const bv = (b[sortKey] ?? 0) as number;
+    if (av === bv) return a.date.localeCompare(b.date);
+    return (av - bv) * dir;
+  });
+
 
   // Totals / averages
   const totalRevenue = sorted.reduce((s, d) => s + d.revenue, 0);
