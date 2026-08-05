@@ -3,6 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+
 
 interface DailyRecord {
   date: string;
@@ -21,7 +23,10 @@ interface DailyDataTableProps {
 }
 
 export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily Breakdown', icon, variant = 'default' }: DailyDataTableProps) {
+  const prefersReduced = usePrefersReducedMotion();
+
   if (data.length === 0) return null;
+
 
   // Only show days with actual data, sorted ascending
   const sorted = [...data]
@@ -40,6 +45,25 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
     : 0;
   const totalRoomsSold = sorted.reduce((s, d) => s + (d.rooms_sold || 0), 0);
 
+  // Best / weakest revenue day (only meaningful with more than one day)
+  let bestDate: string | null = null;
+  let worstDate: string | null = null;
+  const revenueDays = sorted.filter(d => d.revenue > 0);
+  if (revenueDays.length > 1) {
+    bestDate = revenueDays.reduce((a, b) => (b.revenue > a.revenue ? b : a)).date;
+    worstDate = revenueDays.reduce((a, b) => (b.revenue < a.revenue ? b : a)).date;
+    if (bestDate === worstDate) worstDate = null;
+  }
+
+  const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, local
+
+  const surfaceBg = variant === 'forecast' ? 'bg-[hsl(var(--card))]' : 'bg-card';
+  const stickyHead = cn('sticky top-0 z-20 backdrop-blur supports-[backdrop-filter]:bg-card/95', surfaceBg);
+  const stickyFoot = 'sticky bottom-0 z-20 bg-secondary border-t-2 border-border';
+
+
+
+
   return (
     <Card className={cn(variant === 'forecast' && 'border-dashed border-muted-foreground/30 bg-muted/20')}>
       <CardHeader>
@@ -55,19 +79,19 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
         <div className="max-h-[400px] overflow-auto">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Revenue</TableHead>
-                <TableHead className="text-right">Rooms Sold</TableHead>
-                <TableHead className="text-right">Occupancy</TableHead>
-                <TableHead className="text-right">ADR</TableHead>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className={cn(stickyHead, 'text-left')}>Date</TableHead>
+                <TableHead className={cn(stickyHead, 'text-right')}>Revenue</TableHead>
+                <TableHead className={cn(stickyHead, 'text-right')}>Rooms Sold</TableHead>
+                <TableHead className={cn(stickyHead, 'text-right')}>Occupancy</TableHead>
+                <TableHead className={cn(stickyHead, 'text-right')}>ADR</TableHead>
                 {dailyTarget > 0 && (
-                  <TableHead className="text-center min-w-[180px]">Daily Target Progress</TableHead>
+                  <TableHead className={cn(stickyHead, 'text-center min-w-[180px]')}>Daily Target Progress</TableHead>
                 )}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sorted.map((d) => {
+              {sorted.map((d, i) => {
                 const dateLabel = new Date(d.date).toLocaleDateString('en-ZA', {
                   weekday: 'short',
                   day: 'numeric',
@@ -76,10 +100,33 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
                 const occ = d.occupancy != null && d.occupancy > 0 ? d.occupancy * 100 : null;
                 const progress = dailyTarget > 0 ? Math.min((d.revenue / dailyTarget) * 100, 100) : 0;
                 const progressPct = dailyTarget > 0 ? (d.revenue / dailyTarget) * 100 : 0;
+                const isBest = d.date === bestDate;
+                const isWorst = d.date === worstDate;
+                const isToday = d.date === todayStr;
 
                 return (
-                  <TableRow key={d.date}>
-                    <TableCell className="font-medium">{dateLabel}</TableCell>
+                  <TableRow
+                    key={d.date}
+                    className={cn(
+                      isBest && 'bg-success/10',
+                      isWorst && 'bg-destructive/10',
+                      isToday && 'ring-1 ring-inset ring-primary/40',
+                      !prefersReduced && 'animate-fade-in'
+                    )}
+                    style={!prefersReduced ? { animationDelay: `${Math.min(i * 12, 300)}ms`, animationFillMode: 'both' } : undefined}
+                  >
+                    <TableCell className="font-medium">
+                      <span className="flex items-center gap-2">
+                        {dateLabel}
+                        {isBest && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-success bg-success/15 px-1.5 py-0.5 rounded">Best</span>
+                        )}
+                        {isWorst && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-destructive bg-destructive/15 px-1.5 py-0.5 rounded">Lowest</span>
+                        )}
+                      </span>
+                    </TableCell>
+
                     <TableCell className="text-right">{formatCurrency(d.revenue)}</TableCell>
                     <TableCell className="text-right">{d.rooms_sold ?? '—'}</TableCell>
                     <TableCell className="text-right">
@@ -109,19 +156,20 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
                   </TableRow>
                 );
               })}
-              {/* Summary row */}
-              <TableRow className="border-t-2 font-semibold bg-muted/50">
-                <TableCell>Total / Avg</TableCell>
-                <TableCell className="text-right">{formatCurrency(totalRevenue)}</TableCell>
-                <TableCell className="text-right">{totalRoomsSold}</TableCell>
-                <TableCell className="text-right">
+              {/* Summary row — pinned to the bottom of the scroll area */}
+              <TableRow className="font-semibold hover:bg-transparent">
+                <TableCell className={stickyFoot}>Total / Avg</TableCell>
+                <TableCell className={cn(stickyFoot, 'text-right')}>{formatCurrency(totalRevenue)}</TableCell>
+                <TableCell className={cn(stickyFoot, 'text-right')}>{totalRoomsSold}</TableCell>
+                <TableCell className={cn(stickyFoot, 'text-right')}>
                   {avgOccupancy > 0 ? formatPercent(avgOccupancy * 100) : '—'}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className={cn(stickyFoot, 'text-right')}>
                   {avgRate > 0 ? formatCurrency(Math.round(avgRate)) : '—'}
                 </TableCell>
-                {dailyTarget > 0 && <TableCell />}
+                {dailyTarget > 0 && <TableCell className={stickyFoot} />}
               </TableRow>
+
             </TableBody>
           </Table>
         </div>
