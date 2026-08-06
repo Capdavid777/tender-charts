@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/format';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { axisProps, gridProps, barCursor, CHART_POSITIVE, CHART_NEGATIVE } from '@/lib/chartTheme';
+import { axisProps, gridProps, CHART_POSITIVE, CHART_NEGATIVE } from '@/lib/chartTheme';
 import { 
   BarChart, 
   Bar, 
@@ -11,6 +12,8 @@ import {
   Tooltip, 
   ResponsiveContainer,
   ReferenceLine,
+  ReferenceArea,
+  Label,
   Cell
 } from 'recharts';
 
@@ -18,12 +21,16 @@ interface DailyData {
   date: string;
   revenue: number;
   target: number;
+  isWeekend?: boolean;
 }
 
 interface RevenueChartProps {
   data: DailyData[];
   dailyTarget: number;
 }
+
+/** Softer hover column than the shared grey block. */
+const softCursor = { fill: 'hsl(var(--primary) / 0.07)' };
 
 // Ensure Y-axis includes the target line
 function getYDomain(data: DailyData[], dailyTarget: number): [number, number] {
@@ -34,6 +41,17 @@ function getYDomain(data: DailyData[], dailyTarget: number): [number, number] {
 
 export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  // Contiguous weekend runs, rendered as faint bands behind the bars.
+  const weekendBands: { from: string; to: string }[] = [];
+  data.forEach((d, i) => {
+    if (!d.isWeekend) return;
+    const last = weekendBands[weekendBands.length - 1];
+    if (last && data[i - 1]?.isWeekend) last.to = d.date;
+    else weekendBands.push({ from: d.date, to: d.date });
+  });
+
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
