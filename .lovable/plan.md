@@ -1,18 +1,24 @@
-# Instant navigation: prefetch pages on hover
+# Daily Revenue chart polish
 
 ## What changes
-Each page in the dashboard (Room Types, Historical, Upload, Analysis, Website Analytics, Changelog) is loaded on demand the first time you open it, so the first click on a tab shows a loading skeleton for a moment.
+The Daily Revenue chart currently draws flat green/red bars on a plain grid. This update gives it a more refined, readable look without changing any numbers:
 
-This update starts loading a page in the background the instant your pointer hovers over its nav tab (or focuses it via keyboard). By the time the click lands, the page is usually already in memory and appears immediately, with no skeleton flash.
+- Bars get a subtle top-to-bottom gradient (stronger at the top, softer at the base) instead of flat fill, so the chart reads as depth rather than blocks.
+- Hovering a day dims the other bars slightly so the day you're inspecting stands out, and the hover cursor highlight becomes a soft column tint instead of a hard grey block.
+- Weekend days get a very light background band behind them, making week rhythm visible at a glance.
+- The dashed "Target" reference line gets a small pill label so it stays legible against bars.
+- The legend in the card header gains a third swatch for the target line so all three visual cues are explained.
 
-Only the first hover per page does any work — after that the page is cached for the session. Nothing downloads until you actually show intent by hovering, so it does not slow down the initial load.
-
-Today only Room Types and Dashboard get prefetched, and only from the login screen; this extends the benefit to every page and to navigation between pages.
+Reduced-motion users keep the existing behaviour: no bar grow animation, and no hover dim transition.
 
 ## Technical details
-- Add `src/lib/routePrefetch.ts`: a map of route path to its dynamic `import()` thunk (matching the `lazy()` imports in `src/App.tsx`), plus a `prefetchRoute(path)` helper that runs each thunk at most once and swallows errors.
-- In `src/components/layout/DashboardLayout.tsx`, attach `onMouseEnter`, `onFocus`, and `onTouchStart` handlers to the desktop and mobile nav `Link`s, calling `prefetchRoute(item.href)`.
-- Reuse the same helper in `src/pages/Login.tsx` so the existing idle-time prefetch and the hover prefetch share one dedupe cache.
+- All work stays in `src/components/dashboard/RevenueChart.tsx`.
+- Add two `<linearGradient>` defs (positive and negative) built from the existing `CHART_POSITIVE` / `CHART_NEGATIVE` tokens in `src/lib/chartTheme.ts`; `Cell` fills reference the gradient ids instead of the flat colour.
+- Track the hovered bar index via `BarChart`'s `onMouseMove` / `onMouseLeave` and apply `fillOpacity` per `Cell` (1 for hovered or none hovered, ~0.45 otherwise). Skip the opacity change when `usePrefersReducedMotion()` is true.
+- Replace the `barCursor` fill with a low-opacity `hsl(var(--muted))` rectangle.
+- Weekend bands: derive weekend dates from the existing `data` entries and render `ReferenceArea` elements behind the bars.
+- Target label: swap the plain `label` for a small `<Label>` with a rounded background rect.
+- No new dependencies, no data/query changes, no changes to values, formatting, or the y-axis domain logic.
 
 ## Out of scope
-No layout, styling, data, or query changes.
+Other charts, tables, and KPI cards are untouched.
