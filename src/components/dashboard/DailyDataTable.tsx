@@ -124,7 +124,10 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="max-h-[400px] overflow-auto">
+        {/* The shadcn Table renders its own overflow wrapper, so constrain that
+            element directly — otherwise it, not this div, is the scrollport and
+            the sticky header/footer never pin. */}
+        <div className="[&>div]:max-h-[400px] [&>div]:overflow-auto">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
