@@ -91,13 +91,45 @@ export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
               <div className="w-3 h-3 rounded bg-destructive" />
               <span className="text-muted-foreground">Below target</span>
             </div>
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="w-3 border-t-2 border-dashed border-accent" />
+              <span className="text-muted-foreground">Target</span>
+            </div>
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+            <BarChart
+              data={data}
+              margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+              onMouseMove={(state: any) => {
+                const idx = state?.activeTooltipIndex;
+                setHovered(typeof idx === 'number' ? idx : null);
+              }}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <defs>
+                <linearGradient id="revBarPositive" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART_POSITIVE} stopOpacity={1} />
+                  <stop offset="100%" stopColor={CHART_POSITIVE} stopOpacity={0.55} />
+                </linearGradient>
+                <linearGradient id="revBarNegative" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART_NEGATIVE} stopOpacity={1} />
+                  <stop offset="100%" stopColor={CHART_NEGATIVE} stopOpacity={0.55} />
+                </linearGradient>
+              </defs>
+              {weekendBands.map((b) => (
+                <ReferenceArea
+                  key={`weekend-${b.from}`}
+                  x1={b.from}
+                  x2={b.to}
+                  fill="hsl(var(--muted-foreground))"
+                  fillOpacity={0.06}
+                  ifOverflow="extendDomain"
+                />
+              ))}
               <CartesianGrid {...gridProps} />
               <XAxis 
                 dataKey="date"
@@ -108,17 +140,20 @@ export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
                 tickFormatter={(value) => `R${(value / 1000).toFixed(0)}k`}
                 {...axisProps}
               />
-              <Tooltip content={<CustomTooltip />} cursor={barCursor} />
+              <Tooltip content={<CustomTooltip />} cursor={softCursor} />
               <ReferenceLine 
                 y={dailyTarget} 
                 stroke="hsl(var(--accent))" 
                 strokeDasharray="5 5"
-                label={{ 
-                  value: 'Target', 
-                  position: 'right',
-                  className: 'text-xs fill-accent'
-                }}
-              />
+              >
+                <Label
+                  value="Target"
+                  position="right"
+                  fill="hsl(var(--accent))"
+                  fontSize={11}
+                  fontWeight={600}
+                />
+              </ReferenceLine>
               <Bar
                 dataKey="revenue"
                 radius={[4, 4, 0, 0]}
@@ -130,12 +165,16 @@ export default function RevenueChart({ data, dailyTarget }: RevenueChartProps) {
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.revenue >= dailyTarget
-                      ? CHART_POSITIVE
-                      : CHART_NEGATIVE
+                      ? 'url(#revBarPositive)'
+                      : 'url(#revBarNegative)'
+                    }
+                    fillOpacity={
+                      prefersReducedMotion || hovered === null || hovered === index ? 1 : 0.45
                     }
                   />
                 ))}
               </Bar>
+
             </BarChart>
           </ResponsiveContainer>
         </div>
