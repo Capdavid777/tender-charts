@@ -32,6 +32,7 @@ interface DailyData {
   date: string;
   revenue: number;
   target: number;
+  isWeekend?: boolean;
 }
 
 interface RawDailyData {
