@@ -136,9 +136,15 @@ export default function Dashboard() {
 
   // Calculate display data using only actual data for KPIs
   const dailyData: DailyData[] = useMemoTracked(() => {
+    const isWeekendDay = (d: Date) => d.getDay() === 0 || d.getDay() === 6;
     if (!selectedMonth || !currentTarget.target_revenue) return actualFilteredData.map(d => {
       const date = new Date(d.date);
-      return { date: date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }), revenue: Number(d.revenue), target: 0 };
+      return {
+        date: date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }),
+        revenue: Number(d.revenue),
+        target: 0,
+        isWeekend: isWeekendDay(date),
+      };
     });
     const [year, month] = selectedMonth.split('-').map(Number);
     const daysInMonth = new Date(year, month, 0).getDate();
@@ -149,9 +155,11 @@ export default function Dashboard() {
         date: date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }),
         revenue: Number(d.revenue),
         target: dailyTarget,
+        isWeekend: isWeekendDay(date),
       };
     });
   }, [actualFilteredData, selectedMonth, currentTarget], PERF_SCOPE, 'dailyData');
+
 
   const occupancy = useMemoTracked(() => {
     if (actualFilteredData.length === 0) return 0;
