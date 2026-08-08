@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCountUp } from '@/hooks/useCountUp';
 import Sparkline from '@/components/dashboard/Sparkline';
+import CircularProgress from '@/components/ui/circular-progress';
 import { cn } from '@/lib/utils';
 
 
