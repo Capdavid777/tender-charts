@@ -526,6 +526,7 @@ export default function Dashboard() {
                     icon={<DollarSign className="w-5 h-5 text-primary" />}
                     progress={revenueProgress}
                     variant={revenueProgress >= 80 ? 'success' : revenueProgress >= 60 ? 'warning' : 'danger'}
+                    sparklineData={dailyData.map(d => d.revenue)}
                   />
                 </div>
                 <div className="animate-fade-in-up h-full" style={{ animationDelay: '100ms' }}>
