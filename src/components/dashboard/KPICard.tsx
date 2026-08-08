@@ -80,13 +80,10 @@ export default function KPICard({
               </p>
             )}
           </div>
-          <div className="flex flex-col items-center gap-3 flex-shrink-0 ml-4">
+          <div className="flex-shrink-0 ml-4">
             <div className="p-3 rounded-lg bg-secondary">
               {icon}
             </div>
-            {progressStyle === 'ring' && progress !== undefined && (
-              <CircularProgress value={clampedProgress} variant={variant} size={52} strokeWidth={5} showLabel />
-            )}
           </div>
         </div>
 
@@ -95,7 +92,17 @@ export default function KPICard({
             <Sparkline data={sparklineData} color={variantSparklineColors[variant]} />
           </div>
         )}
-        
+
+        {progressStyle === 'ring' && progress !== undefined && (
+          <div className="mt-auto pt-4 flex items-center gap-3">
+            <CircularProgress value={clampedProgress} variant={variant} size={44} strokeWidth={5} />
+            <div className="min-w-0">
+              <p className="text-sm text-muted-foreground leading-tight">Progress to target</p>
+              <p className="text-sm font-semibold tabular-nums">{progress.toFixed(2)}%</p>
+            </div>
+          </div>
+        )}
+
         {progressStyle !== 'ring' && progress !== undefined && (
           <div className="mt-auto pt-4">
             <div className="flex items-center justify-between text-sm mb-1">
