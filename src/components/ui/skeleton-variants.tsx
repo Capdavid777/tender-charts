@@ -31,6 +31,8 @@ export function KPICardSkeleton({
               </div>
               <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0 ml-4" />
             </div>
+            {/* Sparkline placeholder */}
+            <Skeleton className="h-11 w-full mt-3 rounded-md" />
             {showProgress && (
               <div className="mt-auto pt-4">
                 <div className="flex items-center justify-between text-sm mb-1">
