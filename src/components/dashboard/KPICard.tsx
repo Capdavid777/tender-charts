@@ -40,6 +40,7 @@ export default function KPICard({
   icon, 
   trend, 
   progress,
+  progressStyle = 'bar',
   variant = 'default',
   sparklineData,
 }: KPICardProps) {
@@ -79,8 +80,13 @@ export default function KPICard({
               </p>
             )}
           </div>
-          <div className="flex-shrink-0 p-3 rounded-lg bg-secondary">
-            {icon}
+          <div className="flex flex-col items-center gap-3 flex-shrink-0 ml-4">
+            <div className="p-3 rounded-lg bg-secondary">
+              {icon}
+            </div>
+            {progressStyle === 'ring' && progress !== undefined && (
+              <CircularProgress value={clampedProgress} variant={variant} size={48} strokeWidth={6} />
+            )}
           </div>
         </div>
 
