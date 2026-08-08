@@ -1,7 +1,9 @@
 import { ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCountUp } from '@/hooks/useCountUp';
+import Sparkline from '@/components/dashboard/Sparkline';
 import { cn } from '@/lib/utils';
+
 
 
 interface KPICardProps {
@@ -17,7 +19,15 @@ interface KPICardProps {
   };
   progress?: number;
   variant?: 'default' | 'success' | 'warning' | 'danger';
+  sparklineData?: number[];
 }
+
+const variantSparklineColors: Record<NonNullable<KPICardProps['variant']>, string> = {
+  default: 'hsl(var(--primary))',
+  success: 'hsl(var(--success))',
+  warning: 'hsl(var(--warning))',
+  danger: 'hsl(var(--destructive))',
+};
 
 export default function KPICard({ 
   title, 
@@ -28,7 +38,8 @@ export default function KPICard({
   icon, 
   trend, 
   progress,
-  variant = 'default' 
+  variant = 'default',
+  sparklineData,
 }: KPICardProps) {
   const animatedValue = useCountUp(value);
 
@@ -51,11 +62,11 @@ export default function KPICard({
     )}>
       <CardContent className="p-6 flex flex-col flex-1">
         <div className="flex items-start justify-between">
-          <div className="space-y-1">
+          <div className="space-y-1 min-w-0">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold text-foreground tabular-nums">{animatedValue}</p>
             {subtitle && (
-              <p className="text-sm text-muted-foreground">{subtitle}</p>
+              <p className="text-sm text-muted-foreground truncate">{subtitle}</p>
             )}
             {secondarySubtitle && (
               <p className={cn('text-sm font-medium', secondarySubtitleClassName || 'text-muted-foreground')}>{secondarySubtitle}</p>
@@ -70,6 +81,12 @@ export default function KPICard({
             {icon}
           </div>
         </div>
+
+        {sparklineData && sparklineData.length >= 2 && (
+          <div className="mt-3 -mx-2">
+            <Sparkline data={sparklineData} color={variantSparklineColors[variant]} />
+          </div>
+        )}
         
         {progress !== undefined && (
           <div className="mt-auto pt-4">
