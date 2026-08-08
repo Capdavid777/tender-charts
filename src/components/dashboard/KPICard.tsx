@@ -96,7 +96,7 @@ export default function KPICard({
           </div>
         )}
         
-        {progress !== undefined && (
+        {progressStyle !== 'ring' && progress !== undefined && (
           <div className="mt-auto pt-4">
             <div className="flex items-center justify-between text-sm mb-1">
               <span className="text-muted-foreground">Progress to target</span>
