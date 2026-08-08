@@ -42,6 +42,11 @@ export default function CircularProgress({
       aria-valuemax={100}
       aria-valuenow={Math.round(clamped)}
     >
+      <defs>
+        <filter id={`progress-glow-${variant}`} x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor={variantColors[variant]} floodOpacity="0.45" />
+        </filter>
+      </defs>
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -61,6 +66,7 @@ export default function CircularProgress({
         strokeDasharray={circumference}
         strokeDashoffset={offset}
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        filter={`url(#progress-glow-${variant})`}
         style={{
           transition: prefersReduced ? 'none' : 'stroke-dashoffset 800ms ease-out',
           transformOrigin: 'center',
