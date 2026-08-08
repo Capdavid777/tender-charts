@@ -411,7 +411,7 @@ export default function Dashboard() {
                 <Skeleton className="h-6 w-40 rounded-full" />
                 <Skeleton className="h-6 w-56 rounded-full" />
               </div>
-              <KPICardSkeleton count={4} showProgress />
+              <KPICardSkeleton count={4} showProgress progressStyle="ring" />
             </div>
 
             {/* Analysis Summary Skeleton */}
@@ -519,12 +519,13 @@ export default function Dashboard() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="animate-fade-in-up h-full" style={{ animationDelay: '0ms' }}>
-                  <KPICard
+                <KPICard
                     title="Revenue MTD"
                     value={formatCurrency(totalRevenue)}
                     subtitle={otherIncomeTotal > 0 ? `Rooms: ${formatCurrency(roomRevenue)} + Other: ${formatCurrency(otherIncomeTotal)}` : 'All room types'}
                     icon={<DollarSign className="w-5 h-5 text-primary" />}
                     progress={revenueProgress}
+                    progressStyle="ring"
                     variant={revenueProgress >= 80 ? 'success' : revenueProgress >= 60 ? 'warning' : 'danger'}
                     sparklineData={dailyData.map(d => d.revenue)}
                   />

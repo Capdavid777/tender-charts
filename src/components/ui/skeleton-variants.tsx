@@ -9,12 +9,14 @@ import { cn } from '@/lib/utils';
 interface KPICardSkeletonProps {
   count?: number;
   showProgress?: boolean;
+  progressStyle?: 'bar' | 'ring';
   className?: string;
 }
 
 export function KPICardSkeleton({
   count = 4,
   showProgress = true,
+  progressStyle = 'bar',
   className,
 }: KPICardSkeletonProps) {
   return (
@@ -29,11 +31,16 @@ export function KPICardSkeleton({
                 <Skeleton className="h-4 w-48" />
                 <Skeleton className="h-4 w-36" />
               </div>
-              <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0 ml-4" />
+              <div className="flex flex-col items-center gap-3 flex-shrink-0 ml-4">
+                <Skeleton className="h-10 w-10 rounded-lg" />
+                {showProgress && progressStyle === 'ring' && (
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                )}
+              </div>
             </div>
             {/* Sparkline placeholder */}
             <Skeleton className="h-11 w-full mt-3 rounded-md" />
-            {showProgress && (
+            {showProgress && progressStyle === 'bar' && (
               <div className="mt-auto pt-4">
                 <div className="flex items-center justify-between text-sm mb-1">
                   <Skeleton className="h-4 w-28" />

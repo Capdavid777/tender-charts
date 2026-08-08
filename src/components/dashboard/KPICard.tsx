@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCountUp } from '@/hooks/useCountUp';
 import Sparkline from '@/components/dashboard/Sparkline';
+import CircularProgress from '@/components/ui/circular-progress';
 import { cn } from '@/lib/utils';
 
 
@@ -18,6 +19,7 @@ interface KPICardProps {
     label: string;
   };
   progress?: number;
+  progressStyle?: 'bar' | 'ring';
   variant?: 'default' | 'success' | 'warning' | 'danger';
   sparklineData?: number[];
 }
@@ -38,6 +40,7 @@ export default function KPICard({
   icon, 
   trend, 
   progress,
+  progressStyle = 'bar',
   variant = 'default',
   sparklineData,
 }: KPICardProps) {
@@ -77,8 +80,13 @@ export default function KPICard({
               </p>
             )}
           </div>
-          <div className="flex-shrink-0 p-3 rounded-lg bg-secondary">
-            {icon}
+          <div className="flex flex-col items-center gap-3 flex-shrink-0 ml-4">
+            <div className="p-3 rounded-lg bg-secondary">
+              {icon}
+            </div>
+            {progressStyle === 'ring' && progress !== undefined && (
+              <CircularProgress value={clampedProgress} variant={variant} size={52} strokeWidth={5} showLabel />
+            )}
           </div>
         </div>
 
@@ -88,7 +96,7 @@ export default function KPICard({
           </div>
         )}
         
-        {progress !== undefined && (
+        {progressStyle !== 'ring' && progress !== undefined && (
           <div className="mt-auto pt-4">
             <div className="flex items-center justify-between text-sm mb-1">
               <span className="text-muted-foreground">Progress to target</span>
