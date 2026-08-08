@@ -19,6 +19,7 @@ interface KPICardProps {
     label: string;
   };
   progress?: number;
+  progressStyle?: 'bar' | 'ring';
   variant?: 'default' | 'success' | 'warning' | 'danger';
   sparklineData?: number[];
 }
