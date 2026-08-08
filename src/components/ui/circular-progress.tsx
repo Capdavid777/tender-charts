@@ -47,31 +47,31 @@ export default function CircularProgress({
           <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor={variantColors[variant]} floodOpacity="0.45" />
         </filter>
       </defs>
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="hsl(var(--muted-foreground) / 0.25)"
-        strokeWidth={strokeWidth}
-      />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke={variantColors[variant]}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        filter={`url(#progress-glow-${variant})`}
-        style={{
-          transition: prefersReduced ? 'none' : 'stroke-dashoffset 800ms ease-out',
-          transformOrigin: 'center',
-        }}
-      />
+      <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="hsl(var(--muted-foreground) / 0.25)"
+          strokeWidth={strokeWidth}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={variantColors[variant]}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          filter={`url(#progress-glow-${variant})`}
+          style={{
+            transition: prefersReduced ? 'none' : 'stroke-dashoffset 800ms ease-out',
+          }}
+        />
+      </g>
       {showLabel && (
         <foreignObject x="0" y="0" width={size} height={size}>
           <div className="w-full h-full flex items-center justify-center">
