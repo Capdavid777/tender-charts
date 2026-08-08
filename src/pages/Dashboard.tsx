@@ -411,7 +411,7 @@ export default function Dashboard() {
                 <Skeleton className="h-6 w-40 rounded-full" />
                 <Skeleton className="h-6 w-56 rounded-full" />
               </div>
-              <KPICardSkeleton count={4} showProgress />
+              <KPICardSkeleton count={4} showProgress progressStyle="ring" />
             </div>
 
             {/* Analysis Summary Skeleton */}
