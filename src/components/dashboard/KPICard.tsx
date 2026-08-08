@@ -1,7 +1,9 @@
 import { ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCountUp } from '@/hooks/useCountUp';
+import Sparkline from '@/components/dashboard/Sparkline';
 import { cn } from '@/lib/utils';
+
 
 
 interface KPICardProps {
