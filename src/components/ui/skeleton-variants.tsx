@@ -31,10 +31,10 @@ export function KPICardSkeleton({
                 <Skeleton className="h-4 w-48" />
                 <Skeleton className="h-4 w-36" />
               </div>
-              <div className="flex flex-col items-center gap-3 flex-shrink-0 ml-4">
-                <Skeleton className="h-10 w-10 rounded-lg" />
+              <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+                <Skeleton className="h-9 w-9 rounded-lg" />
                 {showProgress && progressStyle === 'ring' && (
-                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <Skeleton className="h-8 w-8 rounded-full" />
                 )}
               </div>
             </div>
