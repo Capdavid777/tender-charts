@@ -6,6 +6,7 @@ interface CircularProgressProps {
   size?: number;
   strokeWidth?: number;
   variant?: 'default' | 'success' | 'warning' | 'danger';
+  showLabel?: boolean;
   className?: string;
 }
 
@@ -18,9 +19,10 @@ const variantColors: Record<NonNullable<CircularProgressProps['variant']>, strin
 
 export default function CircularProgress({
   value,
-  size = 48,
-  strokeWidth = 6,
+  size = 52,
+  strokeWidth = 5,
   variant = 'default',
+  showLabel = false,
   className,
 }: CircularProgressProps) {
   const prefersReduced = usePrefersReducedMotion();
@@ -34,7 +36,7 @@ export default function CircularProgress({
       width={size}
       height={size}
       viewBox={`0 0 ${size} ${size}`}
-      className={cn('transform -rotate-90', className)}
+      className={cn('overflow-visible', className)}
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
@@ -45,7 +47,7 @@ export default function CircularProgress({
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke="hsl(var(--secondary))"
+        stroke="hsl(var(--muted-foreground) / 0.25)"
         strokeWidth={strokeWidth}
       />
       <circle
@@ -58,10 +60,21 @@ export default function CircularProgress({
         strokeLinecap="round"
         strokeDasharray={circumference}
         strokeDashoffset={offset}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
         style={{
           transition: prefersReduced ? 'none' : 'stroke-dashoffset 800ms ease-out',
+          transformOrigin: 'center',
         }}
       />
+      {showLabel && (
+        <foreignObject x="0" y="0" width={size} height={size}>
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-[10px] font-semibold text-foreground tabular-nums leading-none">
+              {Math.round(clamped)}%
+            </span>
+          </div>
+        </foreignObject>
+      )}
     </svg>
   );
 }
