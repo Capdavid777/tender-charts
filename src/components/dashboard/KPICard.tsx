@@ -80,17 +80,12 @@ export default function KPICard({
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-            <div className="p-2.5 rounded-lg bg-secondary">
+          <div className="flex flex-col items-center gap-3 flex-shrink-0 ml-4">
+            <div className="p-3 rounded-lg bg-secondary">
               {icon}
             </div>
             {progressStyle === 'ring' && progress !== undefined && (
-              <div className="flex items-center gap-1.5">
-                <CircularProgress value={clampedProgress} variant={variant} size={32} strokeWidth={3} />
-                <span className="text-xs font-medium text-muted-foreground tabular-nums">
-                  {clampedProgress.toFixed(0)}%
-                </span>
-              </div>
+              <CircularProgress value={clampedProgress} variant={variant} size={52} strokeWidth={5} showLabel />
             )}
           </div>
         </div>
