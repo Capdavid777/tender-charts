@@ -85,7 +85,7 @@ export default function KPICard({
               {icon}
             </div>
             {progressStyle === 'ring' && progress !== undefined && (
-              <CircularProgress value={clampedProgress} variant={variant} size={48} strokeWidth={6} />
+              <CircularProgress value={clampedProgress} variant={variant} size={52} strokeWidth={5} showLabel />
             )}
           </div>
         </div>
