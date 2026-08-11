@@ -415,7 +415,11 @@ export default function Upload() {
           // Determine the month from daily data (use first record's date)
           const firstDate = state.parsedData.daily[0].date;
           const monthStart = firstDate.substring(0, 8) + '01'; // YYYY-MM-01
-          
+
+          // Actual number of days in that month (never assume 30)
+          const [mYear, mMonth] = monthStart.split('-').map(Number);
+          const daysInMonth = new Date(mYear, mMonth, 0).getDate();
+
           // Create one summary record per room type for this month
           const roomTypeRecords = validRoomTypes
             .filter(rt => roomTypeMap.has(rt.name))
@@ -425,8 +429,9 @@ export default function Upload() {
               revenue: rt.revenue,
               rooms_sold: rt.roomsSold,
               average_rate: rt.avgRate,
-              occupancy: rt.totalRooms > 0 ? rt.roomsSold / (rt.totalRooms * 30) : 0,
+              occupancy: rt.totalRooms > 0 ? rt.roomsSold / (rt.totalRooms * daysInMonth) : 0,
             }));
+
           
           if (roomTypeRecords.length > 0) {
             const { error: rtRevenueError } = await supabase
