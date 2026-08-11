@@ -58,11 +58,9 @@ export default function CommandPalette({ queryClient }: CommandPaletteProps) {
   const { setTheme, resolvedTheme } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
 
-  // Only mount the keyboard listener and dialog for authenticated users.
-  if (!isAuthenticated) return null;
-
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+      if (!isAuthenticated) return;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setOpen(prev => !prev);
@@ -70,7 +68,10 @@ export default function CommandPalette({ queryClient }: CommandPaletteProps) {
     };
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
-  }, []);
+  }, [isAuthenticated]);
+
+  // Only render the dialog for authenticated users.
+  if (!isAuthenticated) return null;
 
   const handleNavigate = useCallback((href: string) => {
     setOpen(false);
