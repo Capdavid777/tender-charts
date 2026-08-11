@@ -54,9 +54,12 @@ const navItems: NavItem[] = [
 export default function CommandPalette({ queryClient }: CommandPaletteProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { isAdmin, logout } = useAuth();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { isAuthenticated, isAdmin, logout } = useAuth();
+  const { setTheme, resolvedTheme } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
+
+  // Only mount the keyboard listener and dialog for authenticated users.
+  if (!isAuthenticated) return null;
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
