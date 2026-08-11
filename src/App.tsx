@@ -39,7 +39,7 @@ function withSuspense(node: React.ReactNode, fallback: React.ReactNode) {
   return <Suspense fallback={fallback}>{node}</Suspense>;
 }
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       // Keep cached data for 24h so persisted entries survive reloads.
@@ -57,6 +57,9 @@ const persister = createSyncStoragePersister({
 
 // Bump when query shapes change to invalidate old persisted data.
 const CACHE_BUSTER = "v1";
+
+// Lazy-load the command palette so it doesn't block initial render.
+const CommandPalette = lazy(() => import("./components/CommandPalette"));
 
 
 // Redirect authenticated users away from login
