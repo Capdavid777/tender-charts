@@ -139,6 +139,9 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
                   <RefreshCw className={cn('w-3 h-3', refreshing && 'animate-spin')} />
                   {refreshing ? 'Refreshing…' : 'Refresh'}
                 </Button>
+                <kbd className="hidden 2xl:inline-flex items-center gap-0.5 rounded border bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
+                  <span className="text-[9px]">⌘</span>K
+                </kbd>
               </div>
               <ThemeToggle />
               <WhatsNewBell />
