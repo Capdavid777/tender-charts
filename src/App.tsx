@@ -172,11 +172,9 @@ const App = () => (
           </ViewTransitionRoutes>
 
           {/* Global command palette — available to authenticated users */}
-          <ProtectedRoute>
-            <Suspense fallback={null}>
-              <CommandPalette queryClient={queryClient} />
-            </Suspense>
-          </ProtectedRoute>
+          <Suspense fallback={null}>
+            <CommandPalette queryClient={queryClient} />
+          </Suspense>
           </MonthProvider>
         </AuthProvider>
       </BrowserRouter>
