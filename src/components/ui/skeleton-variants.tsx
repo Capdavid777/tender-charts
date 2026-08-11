@@ -21,7 +21,10 @@ export function KPICardSkeleton({
 }: KPICardSkeletonProps) {
   return (
     <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4", className)}>
-      {Array.from({ length: count }).map((_, i) => (
+      {Array.from({ length: count }).map((_, i) => {
+        // Only the first card (Revenue MTD) has a sparkline + progress indicator.
+        const isFeatured = i === 0;
+        return (
         <Card key={i} className="h-full flex flex-col overflow-hidden border-l-4 border-l-muted">
           <CardContent className="p-6 flex flex-col flex-1">
             <div className="flex items-start justify-between">
@@ -31,16 +34,25 @@ export function KPICardSkeleton({
                 <Skeleton className="h-4 w-48" />
                 <Skeleton className="h-4 w-36" />
               </div>
-              <div className="flex flex-col items-center gap-3 flex-shrink-0 ml-4">
-                <Skeleton className="h-10 w-10 rounded-lg" />
-                {showProgress && progressStyle === 'ring' && (
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                )}
+              <div className="flex-shrink-0 ml-4">
+                <Skeleton className="h-11 w-11 rounded-lg" />
               </div>
             </div>
-            {/* Sparkline placeholder */}
-            <Skeleton className="h-11 w-full mt-3 rounded-md" />
-            {showProgress && progressStyle === 'bar' && (
+            {isFeatured && (
+              <div className="mt-3 -mx-2">
+                <Skeleton className="h-11 w-full rounded-md" />
+              </div>
+            )}
+            {isFeatured && showProgress && progressStyle === 'ring' && (
+              <div className="mt-auto pt-4 flex items-center gap-3">
+                <Skeleton className="h-11 w-11 rounded-full" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
+              </div>
+            )}
+            {isFeatured && showProgress && progressStyle === 'bar' && (
               <div className="mt-auto pt-4">
                 <div className="flex items-center justify-between text-sm mb-1">
                   <Skeleton className="h-4 w-28" />
@@ -51,7 +63,8 @@ export function KPICardSkeleton({
             )}
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }
