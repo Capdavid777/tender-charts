@@ -104,6 +104,9 @@ export default function CommandPalette({ queryClient }: CommandPaletteProps) {
 
   const visibleNav = navItems.filter(item => !item.adminOnly || isAdmin);
 
+  // Only render the dialog for authenticated users.
+  if (!isAuthenticated) return null;
+
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput placeholder="Type a command or search pages..." />
