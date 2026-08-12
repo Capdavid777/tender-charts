@@ -70,9 +70,6 @@ export default function CommandPalette({ queryClient }: CommandPaletteProps) {
     return () => document.removeEventListener('keydown', down);
   }, [isAuthenticated]);
 
-  // Only render the dialog for authenticated users.
-  if (!isAuthenticated) return null;
-
   const handleNavigate = useCallback((href: string) => {
     setOpen(false);
     navigate(href);
@@ -106,6 +103,9 @@ export default function CommandPalette({ queryClient }: CommandPaletteProps) {
   }, [logout, navigate]);
 
   const visibleNav = navItems.filter(item => !item.adminOnly || isAdmin);
+
+  // Only render the dialog for authenticated users.
+  if (!isAuthenticated) return null;
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
