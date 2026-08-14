@@ -202,10 +202,18 @@ export default function RoomTypes() {
             <h2 className="text-2xl font-bold text-foreground">Room Types</h2>
             <p className="text-muted-foreground">Performance breakdown by room category</p>
           </div>
-          <MonthSelector />
+          <MonthSelector onPrefetchMonth={prefetchMonth} />
         </div>
 
+        <div
+          className={
+            isSwitching && !prefersReducedMotion
+              ? 'space-y-6 opacity-60 transition-opacity duration-200'
+              : 'space-y-6 transition-opacity duration-200'
+          }
+        >
         {/* Summary KPIs */}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
             title="Active Room Types"
