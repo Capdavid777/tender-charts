@@ -540,7 +540,14 @@ export default function Dashboard() {
           )
         ) : (
 
-          <>
+          <div
+            className={cn(
+              'space-y-6 transition-opacity duration-200 motion-reduce:transition-none',
+              isMonthTransitioning && 'opacity-60',
+            )}
+            aria-busy={isMonthTransitioning}
+          >
+
             {/* KPI Cards */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 flex-wrap">
