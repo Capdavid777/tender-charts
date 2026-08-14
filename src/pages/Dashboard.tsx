@@ -60,6 +60,23 @@ function formatMonthLabel(key: string): string {
   return new Date(year, month - 1, 1).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' });
 }
 
+const otherIncomeQueryKey = (month: string | null) => ['dashboard', 'otherIncome', month || 'none'] as const;
+
+async function fetchOtherIncome(selectedMonth: string | null): Promise<OtherIncomeItem[]> {
+  if (!selectedMonth) return [];
+  const [year, month] = selectedMonth.split('-').map(Number);
+  const { data, error } = await supabase
+    .from('other_income')
+    .select('product_type, revenue')
+    .eq('year', year)
+    .eq('month', month)
+    .order('revenue', { ascending: false });
+  if (error) throw error;
+  return (data as OtherIncomeItem[]) || [];
+}
+
+
+
 export default function Dashboard() {
 
   // Render timing: mark start synchronously, record duration after commit.
