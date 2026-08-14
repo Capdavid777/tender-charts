@@ -331,26 +331,7 @@ export default function Dashboard() {
   }, [fetchData]);
 
 
-  // Fetch other income per selected month without blanking the dashboard
-  useEffect(() => {
-    if (!selectedMonth) {
-      setOtherIncomeItems([]);
-      return;
-    }
-    let cancelled = false;
-    const [year, month] = selectedMonth.split('-').map(Number);
-    supabase
-      .from('other_income')
-      .select('product_type, revenue')
-      .eq('year', year)
-      .eq('month', month)
-      .order('revenue', { ascending: false })
-      .then(({ data }) => {
-        if (cancelled) return;
-        setOtherIncomeItems((data as OtherIncomeItem[]) || []);
-      });
-    return () => { cancelled = true; };
-  }, [selectedMonth]);
+
 
   // Calculate KPIs from data (memoized to avoid recomputing on unrelated re-renders)
   const { roomRevenue, totalRevenue, targetRevenue, revenueProgress, variance } = useMemoTracked(() => {
