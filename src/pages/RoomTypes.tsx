@@ -343,7 +343,9 @@ export default function RoomTypes() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
+
     </DashboardLayout>
   );
 }
