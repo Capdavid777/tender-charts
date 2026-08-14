@@ -674,8 +674,8 @@ export default function Dashboard() {
                 />
               </div>
             )}
+          </div>
 
-          </>
         )}
       </div>
       {import.meta.env.DEV && <PerfPanel scope={PERF_SCOPE} />}
