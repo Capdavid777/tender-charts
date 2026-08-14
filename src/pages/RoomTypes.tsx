@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import DashboardLayout from '@/components/layout/DashboardLayout';
