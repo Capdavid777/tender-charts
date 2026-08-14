@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import KPICard from '@/components/dashboard/KPICard';
@@ -59,6 +60,23 @@ function formatMonthLabel(key: string): string {
   return new Date(year, month - 1, 1).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' });
 }
 
+const otherIncomeQueryKey = (month: string | null) => ['dashboard', 'otherIncome', month || 'none'] as const;
+
+async function fetchOtherIncome(selectedMonth: string | null): Promise<OtherIncomeItem[]> {
+  if (!selectedMonth) return [];
+  const [year, month] = selectedMonth.split('-').map(Number);
+  const { data, error } = await supabase
+    .from('other_income')
+    .select('product_type, revenue')
+    .eq('year', year)
+    .eq('month', month)
+    .order('revenue', { ascending: false });
+  if (error) throw error;
+  return (data as OtherIncomeItem[]) || [];
+}
+
+
+
 export default function Dashboard() {
 
   // Render timing: mark start synchronously, record duration after commit.
@@ -78,7 +96,42 @@ export default function Dashboard() {
 
   const [totalRooms, setTotalRooms] = useState(80);
   const [monthlyTargets, setMonthlyTargets] = useState<Record<string, MonthlyTarget>>({});
-  const [otherIncomeItems, setOtherIncomeItems] = useState<OtherIncomeItem[]>([]);
+  // Per-month other income — kept previous month's data on screen while the new month loads.
+  const monthClient = useQueryClient();
+  const otherIncomeQuery = useQuery({
+    queryKey: otherIncomeQueryKey(selectedMonth),
+    queryFn: () => fetchOtherIncome(selectedMonth),
+    placeholderData: keepPreviousData,
+    staleTime: 1000 * 60 * 5,
+  });
+  const otherIncomeItems = otherIncomeQuery.data ?? [];
+
+  // Warm adjacent months so switching feels instant.
+  const prefetchMonth = useCallback((month: string) => {
+    if (!month) return;
+    monthClient.prefetchQuery({
+      queryKey: otherIncomeQueryKey(month),
+      queryFn: () => fetchOtherIncome(month),
+      staleTime: 1000 * 60 * 5,
+    });
+  }, [monthClient]);
+
+  useEffect(() => {
+    if (!selectedMonth) return;
+    const [y, m] = selectedMonth.split('-').map(Number);
+    const shift = (delta: number) => {
+      const d = new Date(y, m - 1 + delta, 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    };
+    const id = window.setTimeout(() => {
+      prefetchMonth(shift(-1));
+      prefetchMonth(shift(1));
+    }, 150);
+    return () => window.clearTimeout(id);
+  }, [selectedMonth, prefetchMonth]);
+
+  const isMonthTransitioning = otherIncomeQuery.isPlaceholderData && otherIncomeQuery.isFetching;
+
   const otherIncomeTotal = useMemo(
     () => otherIncomeItems.reduce((sum, i) => sum + Number(i.revenue), 0),
     [otherIncomeItems],
@@ -295,26 +348,7 @@ export default function Dashboard() {
   }, [fetchData]);
 
 
-  // Fetch other income per selected month without blanking the dashboard
-  useEffect(() => {
-    if (!selectedMonth) {
-      setOtherIncomeItems([]);
-      return;
-    }
-    let cancelled = false;
-    const [year, month] = selectedMonth.split('-').map(Number);
-    supabase
-      .from('other_income')
-      .select('product_type, revenue')
-      .eq('year', year)
-      .eq('month', month)
-      .order('revenue', { ascending: false })
-      .then(({ data }) => {
-        if (cancelled) return;
-        setOtherIncomeItems((data as OtherIncomeItem[]) || []);
-      });
-    return () => { cancelled = true; };
-  }, [selectedMonth]);
+
 
   // Calculate KPIs from data (memoized to avoid recomputing on unrelated re-renders)
   const { roomRevenue, totalRevenue, targetRevenue, revenueProgress, variance } = useMemoTracked(() => {
@@ -383,7 +417,7 @@ export default function Dashboard() {
               <h2 className="text-2xl font-bold text-foreground">Dashboard Overview</h2>
               <p className="text-muted-foreground">Monitor our performance at a glance</p>
             </div>
-            <MonthSelector />
+            <MonthSelector onPrefetchMonth={prefetchMonth} />
           </div>
         )}
 
@@ -506,7 +540,14 @@ export default function Dashboard() {
           )
         ) : (
 
-          <>
+          <div
+            className={cn(
+              'space-y-6 transition-opacity duration-200 motion-reduce:transition-none',
+              isMonthTransitioning && 'opacity-60',
+            )}
+            aria-busy={isMonthTransitioning}
+          >
+
             {/* KPI Cards */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 flex-wrap">
@@ -633,8 +674,8 @@ export default function Dashboard() {
                 />
               </div>
             )}
+          </div>
 
-          </>
         )}
       </div>
       {import.meta.env.DEV && <PerfPanel scope={PERF_SCOPE} />}
