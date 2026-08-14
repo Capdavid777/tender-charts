@@ -35,97 +35,124 @@ interface RoomTypeData {
   rooms: number;
 }
 
+const ROOM_TYPES_STALE_TIME = 1000 * 60 * 5;
+
+const roomTypesQueryKey = (month: string | null) => ['roomTypes', 'summary', month ?? 'latest'] as const;
+
+async function fetchRoomTypeSummary(selectedMonth: string | null) {
+  const { data: rtData } = await supabase
+    .from('room_types')
+    .select('*')
+    .order('name');
+
+  let year: number, monthIdx: number;
+
+  if (selectedMonth) {
+    const parts = selectedMonth.split('-').map(Number);
+    year = parts[0];
+    monthIdx = parts[1] - 1;
+  } else {
+    const { data: latestRecord } = await supabase
+      .from('daily_revenue')
+      .select('date')
+      .is('room_type_id', null)
+      .order('date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const refDate = latestRecord ? new Date(latestRecord.date + 'T00:00:00') : new Date();
+    year = refDate.getFullYear();
+    monthIdx = refDate.getMonth();
+  }
+
+  const month = String(monthIdx + 1).padStart(2, '0');
+  const startDate = `${year}-${month}-01`;
+  const endDate = `${year}-${month}-${new Date(year, monthIdx + 1, 0).getDate()}`;
+
+  const { data: revenueData } = await supabase
+    .from('daily_revenue')
+    .select('revenue, rooms_sold, average_rate, occupancy')
+    .is('room_type_id', null)
+    .gte('date', startDate)
+    .lte('date', endDate);
+
+  const totalRev = revenueData?.reduce((sum, d) => sum + Number(d.revenue || 0), 0) || 0;
+  const totalRoomsSold = revenueData?.reduce((sum, d) => sum + Number(d.rooms_sold || 0), 0) || 0;
+  const calculatedWeightedAdr = totalRoomsSold > 0 ? totalRev / totalRoomsSold : 0;
+
+  const daysWithOccupancy = revenueData?.filter(d => (d.occupancy ?? 0) > 0) || [];
+  const avgOcc = daysWithOccupancy.length > 0
+    ? Number(((daysWithOccupancy.reduce((sum, d) => sum + Number(d.occupancy || 0), 0) / daysWithOccupancy.length) * 100).toFixed(2))
+    : 0;
+
+  const { data: rtRevenueData } = await supabase
+    .from('daily_revenue')
+    .select('room_type_id, revenue, rooms_sold, average_rate, occupancy')
+    .not('room_type_id', 'is', null)
+    .gte('date', startDate)
+    .lte('date', endDate);
+
+  let roomTypesResult: RoomTypeData[] = [];
+  if (rtData && rtData.length > 0) {
+    const validRtData = rtData.filter(rt => rt.name && rt.name.trim() !== '');
+    const rtRevenueMap = new Map<string, { revenue: number; roomsSold: number; occupancy: number }>();
+    rtRevenueData?.forEach(d => {
+      const id = d.room_type_id!;
+      const existing = rtRevenueMap.get(id) || { revenue: 0, roomsSold: 0, occupancy: 0 };
+      existing.revenue += Number(d.revenue || 0);
+      existing.roomsSold += Number(d.rooms_sold || 0);
+      existing.occupancy += Number(d.occupancy || 0);
+      rtRevenueMap.set(id, existing);
+    });
+
+    roomTypesResult = validRtData.map(rt => {
+      const data = rtRevenueMap.get(rt.id);
+      return {
+        name: rt.name,
+        revenue: data?.revenue || 0,
+        occupancy: data ? Number((Math.min(data.occupancy, 1) * 100).toFixed(2)) : 0,
+        adr: data && data.roomsSold > 0 ? Number((data.revenue / data.roomsSold).toFixed(2)) : 0,
+        rooms: rt.total_rooms,
+      };
+    });
+  }
+
+  return { roomTypes: roomTypesResult, totalRevenue: totalRev, weightedAdr: calculatedWeightedAdr, avgOccupancy: avgOcc };
+}
+
 export default function RoomTypes() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [roomTypes, setRoomTypes] = useState<RoomTypeData[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [weightedAdr, setWeightedAdr] = useState(0);
   const [avgOccupancy, setAvgOccupancy] = useState(0);
-  const { selectedMonth } = useMonth();
+  const { selectedMonth, availableMonths } = useMonth();
+  const queryClient = useQueryClient();
 
   const roomTypesQuery = useQuery({
-    queryKey: ['roomTypes', 'summary', selectedMonth ?? 'latest'],
-    queryFn: async () => {
-      const { data: rtData } = await supabase
-        .from('room_types')
-        .select('*')
-        .order('name');
-
-      let year: number, monthIdx: number;
-
-      if (selectedMonth) {
-        const parts = selectedMonth.split('-').map(Number);
-        year = parts[0];
-        monthIdx = parts[1] - 1;
-      } else {
-        const { data: latestRecord } = await supabase
-          .from('daily_revenue')
-          .select('date')
-          .is('room_type_id', null)
-          .order('date', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const refDate = latestRecord ? new Date(latestRecord.date + 'T00:00:00') : new Date();
-        year = refDate.getFullYear();
-        monthIdx = refDate.getMonth();
-      }
-
-      const month = String(monthIdx + 1).padStart(2, '0');
-      const startDate = `${year}-${month}-01`;
-      const endDate = `${year}-${month}-${new Date(year, monthIdx + 1, 0).getDate()}`;
-
-      const { data: revenueData } = await supabase
-        .from('daily_revenue')
-        .select('revenue, rooms_sold, average_rate, occupancy')
-        .is('room_type_id', null)
-        .gte('date', startDate)
-        .lte('date', endDate);
-
-      const totalRev = revenueData?.reduce((sum, d) => sum + Number(d.revenue || 0), 0) || 0;
-      const totalRoomsSold = revenueData?.reduce((sum, d) => sum + Number(d.rooms_sold || 0), 0) || 0;
-      const calculatedWeightedAdr = totalRoomsSold > 0 ? totalRev / totalRoomsSold : 0;
-
-      const daysWithOccupancy = revenueData?.filter(d => (d.occupancy ?? 0) > 0) || [];
-      const avgOcc = daysWithOccupancy.length > 0
-        ? Number(((daysWithOccupancy.reduce((sum, d) => sum + Number(d.occupancy || 0), 0) / daysWithOccupancy.length) * 100).toFixed(2))
-        : 0;
-
-      const { data: rtRevenueData } = await supabase
-        .from('daily_revenue')
-        .select('room_type_id, revenue, rooms_sold, average_rate, occupancy')
-        .not('room_type_id', 'is', null)
-        .gte('date', startDate)
-        .lte('date', endDate);
-
-      let roomTypesResult: RoomTypeData[] = [];
-      if (rtData && rtData.length > 0) {
-        const validRtData = rtData.filter(rt => rt.name && rt.name.trim() !== '');
-        const rtRevenueMap = new Map<string, { revenue: number; roomsSold: number; occupancy: number }>();
-        rtRevenueData?.forEach(d => {
-          const id = d.room_type_id!;
-          const existing = rtRevenueMap.get(id) || { revenue: 0, roomsSold: 0, occupancy: 0 };
-          existing.revenue += Number(d.revenue || 0);
-          existing.roomsSold += Number(d.rooms_sold || 0);
-          existing.occupancy += Number(d.occupancy || 0);
-          rtRevenueMap.set(id, existing);
-        });
-
-        roomTypesResult = validRtData.map(rt => {
-          const data = rtRevenueMap.get(rt.id);
-          return {
-            name: rt.name,
-            revenue: data?.revenue || 0,
-            occupancy: data ? Number((Math.min(data.occupancy, 1) * 100).toFixed(2)) : 0,
-            adr: data && data.roomsSold > 0 ? Number((data.revenue / data.roomsSold).toFixed(2)) : 0,
-            rooms: rt.total_rooms,
-          };
-        });
-      }
-
-      return { roomTypes: roomTypesResult, totalRevenue: totalRev, weightedAdr: calculatedWeightedAdr, avgOccupancy: avgOcc };
-    },
+    queryKey: roomTypesQueryKey(selectedMonth ?? null),
+    queryFn: () => fetchRoomTypeSummary(selectedMonth ?? null),
+    placeholderData: (prev) => prev,
+    staleTime: ROOM_TYPES_STALE_TIME,
   });
+
+  const prefetchMonth = useCallback((month: string) => {
+    queryClient.prefetchQuery({
+      queryKey: roomTypesQueryKey(month),
+      queryFn: () => fetchRoomTypeSummary(month),
+      staleTime: ROOM_TYPES_STALE_TIME,
+    });
+  }, [queryClient]);
+
+  // Warm the adjacent months so nearby switches are instant.
+  useEffect(() => {
+    if (!selectedMonth || availableMonths.length === 0) return;
+    const idx = availableMonths.indexOf(selectedMonth);
+    if (idx === -1) return;
+    [availableMonths[idx - 1], availableMonths[idx + 1]]
+      .filter((m): m is string => Boolean(m))
+      .forEach(prefetchMonth);
+  }, [selectedMonth, availableMonths, prefetchMonth]);
 
   useEffect(() => {
     if (!roomTypesQuery.data) return;
@@ -134,6 +161,9 @@ export default function RoomTypes() {
     setWeightedAdr(roomTypesQuery.data.weightedAdr);
     setAvgOccupancy(roomTypesQuery.data.avgOccupancy);
   }, [roomTypesQuery.data]);
+
+  const isSwitching = roomTypesQuery.isPlaceholderData;
+
 
 
   const totalRoomTypes = roomTypes.length;
