@@ -417,7 +417,7 @@ export default function Dashboard() {
               <h2 className="text-2xl font-bold text-foreground">Dashboard Overview</h2>
               <p className="text-muted-foreground">Monitor our performance at a glance</p>
             </div>
-            <MonthSelector />
+            <MonthSelector onPrefetchMonth={prefetchMonth} />
           </div>
         )}
 
