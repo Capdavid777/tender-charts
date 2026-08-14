@@ -79,7 +79,42 @@ export default function Dashboard() {
 
   const [totalRooms, setTotalRooms] = useState(80);
   const [monthlyTargets, setMonthlyTargets] = useState<Record<string, MonthlyTarget>>({});
-  const [otherIncomeItems, setOtherIncomeItems] = useState<OtherIncomeItem[]>([]);
+  // Per-month other income — kept previous month's data on screen while the new month loads.
+  const monthClient = useQueryClient();
+  const otherIncomeQuery = useQuery({
+    queryKey: otherIncomeQueryKey(selectedMonth),
+    queryFn: () => fetchOtherIncome(selectedMonth),
+    placeholderData: keepPreviousData,
+    staleTime: 1000 * 60 * 5,
+  });
+  const otherIncomeItems = otherIncomeQuery.data ?? [];
+
+  // Warm adjacent months so switching feels instant.
+  const prefetchMonth = useCallback((month: string) => {
+    if (!month) return;
+    monthClient.prefetchQuery({
+      queryKey: otherIncomeQueryKey(month),
+      queryFn: () => fetchOtherIncome(month),
+      staleTime: 1000 * 60 * 5,
+    });
+  }, [monthClient]);
+
+  useEffect(() => {
+    if (!selectedMonth) return;
+    const [y, m] = selectedMonth.split('-').map(Number);
+    const shift = (delta: number) => {
+      const d = new Date(y, m - 1 + delta, 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    };
+    const id = window.setTimeout(() => {
+      prefetchMonth(shift(-1));
+      prefetchMonth(shift(1));
+    }, 150);
+    return () => window.clearTimeout(id);
+  }, [selectedMonth, prefetchMonth]);
+
+  const isMonthTransitioning = otherIncomeQuery.isPlaceholderData && otherIncomeQuery.isFetching;
+
   const otherIncomeTotal = useMemo(
     () => otherIncomeItems.reduce((sum, i) => sum + Number(i.revenue), 0),
     [otherIncomeItems],
