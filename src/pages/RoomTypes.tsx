@@ -38,7 +38,8 @@ interface RoomTypeData {
 
 const ROOM_TYPES_STALE_TIME = 1000 * 60 * 5;
 
-const roomTypesQueryKey = (month: string | null) => ['roomTypes', 'summary', month ?? 'latest'] as const;
+// Versioned so corrected historical occupancy values bypass persisted stale data.
+const roomTypesQueryKey = (month: string | null) => ['roomTypes', 'summary-v2', month ?? 'latest'] as const;
 
 async function fetchRoomTypeSummary(selectedMonth: string | null) {
   const { data: rtData } = await supabase
