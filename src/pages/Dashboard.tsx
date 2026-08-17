@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import KPICard from '@/components/dashboard/KPICard';
@@ -130,7 +131,25 @@ export default function Dashboard() {
     return () => window.clearTimeout(id);
   }, [selectedMonth, prefetchMonth]);
 
-  const isMonthTransitioning = otherIncomeQuery.isPlaceholderData && otherIncomeQuery.isFetching;
+  // Brief settle window on every month change so recomputed charts/tables cross-fade
+  // instead of snapping, even when the data is served straight from cache.
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [monthSettling, setMonthSettling] = useState(false);
+  const firstMonthRef = useRef(true);
+  useEffect(() => {
+    if (!selectedMonth) return;
+    if (firstMonthRef.current) {
+      firstMonthRef.current = false;
+      return;
+    }
+    if (prefersReducedMotion) return;
+    setMonthSettling(true);
+    const id = window.setTimeout(() => setMonthSettling(false), 260);
+    return () => window.clearTimeout(id);
+  }, [selectedMonth, prefersReducedMotion]);
+
+  const isMonthTransitioning =
+    monthSettling || (otherIncomeQuery.isPlaceholderData && otherIncomeQuery.isFetching);
 
   const otherIncomeTotal = useMemo(
     () => otherIncomeItems.reduce((sum, i) => sum + Number(i.revenue), 0),
@@ -504,7 +523,7 @@ export default function Dashboard() {
             <TableSkeleton rows={8} columns={5} withProgressColumn titleWidth="w-36" />
           </>
 
-        ) : filteredData.length === 0 ? (
+        ) : filteredData.length === 0 && !isMonthTransitioning ? (
           allData.length === 0 ? (
             <EmptyState
               icon={<Inbox className="w-6 h-6" />}
@@ -543,11 +562,21 @@ export default function Dashboard() {
 
           <div
             className={cn(
-              'space-y-6 transition-opacity duration-200 motion-reduce:transition-none',
+              'relative space-y-6 transition-opacity duration-200 motion-reduce:transition-none',
               isMonthTransitioning && 'opacity-60',
             )}
             aria-busy={isMonthTransitioning}
           >
+            {/* Subtle indeterminate bar while the new month settles */}
+            {isMonthTransitioning && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -top-2 left-0 right-0 h-0.5 overflow-hidden rounded-full bg-muted"
+              >
+                <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-primary to-transparent" />
+              </div>
+            )}
+
 
             {/* KPI Cards */}
             <div className="space-y-2">
@@ -611,7 +640,9 @@ export default function Dashboard() {
             </div>
 
             {/* Revenue Chart */}
-            {dailyData.length > 0 ? (
+            {isMonthTransitioning && dailyData.length === 0 ? (
+              <ChartSkeleton bars={14} height={300} titleWidth="w-40" />
+            ) : dailyData.length > 0 ? (
               <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
                 <RevenueChart data={dailyData} dailyTarget={dailyData[0]?.target || 0} />
               </div>
