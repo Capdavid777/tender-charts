@@ -130,7 +130,25 @@ export default function Dashboard() {
     return () => window.clearTimeout(id);
   }, [selectedMonth, prefetchMonth]);
 
-  const isMonthTransitioning = otherIncomeQuery.isPlaceholderData && otherIncomeQuery.isFetching;
+  // Brief settle window on every month change so recomputed charts/tables cross-fade
+  // instead of snapping, even when the data is served straight from cache.
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [monthSettling, setMonthSettling] = useState(false);
+  const firstMonthRef = useRef(true);
+  useEffect(() => {
+    if (!selectedMonth) return;
+    if (firstMonthRef.current) {
+      firstMonthRef.current = false;
+      return;
+    }
+    if (prefersReducedMotion) return;
+    setMonthSettling(true);
+    const id = window.setTimeout(() => setMonthSettling(false), 260);
+    return () => window.clearTimeout(id);
+  }, [selectedMonth, prefersReducedMotion]);
+
+  const isMonthTransitioning =
+    monthSettling || (otherIncomeQuery.isPlaceholderData && otherIncomeQuery.isFetching);
 
   const otherIncomeTotal = useMemo(
     () => otherIncomeItems.reduce((sum, i) => sum + Number(i.revenue), 0),
