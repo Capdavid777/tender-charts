@@ -523,7 +523,7 @@ export default function Dashboard() {
             <TableSkeleton rows={8} columns={5} withProgressColumn titleWidth="w-36" />
           </>
 
-        ) : filteredData.length === 0 ? (
+        ) : filteredData.length === 0 && !isMonthTransitioning ? (
           allData.length === 0 ? (
             <EmptyState
               icon={<Inbox className="w-6 h-6" />}
@@ -562,11 +562,21 @@ export default function Dashboard() {
 
           <div
             className={cn(
-              'space-y-6 transition-opacity duration-200 motion-reduce:transition-none',
+              'relative space-y-6 transition-opacity duration-200 motion-reduce:transition-none',
               isMonthTransitioning && 'opacity-60',
             )}
             aria-busy={isMonthTransitioning}
           >
+            {/* Subtle indeterminate bar while the new month settles */}
+            {isMonthTransitioning && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -top-2 left-0 right-0 h-0.5 overflow-hidden rounded-full bg-muted"
+              >
+                <div className="h-full w-1/3 animate-shimmer bg-gradient-to-r from-transparent via-primary to-transparent" />
+              </div>
+            )}
+
 
             {/* KPI Cards */}
             <div className="space-y-2">
@@ -630,7 +640,9 @@ export default function Dashboard() {
             </div>
 
             {/* Revenue Chart */}
-            {dailyData.length > 0 ? (
+            {isMonthTransitioning && dailyData.length === 0 ? (
+              <ChartSkeleton bars={14} height={300} titleWidth="w-40" />
+            ) : dailyData.length > 0 ? (
               <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
                 <RevenueChart data={dailyData} dailyTarget={dailyData[0]?.target || 0} />
               </div>
