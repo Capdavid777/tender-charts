@@ -316,6 +316,7 @@ export default function Dashboard() {
 
       return { lastUpdated: lastUpdatedStr, allData: allDataResult, totalRooms: totalRoomsResult, monthlyTargets: targetsMap };
     },
+    staleTime: 1000 * 60 * 5,
   });
 
   // Mirror query results into existing local state so downstream memos stay untouched.
