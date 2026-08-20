@@ -15,6 +15,7 @@ import { MonthProvider } from "@/contexts/MonthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Login from "./pages/Login";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import { routeLoaders } from "@/lib/routePreload";
 import {
   DashboardSkeleton,
   RoomTypesSkeleton,
