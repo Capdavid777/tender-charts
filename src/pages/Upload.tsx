@@ -119,6 +119,7 @@ export default function Upload() {
   });
   const { toast } = useToast();
   const { refetchMonths } = useMonth();
+  const queryClient = useQueryClient();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
