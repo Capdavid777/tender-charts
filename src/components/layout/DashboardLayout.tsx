@@ -256,28 +256,17 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
         {/* Mobile navigation */}
         <div className="md:hidden border-t">
           <div className="container mx-auto px-4">
-            <nav className="flex items-center gap-1 py-2 overflow-x-auto">
-              {navItems.filter(item => !item.adminOnly || isAdmin).map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link key={item.href} to={item.href}>
-                    <Button
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      size="sm"
-                      className={cn(
-                        'gap-2 shrink-0',
-                        isActive && 'bg-secondary font-medium'
-                      )}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {item.label}
-                    </Button>
-                  </Link>
-                );
-              })}
+            <nav className="py-2 overflow-x-auto">
+              <NavTabs
+                items={visibleNavItems}
+                activeHref={location.pathname}
+                onPreload={handlePreload}
+                scrollActiveIntoView
+                className="pb-1 w-max"
+              />
             </nav>
           </div>
+
         </div>
       </header>
 
