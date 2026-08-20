@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useMonth } from '@/contexts/MonthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -119,6 +120,7 @@ export default function Upload() {
   });
   const { toast } = useToast();
   const { refetchMonths } = useMonth();
+  const queryClient = useQueryClient();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -506,6 +508,11 @@ export default function Upload() {
       }));
       
       refetchMonths();
+      // Fresh data landed — drop every cached dashboard/room-type payload so the
+      // next view refetches instead of showing pre-upload numbers.
+      window.dispatchEvent(new CustomEvent('app:refresh-data'));
+      await queryClient.invalidateQueries();
+
       
       toast({
         title: 'Upload Successful',
