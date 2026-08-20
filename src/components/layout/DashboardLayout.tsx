@@ -191,27 +191,15 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
             </div>
 
             {/* Navigation */}
-            <nav className="hidden md:flex items-center gap-1">
-              {navItems.filter(item => !item.adminOnly || isAdmin).map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link key={item.href} to={item.href}>
-                    <Button
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      size="sm"
-                      className={cn(
-                        'gap-2',
-                        isActive && 'bg-secondary font-medium'
-                      )}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {item.label}
-                    </Button>
-                  </Link>
-                );
-              })}
+            <nav className="hidden md:flex items-center self-stretch">
+              <NavTabs
+                items={visibleNavItems}
+                activeHref={location.pathname}
+                onPreload={handlePreload}
+                className="h-16"
+              />
             </nav>
+
 
             {/* Right side */}
             <div className="flex items-center gap-2 lg:gap-4 min-w-0">
