@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +18,9 @@ import {
 import rsLogo from '@/assets/rs-logo.png';
 import WhatsNewBell from '@/components/WhatsNewBell';
 import ThemeToggle from '@/components/ThemeToggle';
+import { preloadRoute } from '@/lib/routePreload';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useMonth } from '@/contexts/MonthContext';
 
 import { cn } from '@/lib/utils';
 
@@ -37,6 +40,98 @@ const navItems = [
   { href: '/upload', label: 'Upload Data', icon: Upload, adminOnly: true },
 ];
 
+type NavItem = (typeof navItems)[number];
+
+/** Nav row with a single accent indicator that slides between the active items. */
+function NavTabs({
+  items,
+  activeHref,
+  onPreload,
+  className,
+  scrollActiveIntoView = false,
+}: {
+  items: NavItem[];
+  activeHref: string;
+  onPreload: (href: string) => void;
+  className?: string;
+  scrollActiveIntoView?: boolean;
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  const measure = useCallback(() => {
+    const container = containerRef.current;
+    const el = itemRefs.current[activeHref];
+    if (!container || !el) {
+      setIndicator(null);
+      return;
+    }
+    setIndicator({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [activeHref]);
+
+  useLayoutEffect(() => {
+    measure();
+  }, [measure, items.length]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [measure]);
+
+  useEffect(() => {
+    if (!scrollActiveIntoView) return;
+    itemRefs.current[activeHref]?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+  }, [activeHref, scrollActiveIntoView, prefersReducedMotion]);
+
+  return (
+    <div ref={containerRef} className={cn('relative flex items-center gap-1', className)}>
+      {items.map((item) => {
+        const Icon = item.icon;
+        const isActive = activeHref === item.href;
+        return (
+          <Link
+            key={item.href}
+            to={item.href}
+            ref={(el) => { itemRefs.current[item.href] = el; }}
+            onMouseEnter={() => onPreload(item.href)}
+            onFocus={() => onPreload(item.href)}
+            onTouchStart={() => onPreload(item.href)}
+            className="shrink-0"
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                'gap-2 shrink-0 transition-colors',
+                isActive ? 'font-medium text-foreground' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <Icon className="w-4 h-4" />
+              {item.label}
+            </Button>
+          </Link>
+        );
+      })}
+      {indicator && (
+        <span
+          aria-hidden
+          className={cn(
+            'pointer-events-none absolute bottom-0 left-0 h-0.5 rounded-full bg-primary',
+            !prefersReducedMotion && 'transition-transform transition-[width] duration-300 ease-out',
+          )}
+          style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }}
+        />
+      )}
+    </div>
+  );
+}
+
+
 export default function DashboardLayout({ children, lastUpdated }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -50,6 +145,16 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
 
   const [refreshing, setRefreshing] = useState(false);
   const queryClient = useQueryClient();
+  const { selectedMonth } = useMonth();
+
+  const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
+
+  // Warm the route chunk (and its data, when the page exposes a prefetch hook) on hover/focus.
+  const handlePreload = useCallback(
+    (href: string) => preloadRoute(href, queryClient, selectedMonth || undefined),
+    [queryClient, selectedMonth],
+  );
+
 
   const handleRefresh = async () => {
     if (refreshing) return;
@@ -96,27 +201,15 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
             </div>
 
             {/* Navigation */}
-            <nav className="hidden md:flex items-center gap-1">
-              {navItems.filter(item => !item.adminOnly || isAdmin).map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link key={item.href} to={item.href}>
-                    <Button
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      size="sm"
-                      className={cn(
-                        'gap-2',
-                        isActive && 'bg-secondary font-medium'
-                      )}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {item.label}
-                    </Button>
-                  </Link>
-                );
-              })}
+            <nav className="hidden md:flex items-center self-stretch">
+              <NavTabs
+                items={visibleNavItems}
+                activeHref={location.pathname}
+                onPreload={handlePreload}
+                className="h-16"
+              />
             </nav>
+
 
             {/* Right side */}
             <div className="flex items-center gap-2 lg:gap-4 min-w-0">
@@ -161,28 +254,17 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
         {/* Mobile navigation */}
         <div className="md:hidden border-t">
           <div className="container mx-auto px-4">
-            <nav className="flex items-center gap-1 py-2 overflow-x-auto">
-              {navItems.filter(item => !item.adminOnly || isAdmin).map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link key={item.href} to={item.href}>
-                    <Button
-                      variant={isActive ? 'secondary' : 'ghost'}
-                      size="sm"
-                      className={cn(
-                        'gap-2 shrink-0',
-                        isActive && 'bg-secondary font-medium'
-                      )}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {item.label}
-                    </Button>
-                  </Link>
-                );
-              })}
+            <nav className="py-2 overflow-x-auto">
+              <NavTabs
+                items={visibleNavItems}
+                activeHref={location.pathname}
+                onPreload={handlePreload}
+                scrollActiveIntoView
+                className="pb-1 w-max"
+              />
             </nav>
           </div>
+
         </div>
       </header>
 

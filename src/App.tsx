@@ -15,6 +15,7 @@ import { MonthProvider } from "@/contexts/MonthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Login from "./pages/Login";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import { routeLoaders } from "@/lib/routePreload";
 import {
   DashboardSkeleton,
   RoomTypesSkeleton,
@@ -26,13 +27,13 @@ import {
   NotFoundSkeleton,
 } from "./components/PageSkeletons";
 
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const RoomTypes = lazy(() => import("./pages/RoomTypes"));
-const Historical = lazy(() => import("./pages/Historical"));
-const Upload = lazy(() => import("./pages/Upload"));
-const Analysis = lazy(() => import("./pages/Analysis"));
-const WebsiteAnalytics = lazy(() => import("./pages/WebsiteAnalytics"));
-const Changelog = lazy(() => import("./pages/Changelog"));
+const Dashboard = lazy(() => routeLoaders["/dashboard"]());
+const RoomTypes = lazy(() => routeLoaders["/room-types"]());
+const Historical = lazy(() => routeLoaders["/historical"]());
+const Upload = lazy(() => routeLoaders["/upload"]());
+const Analysis = lazy(() => routeLoaders["/analysis"]());
+const WebsiteAnalytics = lazy(() => routeLoaders["/website-analytics"]());
+const Changelog = lazy(() => routeLoaders["/changelog"]());
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function withSuspense(node: React.ReactNode, fallback: React.ReactNode) {
