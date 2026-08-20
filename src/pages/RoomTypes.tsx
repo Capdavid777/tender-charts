@@ -122,6 +122,16 @@ async function fetchRoomTypeSummary(selectedMonth: string | null) {
   return { roomTypes: roomTypesResult, totalRevenue: totalRev, weightedAdr: calculatedWeightedAdr, avgOccupancy: avgOcc };
 }
 
+/** Called by nav hover preloading once this chunk is loaded — warms the current month's data. */
+export function prefetchRouteData(queryClient: QueryClient, month?: string) {
+  queryClient.prefetchQuery({
+    queryKey: roomTypesQueryKey(month ?? null),
+    queryFn: () => fetchRoomTypeSummary(month ?? null),
+    staleTime: ROOM_TYPES_STALE_TIME,
+  });
+}
+
+
 export default function RoomTypes() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [roomTypes, setRoomTypes] = useState<RoomTypeData[]>([]);
