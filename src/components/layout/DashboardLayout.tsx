@@ -145,6 +145,16 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
 
   const [refreshing, setRefreshing] = useState(false);
   const queryClient = useQueryClient();
+  const { selectedMonth } = useMonth();
+
+  const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
+
+  // Warm the route chunk (and its data, when the page exposes a prefetch hook) on hover/focus.
+  const handlePreload = useCallback(
+    (href: string) => preloadRoute(href, queryClient, selectedMonth || undefined),
+    [queryClient, selectedMonth],
+  );
+
 
   const handleRefresh = async () => {
     if (refreshing) return;
