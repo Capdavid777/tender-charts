@@ -506,6 +506,11 @@ export default function Upload() {
       }));
       
       refetchMonths();
+      // Fresh data landed — drop every cached dashboard/room-type payload so the
+      // next view refetches instead of showing pre-upload numbers.
+      window.dispatchEvent(new CustomEvent('app:refresh-data'));
+      await queryClient.invalidateQueries();
+
       
       toast({
         title: 'Upload Successful',
