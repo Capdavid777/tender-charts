@@ -124,11 +124,150 @@ export default function DailyDataTable({ data, dailyTarget = 0, title = 'Daily B
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* ---------- Mobile: stacked cards ---------- */}
+        <div className="sm:hidden">
+          {/* Compact sort control mirrors the desktop column sorting */}
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {([
+              { label: 'Date', key: 'date' },
+              { label: 'Revenue', key: 'revenue' },
+              { label: 'Rooms', key: 'rooms_sold' },
+              { label: 'Occ.', key: 'occupancy' },
+              { label: 'ADR', key: 'average_rate' },
+            ] as { label: string; key: SortKey }[]).map(({ label, key }) => {
+              const active = sortKey === key;
+              const Icon = active ? (sortDir === 'asc' ? ArrowUp : ArrowDown) : ChevronsUpDown;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => toggleSort(key)}
+                  aria-pressed={active}
+                  aria-label={`Sort by ${label}`}
+                  className={cn(
+                    'flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                    active
+                      ? 'border-primary/40 bg-primary/10 text-foreground'
+                      : 'border-border bg-secondary/40 text-muted-foreground'
+                  )}
+                >
+                  {label}
+                  <Icon className={cn('w-3 h-3', !active && 'opacity-40')} />
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="max-h-[420px] overflow-auto space-y-2 pr-0.5">
+            {sorted.map((d, i) => {
+              const dateLabel = new Date(d.date).toLocaleDateString('en-ZA', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+              });
+              const occ = d.occupancy != null && d.occupancy > 0 ? d.occupancy * 100 : null;
+              const progressPct = dailyTarget > 0 ? (d.revenue / dailyTarget) * 100 : 0;
+              const progress = Math.min(progressPct, 100);
+              const isBest = d.date === bestDate;
+              const isWorst = d.date === worstDate;
+              const isToday = d.date === todayStr;
+
+              return (
+                <div
+                  key={d.date}
+                  className={cn(
+                    'rounded-lg border border-l-4 bg-card p-3',
+                    isBest ? 'border-l-success bg-success/5' : isWorst ? 'border-l-destructive bg-destructive/5' : 'border-l-border',
+                    isToday && 'ring-1 ring-inset ring-primary/40',
+                    !prefersReduced && 'animate-fade-in'
+                  )}
+                  style={!prefersReduced ? { animationDelay: `${Math.min(i * 12, 300)}ms`, animationFillMode: 'both' } : undefined}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-sm font-medium">
+                      {dateLabel}
+                      {isBest && (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-success bg-success/15 px-1.5 py-0.5 rounded">Best</span>
+                      )}
+                      {isWorst && (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-destructive bg-destructive/15 px-1.5 py-0.5 rounded">Lowest</span>
+                      )}
+                    </div>
+                    <div className="text-base font-semibold tabular-nums">{formatCurrency(d.revenue)}</div>
+                  </div>
+
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Rooms</div>
+                      <div className="text-sm tabular-nums">{d.rooms_sold ?? '—'}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Occupancy</div>
+                      <div className="text-sm tabular-nums">{occ != null ? formatPercent(occ) : '—'}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">ADR</div>
+                      <div className="text-sm tabular-nums">
+                        {(d.average_rate ?? 0) > 0 ? formatCurrency(d.average_rate!) : '—'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {dailyTarget > 0 && (
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            'h-full rounded-full transition-all duration-500',
+                            progressPct >= 100 ? 'bg-success' : progressPct >= 80 ? 'bg-accent' : 'bg-warning'
+                          )}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] font-medium text-muted-foreground w-9 text-right tabular-nums">
+                        {Math.round(progressPct)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Totals card */}
+          <div className="mt-2 rounded-lg border-2 border-border bg-secondary p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-semibold">Total / Avg</span>
+              <span className="text-base font-semibold tabular-nums">{formatCurrency(totalRevenue)}</span>
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Rooms</div>
+                <div className="text-sm font-semibold tabular-nums">{totalRoomsSold}</div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg Occ.</div>
+                <div className="text-sm font-semibold tabular-nums">
+                  {avgOccupancy > 0 ? formatPercent(avgOccupancy * 100) : '—'}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg ADR</div>
+                <div className="text-sm font-semibold tabular-nums">
+                  {avgRate > 0 ? formatCurrency(Math.round(avgRate)) : '—'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ---------- Desktop: table ---------- */}
         {/* The shadcn Table renders its own overflow wrapper, so constrain that
             element directly — otherwise it, not this div, is the scrollport and
             the sticky header/footer never pin. */}
-        <div className="[&>div]:max-h-[400px] [&>div]:overflow-auto">
+        <div className="hidden sm:block [&>div]:max-h-[400px] [&>div]:overflow-auto">
           <Table>
+
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <SortHead label="Date" colKey="date" align="left" />
