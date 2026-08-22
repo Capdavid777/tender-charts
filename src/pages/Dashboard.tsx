@@ -352,47 +352,11 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
 
   const dashboardQuery = useQuery({
-    queryKey: ['dashboard', 'core'],
-    queryFn: async () => {
-      const [uploadsRes, revenueRes, roomTypesRes, targetsRes] = await Promise.all([
-        supabase.from('data_uploads').select('uploaded_at').order('uploaded_at', { ascending: false }).limit(1),
-        supabase.from('daily_revenue').select('date, revenue, rooms_sold, average_rate, occupancy').is('room_type_id', null).order('date', { ascending: true }),
-        supabase.from('room_types').select('total_rooms'),
-        supabase.from('monthly_targets').select('*'),
-      ]);
-
-      const firstError = [uploadsRes, revenueRes, roomTypesRes, targetsRes]
-        .map((r: any) => r?.error)
-        .find(Boolean);
-      if (firstError) throw firstError;
-
-      const lastUpdatedStr = uploadsRes.data && uploadsRes.data.length > 0
-        ? new Date(uploadsRes.data[0].uploaded_at).toLocaleDateString('en-ZA', {
-            day: 'numeric', month: 'short', year: 'numeric',
-            hour: '2-digit', minute: '2-digit',
-          })
-        : 'No data uploaded yet';
-
-      const allDataResult = (revenueRes.data || []) as RawDailyData[];
-      const totalRoomsResult = (roomTypesRes.data || []).reduce((sum, rt) => sum + (rt.total_rooms || 0), 0) || 80;
-
-      const targetsMap: Record<string, MonthlyTarget> = {};
-      (targetsRes.data || []).forEach(t => {
-        const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
-        targetsMap[key] = {
-          target_revenue: Number(t.target_revenue),
-          target_occupancy: Number(t.target_occupancy),
-          available_rooms: Number((t as any).available_rooms || 0),
-          breakeven_rate: Number((t as any).breakeven_rate || 0),
-          breakeven_occupancy: Number((t as any).breakeven_occupancy || 0),
-          room_cost_per_occupied: Number((t as any).room_cost_per_occupied || 0),
-        };
-      });
-
-      return { lastUpdated: lastUpdatedStr, allData: allDataResult, totalRooms: totalRoomsResult, monthlyTargets: targetsMap };
-    },
-    staleTime: 1000 * 60 * 5,
+    queryKey: DASHBOARD_CORE_KEY,
+    queryFn: fetchDashboardCore,
+    staleTime: CORE_STALE_TIME,
   });
+
 
   // Mirror query results into existing local state so downstream memos stay untouched.
   // Show cached data instantly on load; refresh in the background.
