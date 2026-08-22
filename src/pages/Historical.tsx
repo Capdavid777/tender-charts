@@ -28,23 +28,12 @@ interface YearData {
   avgRate: number;
 }
 
-export default function Historical() {
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const [sortColumn, setSortColumn] = useState<string>('year');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const { selectedMonth } = useMonth();
+const historicalQueryKey = (monthNum: number | null) => ['historical-by-month', monthNum] as const;
+const HISTORICAL_STALE_TIME = 1000 * 60 * 5;
 
-  // Extract the month number from selectedMonth (e.g. "2026-01" -> 1)
-  const monthNum = selectedMonth ? Number(selectedMonth.split('-')[1]) : null;
-  const monthName = monthNum
-    ? new Date(2000, monthNum - 1).toLocaleDateString('en-ZA', { month: 'long' })
-    : '';
+async function fetchHistoricalByMonth(monthNum: number): Promise<YearData[]> {
+  {
 
-  // Fetch daily_revenue for the selected month across ALL years, plus annual_summary fallback
-  const { data: historicalData = [] } = useQuery<YearData[]>({
-    queryKey: ['historical-by-month', monthNum],
-    enabled: monthNum !== null,
-    queryFn: async () => {
       const [dailyRes, annualRes] = await Promise.all([
         supabase
           .from('daily_revenue')
