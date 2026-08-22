@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import MonthSelector from '@/components/MonthSelector';
 import { useMonth } from '@/contexts/MonthContext';
@@ -16,6 +16,31 @@ import DOMPurify from 'dompurify';
 
 const MONTH_NAMES = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+const analysisQueryKey = (month: string) => ['monthly-analysis', month] as const;
+const ANALYSIS_STALE_TIME = 1000 * 60 * 5;
+
+async function fetchMonthlyAnalysis(monthKey: string) {
+  const [year, month] = monthKey.split('-').map(Number);
+  const { data, error } = await supabase
+    .from('monthly_analyses')
+    .select('*')
+    .eq('year', year)
+    .eq('month', month)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/** Warm the Analysis page's data when its nav link is hovered/focused. */
+export function prefetchRouteData(queryClient: QueryClient, month?: string) {
+  if (!month) return;
+  queryClient.prefetchQuery({
+    queryKey: analysisQueryKey(month),
+    queryFn: () => fetchMonthlyAnalysis(month),
+    staleTime: ANALYSIS_STALE_TIME,
+  });
+}
+
 export default function Analysis() {
   const { selectedMonth } = useMonth();
   const [editing, setEditing] = useState(false);
@@ -29,18 +54,11 @@ export default function Analysis() {
   const monthLabel = `${MONTH_NAMES[month]} ${year}`;
 
   const { data: analysis, isLoading } = useQuery({
-    queryKey: ['monthly-analysis', selectedMonth],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('monthly_analyses')
-        .select('*')
-        .eq('year', year)
-        .eq('month', month)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryKey: analysisQueryKey(selectedMonth),
+    queryFn: () => fetchMonthlyAnalysis(selectedMonth),
+    staleTime: ANALYSIS_STALE_TIME,
   });
+
 
   const saveMutation = useMutation({
     mutationFn: async () => {

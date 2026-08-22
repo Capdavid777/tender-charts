@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData, type QueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
@@ -75,10 +75,66 @@ async function fetchOtherIncome(selectedMonth: string | null): Promise<OtherInco
   if (error) throw error;
   return (data as OtherIncomeItem[]) || [];
 }
+const DASHBOARD_CORE_KEY = ['dashboard', 'core'] as const;
+const CORE_STALE_TIME = 1000 * 60 * 5;
 
+async function fetchDashboardCore() {
+  const [uploadsRes, revenueRes, roomTypesRes, targetsRes] = await Promise.all([
+    supabase.from('data_uploads').select('uploaded_at').order('uploaded_at', { ascending: false }).limit(1),
+    supabase.from('daily_revenue').select('date, revenue, rooms_sold, average_rate, occupancy').is('room_type_id', null).order('date', { ascending: true }),
+    supabase.from('room_types').select('total_rooms'),
+    supabase.from('monthly_targets').select('*'),
+  ]);
 
+  const firstError = [uploadsRes, revenueRes, roomTypesRes, targetsRes]
+    .map((r: any) => r?.error)
+    .find(Boolean);
+  if (firstError) throw firstError;
+
+  const lastUpdatedStr = uploadsRes.data && uploadsRes.data.length > 0
+    ? new Date(uploadsRes.data[0].uploaded_at).toLocaleDateString('en-ZA', {
+        day: 'numeric', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      })
+    : 'No data uploaded yet';
+
+  const allDataResult = (revenueRes.data || []) as RawDailyData[];
+  const totalRoomsResult = (roomTypesRes.data || []).reduce((sum, rt) => sum + (rt.total_rooms || 0), 0) || 80;
+
+  const targetsMap: Record<string, MonthlyTarget> = {};
+  (targetsRes.data || []).forEach(t => {
+    const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
+    targetsMap[key] = {
+      target_revenue: Number(t.target_revenue),
+      target_occupancy: Number(t.target_occupancy),
+      available_rooms: Number((t as any).available_rooms || 0),
+      breakeven_rate: Number((t as any).breakeven_rate || 0),
+      breakeven_occupancy: Number((t as any).breakeven_occupancy || 0),
+      room_cost_per_occupied: Number((t as any).room_cost_per_occupied || 0),
+    };
+  });
+
+  return { lastUpdated: lastUpdatedStr, allData: allDataResult, totalRooms: totalRoomsResult, monthlyTargets: targetsMap };
+}
+
+/** Warm the Dashboard's data when its nav link is hovered/focused. */
+export function prefetchRouteData(queryClient: QueryClient, month?: string) {
+  queryClient.prefetchQuery({
+    queryKey: DASHBOARD_CORE_KEY,
+    queryFn: fetchDashboardCore,
+    staleTime: CORE_STALE_TIME,
+  });
+  if (month) {
+    queryClient.prefetchQuery({
+      queryKey: otherIncomeQueryKey(month),
+      queryFn: () => fetchOtherIncome(month),
+      staleTime: CORE_STALE_TIME,
+    });
+  }
+}
 
 export default function Dashboard() {
+
 
   // Render timing: mark start synchronously, record duration after commit.
   const renderStart = useRef(performance.now());
@@ -296,47 +352,11 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
 
   const dashboardQuery = useQuery({
-    queryKey: ['dashboard', 'core'],
-    queryFn: async () => {
-      const [uploadsRes, revenueRes, roomTypesRes, targetsRes] = await Promise.all([
-        supabase.from('data_uploads').select('uploaded_at').order('uploaded_at', { ascending: false }).limit(1),
-        supabase.from('daily_revenue').select('date, revenue, rooms_sold, average_rate, occupancy').is('room_type_id', null).order('date', { ascending: true }),
-        supabase.from('room_types').select('total_rooms'),
-        supabase.from('monthly_targets').select('*'),
-      ]);
-
-      const firstError = [uploadsRes, revenueRes, roomTypesRes, targetsRes]
-        .map((r: any) => r?.error)
-        .find(Boolean);
-      if (firstError) throw firstError;
-
-      const lastUpdatedStr = uploadsRes.data && uploadsRes.data.length > 0
-        ? new Date(uploadsRes.data[0].uploaded_at).toLocaleDateString('en-ZA', {
-            day: 'numeric', month: 'short', year: 'numeric',
-            hour: '2-digit', minute: '2-digit',
-          })
-        : 'No data uploaded yet';
-
-      const allDataResult = (revenueRes.data || []) as RawDailyData[];
-      const totalRoomsResult = (roomTypesRes.data || []).reduce((sum, rt) => sum + (rt.total_rooms || 0), 0) || 80;
-
-      const targetsMap: Record<string, MonthlyTarget> = {};
-      (targetsRes.data || []).forEach(t => {
-        const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
-        targetsMap[key] = {
-          target_revenue: Number(t.target_revenue),
-          target_occupancy: Number(t.target_occupancy),
-          available_rooms: Number((t as any).available_rooms || 0),
-          breakeven_rate: Number((t as any).breakeven_rate || 0),
-          breakeven_occupancy: Number((t as any).breakeven_occupancy || 0),
-          room_cost_per_occupied: Number((t as any).room_cost_per_occupied || 0),
-        };
-      });
-
-      return { lastUpdated: lastUpdatedStr, allData: allDataResult, totalRooms: totalRoomsResult, monthlyTargets: targetsMap };
-    },
-    staleTime: 1000 * 60 * 5,
+    queryKey: DASHBOARD_CORE_KEY,
+    queryFn: fetchDashboardCore,
+    staleTime: CORE_STALE_TIME,
   });
+
 
   // Mirror query results into existing local state so downstream memos stay untouched.
   // Show cached data instantly on load; refresh in the background.
