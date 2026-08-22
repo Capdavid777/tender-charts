@@ -47,32 +47,58 @@ const COUNTRY_NAMES: Record<string, string> = {
 const monthLabel = (iso: string) =>
   new Date(iso + 'T00:00:00').toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' });
 
+const WEB_ANALYTICS_KEY = ['website-analytics', 'reports'] as const;
+const WEB_ANALYTICS_STALE_TIME = 1000 * 60 * 5;
+
+async function fetchWebsiteReports(): Promise<Report[]> {
+  const { data, error } = await supabase
+    .from('website_analytics_reports')
+    .select('*')
+    .order('month', { ascending: false });
+  if (error) throw error;
+  return (data || []) as any as Report[];
+}
+
+/** Warm the Website Analytics page's data when its nav link is hovered/focused. */
+export function prefetchRouteData(queryClient: QueryClient) {
+  queryClient.prefetchQuery({
+    queryKey: WEB_ANALYTICS_KEY,
+    queryFn: fetchWebsiteReports,
+    staleTime: WEB_ANALYTICS_STALE_TIME,
+  });
+}
+
 export default function WebsiteAnalytics() {
   const reducedMotion = usePrefersReducedMotion();
   const anim = reducedMotion ? 0 : 900;
 
-  const [reports, setReports] = useState<Report[]>([]);
   const [selected, setSelected] = useState<string>('');
-  const [loading, setLoading] = useState(true);
   const [highlightRoom, setHighlightRoom] = useState<string | null>(null);
 
+  const reportsQuery = useQuery({
+    queryKey: WEB_ANALYTICS_KEY,
+    queryFn: fetchWebsiteReports,
+    staleTime: WEB_ANALYTICS_STALE_TIME,
+  });
+  const reports = useMemo(() => reportsQuery.data ?? [], [reportsQuery.data]);
+  const loading = reportsQuery.isPending && !reportsQuery.data;
+
   useEffect(() => {
-    (async () => {
-      const { data, error } = await supabase
-        .from('website_analytics_reports')
-        .select('*')
-        .order('month', { ascending: false });
-      if (error) {
-        toast({ title: 'Failed to load reports', description: error.message, variant: 'destructive' });
-      } else if (data) {
-        setReports(data as any);
-        if (data.length) setSelected(data[0].month);
-      }
-      setLoading(false);
-    })();
-  }, []);
+    if (reportsQuery.error) {
+      toast({
+        title: 'Failed to load reports',
+        description: (reportsQuery.error as Error)?.message,
+        variant: 'destructive',
+      });
+    }
+  }, [reportsQuery.error]);
+
+  useEffect(() => {
+    if (!selected && reports.length) setSelected(reports[0].month);
+  }, [reports, selected]);
 
   const report = useMemo(() => reports.find(r => r.month === selected), [reports, selected]);
+
 
   if (loading) {
     return (
