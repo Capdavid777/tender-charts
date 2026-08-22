@@ -96,8 +96,41 @@ async function fetchHistoricalByMonth(monthNum: number): Promise<YearData[]> {
             ? Number((d.rates.reduce((s, v) => s + v, 0) / d.rates.length).toFixed(2))
             : 0,
         }));
-    },
+  }
+}
+
+/** Warm the Historical page's data when its nav link is hovered/focused. */
+export function prefetchRouteData(queryClient: QueryClient, month?: string) {
+  const monthNum = month ? Number(month.split('-')[1]) : null;
+  if (!monthNum) return;
+  queryClient.prefetchQuery({
+    queryKey: historicalQueryKey(monthNum),
+    queryFn: () => fetchHistoricalByMonth(monthNum),
+    staleTime: HISTORICAL_STALE_TIME,
   });
+}
+
+export default function Historical() {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [sortColumn, setSortColumn] = useState<string>('year');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const { selectedMonth } = useMonth();
+
+  // Extract the month number from selectedMonth (e.g. "2026-01" -> 1)
+  const monthNum = selectedMonth ? Number(selectedMonth.split('-')[1]) : null;
+  const monthName = monthNum
+    ? new Date(2000, monthNum - 1).toLocaleDateString('en-ZA', { month: 'long' })
+    : '';
+
+  // Fetch daily_revenue for the selected month across ALL years, plus annual_summary fallback
+  const { data: historicalData = [] } = useQuery<YearData[]>({
+    queryKey: historicalQueryKey(monthNum),
+    enabled: monthNum !== null,
+    queryFn: () => fetchHistoricalByMonth(monthNum as number),
+    staleTime: HISTORICAL_STALE_TIME,
+  });
+
+
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
