@@ -263,7 +263,71 @@ export default function Historical() {
             <CardTitle>Year-by-Year {monthName} Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Mobile: stacked cards */}
+            <div className="sm:hidden">
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {[
+                  { key: 'year', label: 'Year' },
+                  { key: 'revenue', label: 'Revenue' },
+                  { key: 'roomsSold', label: 'Rooms' },
+                  { key: 'occupancy', label: 'Occ.' },
+                  { key: 'avgRate', label: 'Avg Rate' },
+                ].map(({ key, label }) => {
+                  const active = sortColumn === key;
+                  const Icon = sortDirection === 'asc' ? TrendingUp : TrendingDown;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleSort(key)}
+                      aria-pressed={active}
+                      aria-label={`Sort by ${label}`}
+                      className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                        active
+                          ? 'border-primary/40 bg-primary/10 text-foreground'
+                          : 'border-border bg-secondary/40 text-muted-foreground'
+                      }`}
+                    >
+                      {label}
+                      {active && <Icon className="w-3 h-3" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="space-y-2">
+                {sortedData.map((row, index) => (
+                  <div
+                    key={row.year}
+                    className={`rounded-lg border border-l-4 border-l-primary/40 bg-card p-3 ${prefersReducedMotion ? '' : 'animate-fade-in'}`}
+                    style={prefersReducedMotion ? undefined : { animationDelay: `${Math.min(index * 30, 300)}ms`, animationFillMode: 'both' }}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-sm font-semibold">{row.year}</span>
+                      <span className="text-base font-semibold tabular-nums">{formatCurrency(row.revenue)}</span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Rooms Sold</div>
+                        <div className="text-sm tabular-nums">{row.roomsSold.toLocaleString()}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Occupancy</div>
+                        <div className="text-sm tabular-nums">{formatPercent(row.occupancy)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg Rate</div>
+                        <div className="text-sm tabular-nums">{formatCurrency(row.avgRate)}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden sm:block overflow-x-auto">
+
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
