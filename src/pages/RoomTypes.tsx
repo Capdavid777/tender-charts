@@ -336,7 +336,39 @@ export default function RoomTypes() {
             <CardTitle>Room Type Details</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Mobile: stacked cards */}
+            <div className="sm:hidden space-y-2">
+              {roomTypes.map((room, index) => (
+                <div
+                  key={room.name}
+                  className={`rounded-lg border border-l-4 border-l-primary/40 bg-card p-3 ${prefersReducedMotion ? '' : 'animate-fade-in'}`}
+                  style={prefersReducedMotion ? undefined : { animationDelay: `${Math.min(index * 40, 300)}ms`, animationFillMode: 'both' }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-sm font-semibold">{room.name}</span>
+                    <span className="text-base font-semibold tabular-nums">{formatCurrency(room.revenue)}</span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Rooms</div>
+                      <div className="text-sm tabular-nums">{room.rooms}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Occupancy</div>
+                      <div className="text-sm tabular-nums">{formatPercent(room.occupancy)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">ADR</div>
+                      <div className="text-sm tabular-nums">{formatCurrency(room.adr)}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden sm:block overflow-x-auto">
+
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
