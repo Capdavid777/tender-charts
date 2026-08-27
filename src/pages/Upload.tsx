@@ -431,7 +431,7 @@ export default function Upload() {
               revenue: rt.revenue,
               rooms_sold: rt.roomsSold,
               average_rate: rt.avgRate,
-              occupancy: rt.totalRooms > 0 ? rt.roomsSold / (rt.totalRooms * daysInMonth) : 0,
+              occupancy: rt.totalRooms > 0 ? Math.min(rt.roomsSold / (rt.totalRooms * daysInMonth), 1) : 0,
             }));
 
           
