@@ -25,6 +25,7 @@ import OtherIncomeSummary, { OtherIncomeItem } from '@/components/dashboard/Othe
 import PerfPanel from '@/components/dashboard/PerfPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartSkeleton, TableSkeleton, FilterBarSkeleton, KPICardSkeleton } from '@/components/ui/skeleton-variants';
+import LazySection from '@/components/dashboard/LazySection';
 import { Card, CardContent } from '@/components/ui/card';
 import { perfRegistry, useMemoTracked } from '@/lib/perf';
 
@@ -677,13 +678,19 @@ export default function Dashboard() {
             )}
 
 
-            {/* Other Income Breakdown */}
-            <div className="animate-fade-in-up" style={{ animationDelay: '600ms' }}>
+            {/* Other Income Breakdown — deferred until near viewport */}
+            <LazySection
+              estimatedHeight={280}
+              fallback={<ChartSkeleton bars={8} height={160} titleWidth="w-48" />}
+            >
               <OtherIncomeSummary items={otherIncomeItems} loading={loading} error={error} onRetry={fetchData} />
-            </div>
+            </LazySection>
 
-            {/* Month-End Projection Summary */}
-            <div className="animate-fade-in-up" style={{ animationDelay: '700ms' }}>
+            {/* Month-End Projection Summary — deferred until near viewport */}
+            <LazySection
+              estimatedHeight={320}
+              fallback={<ChartSkeleton bars={8} height={200} titleWidth="w-56" />}
+            >
               <MonthProjectionSummary
                 actualData={actualFilteredData}
                 forecastData={forecastFilteredData}
@@ -695,37 +702,39 @@ export default function Dashboard() {
                 error={error}
                 onRetry={fetchData}
               />
-            </div>
+            </LazySection>
 
-            {/* Daily Breakdown Table (Actual only) */}
-            {actualFilteredData.length > 0 ? (
-              <div className="animate-fade-in-up" style={{ animationDelay: '800ms' }}>
+            {/* Daily Breakdown Table (Actual only) — deferred until near viewport */}
+            <LazySection
+              estimatedHeight={520}
+              fallback={<TableSkeleton rows={8} columns={5} titleWidth="w-40" />}
+            >
+              {actualFilteredData.length > 0 ? (
                 <DailyDataTable data={actualFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Daily Breakdown" />
-              </div>
-            ) : (
-              <div className="animate-fade-in-up" style={{ animationDelay: '800ms' }}>
+              ) : (
                 <EmptyState
                   icon={<CalendarX className="w-6 h-6" />}
                   title="No actuals yet for this month"
                   description={`${monthLabel} hasn't started recording completed days yet — only forecast figures are available so far.`}
                 />
-              </div>
-            )}
+              )}
+            </LazySection>
 
-            {/* Forecast Table */}
-            {forecastFilteredData.length > 0 ? (
-              <div className="animate-fade-in-up" style={{ animationDelay: '900ms' }}>
+            {/* Forecast Table — deferred until near viewport */}
+            <LazySection
+              estimatedHeight={520}
+              fallback={<TableSkeleton rows={6} columns={5} titleWidth="w-28" />}
+            >
+              {forecastFilteredData.length > 0 ? (
                 <DailyDataTable data={forecastFilteredData} dailyTarget={dailyData[0]?.target || 0} title="Forecast" icon={<TrendingUpDown className="w-5 h-5 text-primary" />} variant="forecast" />
-              </div>
-            ) : (
-              <div className="animate-fade-in-up" style={{ animationDelay: '900ms' }}>
+              ) : (
                 <EmptyState
                   icon={<TrendingUpDown className="w-6 h-6" />}
                   title="No forecast days remaining"
                   description={`Every day in ${monthLabel} has already been recorded as actuals, so there is nothing left to forecast.`}
                 />
-              </div>
-            )}
+              )}
+            </LazySection>
           </div>
 
         )}
