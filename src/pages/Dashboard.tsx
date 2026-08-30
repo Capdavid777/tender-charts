@@ -681,6 +681,7 @@ export default function Dashboard() {
             {/* Other Income Breakdown — deferred until near viewport */}
             <LazySection
               estimatedHeight={280}
+              warmPriority={0}
               fallback={<ChartSkeleton bars={8} height={160} titleWidth="w-48" />}
             >
               <OtherIncomeSummary items={otherIncomeItems} loading={loading} error={error} onRetry={fetchData} />
@@ -689,6 +690,7 @@ export default function Dashboard() {
             {/* Month-End Projection Summary — deferred until near viewport */}
             <LazySection
               estimatedHeight={320}
+              warmPriority={1}
               fallback={<ChartSkeleton bars={8} height={200} titleWidth="w-56" />}
             >
               <MonthProjectionSummary
@@ -707,6 +709,7 @@ export default function Dashboard() {
             {/* Daily Breakdown Table (Actual only) — deferred until near viewport */}
             <LazySection
               estimatedHeight={520}
+              warmPriority={2}
               fallback={<TableSkeleton rows={8} columns={5} titleWidth="w-40" />}
             >
               {actualFilteredData.length > 0 ? (
@@ -723,6 +726,7 @@ export default function Dashboard() {
             {/* Forecast Table — deferred until near viewport */}
             <LazySection
               estimatedHeight={520}
+              warmPriority={3}
               fallback={<TableSkeleton rows={6} columns={5} titleWidth="w-28" />}
             >
               {forecastFilteredData.length > 0 ? (
