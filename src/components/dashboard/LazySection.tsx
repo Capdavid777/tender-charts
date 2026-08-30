@@ -8,6 +8,11 @@ interface LazySectionProps {
   fallback: ReactNode;
   /** Estimated height (px) used for content-visibility containment after mount. */
   estimatedHeight?: number;
+  /**
+   * Order in which this section is warmed during idle time (lower = sooner).
+   * Omit to only mount on scroll.
+   */
+  warmPriority?: number;
   className?: string;
 }
 
@@ -21,9 +26,10 @@ export default function LazySection({
   children,
   fallback,
   estimatedHeight = 400,
+  warmPriority,
   className,
 }: LazySectionProps) {
-  const { ref, inView } = useInViewOnce();
+  const { ref, inView } = useInViewOnce({ warmPriority });
 
   return (
     <div
