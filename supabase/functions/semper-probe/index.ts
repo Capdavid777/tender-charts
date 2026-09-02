@@ -33,6 +33,15 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     let authorized = Boolean(token) && token === serviceKey;
 
+    // Also accept any service-role JWT (keys rotate; compare the role claim).
+    if (!authorized && token.split(".").length === 3) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+        if (payload?.role === "service_role") authorized = true;
+      } catch { /* not a decodable JWT */ }
+    }
+
+
     if (!authorized && token) {
       const authClient = createClient(
         Deno.env.get("SUPABASE_URL")!,
