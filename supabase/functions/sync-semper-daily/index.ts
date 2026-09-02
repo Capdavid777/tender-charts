@@ -21,6 +21,8 @@ const ROOM_TYPE_MAP: Record<string, string> = {
 const LIVE_STATUSES = new Set(["in house", "active out", "checked out", "checked in", "confirmed"]);
 
 const MAX_RESERVATIONS_PER_RUN = 800;
+// South African VAT; Semper amounts are VAT-inclusive, all stored figures are ex-VAT.
+const VAT_RATE = 0.15;
 const LEASE_MINUTES = 20;
 
 interface SemperGuest { ID?: number }
