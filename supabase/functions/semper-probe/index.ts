@@ -104,56 +104,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    const roomCount = await get(`/OpenAPI/Rooms/PMSRoomCount?pVenueID=${venueId}&pRoomTypeID=0`);
-    const roomTypes = await get(`/OpenAPI/Rooms/CRSTypes?pVenueID=${venueId}`);
-    const inPeriod = await get(
-      `/OpenAPI/Reservations/PMSReservationsInPeriod?pVenueID=${venueId}&pStartDate=${from}&pEndDate=${to}`,
-    );
+    const out: Record<string, unknown> = {};
+    out.reservation23848 = await get(`/OpenAPI/Reservations/PMSReservation?pVenueID=${venueId}&pReservationID=23848`);
+    out.reservation23440 = await get(`/OpenAPI/Reservations/PMSReservation?pVenueID=${venueId}&pReservationID=23440`);
+    out.checkedOut = await get(`/OpenAPI/Reservations/PMSCheckedOut?pVenueID=${venueId}&pFromDate=2026-08-28`);
+    out.bill23848_guest0 = await get(`/OpenAPI/Reservations/PMSBill?pVenueID=${venueId}&pReservationID=23848&pGuestID=17396`);
 
-    const list = Array.isArray(inPeriod.body) ? (inPeriod.body as Record<string, unknown>[]) : [];
-    const statuses = [...new Set(list.map((r) => String(r.Status)))];
-    const wanted = ["In House", "Active Out", "Checked Out"];
-    const picks: Record<string, unknown>[] = [];
-    for (const st of wanted) {
-      const found = list.filter((r) => String(r.Status) === st).slice(-2);
-      picks.push(...found);
-    }
-    const bills: unknown[] = [];
-    for (const r of picks) {
-      const guestId = ((r.Guests as Record<string, unknown>[]) ?? [])[0]?.ID ?? 0;
-      const withGuest = await get(
-        `/OpenAPI/Reservations/PMSBill?pVenueID=${venueId}&pReservationID=${r.ReservationID}&pGuestID=${guestId}`,
-      );
-      const noGuest = await get(
-        `/OpenAPI/Reservations/PMSBill?pVenueID=${venueId}&pReservationID=${r.ReservationID}&pGuestID=0`,
-      );
-      bills.push({
-        reservationID: r.ReservationID,
-        status: r.Status,
-        checkIn: r.CheckInDate,
-        checkOut: r.CheckOutDate,
-        roomType: (r.RoomType as Record<string, unknown> | undefined)?.Name,
-        withGuest: JSON.stringify(withGuest).slice(0, 1200),
-        noGuest: JSON.stringify(noGuest).slice(0, 1200),
-      });
-    }
-
-    return new Response(
-      JSON.stringify(
-        {
-          from,
-          to,
-          roomCount,
-          roomTypes,
-          reservationCount: list.length,
-          statuses,
-          bills,
-        },
-        null,
-        2,
-      ),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify(out, null, 2).slice(0, 12000),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : String(e) }),
