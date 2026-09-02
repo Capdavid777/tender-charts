@@ -11,8 +11,10 @@ const ROOM_TYPE_MAP: Record<string, string> = {
   "queen room": "Queen Room",
   "one bedroom apartment": "1 Bed Apartment",
   "one bedroom apartment with view": "1 Bed Apartment",
+  "queen room with balcony": "Queen Room",
   "executive two bedroom apartment": "2 Bed Apartment",
   "two bedroom apartment": "2 Bed Apartment",
+  "two bedroom apartment with view": "2 Bed Apartment",
 };
 
 // Reservation statuses that represent a real, occupied room-night.
@@ -31,7 +33,6 @@ interface SemperReservation {
   Guests?: SemperGuest[];
   RoomType?: { Name?: string };
 }
-interface BillItem { Amount: number; ProductID: number; DateEffective: string; Comments?: string }
 
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
 const addDays = (iso: string, n: number) => {
@@ -166,8 +167,6 @@ Deno.serve(async (req) => {
       nameCounts[n] = (nameCounts[n] ?? 0) + 1;
       statusCounts[String(r.Status)] = (statusCounts[String(r.Status)] ?? 0) + 1;
     }
-    const emptyBills: Record<string, unknown>[] = [];
-    let emptyBillTotal = 0;
 
     const live = reservations
       .filter((r) => LIVE_STATUSES.has(String(r.Status).toLowerCase()))
@@ -188,7 +187,7 @@ Deno.serve(async (req) => {
       return b;
     };
 
-    let billErrors = 0;
+    let detailErrors = 0;
     for (const r of live) {
       const canonical = ROOM_TYPE_MAP[(r.RoomType?.Name ?? "").toLowerCase()];
       const roomKey = r.RoomName || `res-${r.ReservationID}`;
@@ -207,44 +206,28 @@ Deno.serve(async (req) => {
         t.rooms.add(roomKey);
       }
 
-      // nightly accommodation charges (positive amounts with a real product id)
-      const guestIds = (r.Guests ?? []).map((g) => g.ID).filter((id): id is number => typeof id === "number");
-      let items: BillItem[] = [];
-      for (const gid of guestIds.length ? guestIds : [0]) {
-        try {
-          const bill = await semperGet<{ Items?: BillItem[] }>(
-            `/OpenAPI/Reservations/PMSBill?pVenueID=${venueId}&pReservationID=${r.ReservationID}&pGuestID=${gid}`,
-          );
-          if (bill.Items?.length) items = items.concat(bill.Items);
-        } catch {
-          billErrors++;
-        }
+      // Accommodation revenue: the reservation total spread evenly over its nights.
+      // (PMSBill nightly lines exist only for a minority of reservations.)
+      let nights = 0;
+      for (let d = start; d < end; d = addDays(d, 1)) nights++;
+      let total = 0;
+      try {
+        const detail = await semperGet<{ AccommodationTotal?: number }>(
+          `/OpenAPI/Reservations/PMSReservation?pVenueID=${venueId}&pReservationID=${r.ReservationID}`,
+        );
+        total = Number(detail.AccommodationTotal ?? 0);
+      } catch {
+        detailErrors++;
       }
 
-      if (items.length === 0) emptyBillTotal++;
-      if (items.length === 0 && emptyBills.length < 8) {
-        emptyBills.push({
-          id: r.ReservationID,
-          status: r.Status,
-          type: r.RoomType?.Name,
-          checkIn: r.CheckInDate,
-          checkOut: r.CheckOutDate,
-          guestIds,
-        });
-      }
-
-      for (const it of items) {
-        if (!(it.Amount > 0) || !(it.ProductID > 0)) continue;
-        const d = String(it.DateEffective).slice(0, 10);
-        if (d < from || d > to) continue;
-        const b = bucketFor(d);
-        b.revenue += it.Amount;
-        let t = b.perType.get(canonical);
-        if (!t) {
-          t = { rooms: new Set(), revenue: 0 };
-          b.perType.set(canonical, t);
+      if (nights > 0 && total > 0) {
+        const perNight = total / nights;
+        for (let d = start > from ? start : from; d < end && d <= to; d = addDays(d, 1)) {
+          const b = bucketFor(d);
+          b.revenue += perNight;
+          const t = b.perType.get(canonical)!;
+          t.revenue += perNight;
         }
-        t.revenue += it.Amount;
       }
     }
 
@@ -323,12 +306,10 @@ Deno.serve(async (req) => {
         from,
         to,
         reservationsConsidered: live.length,
-        billErrors,
+        detailErrors,
         skippedManualDates: [...manualDates].length,
         nameCounts,
         statusCounts,
-        emptyBillTotal,
-        emptyBills,
         daily: dailyRecords,
         roomTypes: roomTypeRecords,
       });
@@ -373,7 +354,7 @@ Deno.serve(async (req) => {
       reservationsConsidered: live.length,
       rowsWritten: dailyRecords.length + roomTypeRecords.length,
       datesSkipped: manualDates.size,
-      billErrors,
+      detailErrors,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
