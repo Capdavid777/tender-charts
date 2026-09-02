@@ -167,6 +167,7 @@ Deno.serve(async (req) => {
       statusCounts[String(r.Status)] = (statusCounts[String(r.Status)] ?? 0) + 1;
     }
     const emptyBills: Record<string, unknown>[] = [];
+    let emptyBillTotal = 0;
 
     const live = reservations
       .filter((r) => LIVE_STATUSES.has(String(r.Status).toLowerCase()))
@@ -220,6 +221,7 @@ Deno.serve(async (req) => {
         }
       }
 
+      if (items.length === 0) emptyBillTotal++;
       if (items.length === 0 && emptyBills.length < 8) {
         emptyBills.push({
           id: r.ReservationID,
@@ -325,7 +327,7 @@ Deno.serve(async (req) => {
         skippedManualDates: [...manualDates].length,
         nameCounts,
         statusCounts,
-        emptyBillCount: emptyBills.length,
+        emptyBillTotal,
         emptyBills,
         daily: dailyRecords,
         roomTypes: roomTypeRecords,
