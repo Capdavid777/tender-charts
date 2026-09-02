@@ -7,6 +7,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const SEMPER_BASE = "https://iis-prod.semper-services.com/IntegrationsAPI";
 const LIVE_STATUSES = new Set(["in house", "active out", "checked out", "checked in", "confirmed"]);
 const MAX_BILLS = 250;
+// Semper bill lines are VAT-inclusive; the dashboard reports ex-VAT figures.
+const VAT_RATE = 0.15;
 
 // Lines that are room revenue, not extras.
 const ACCOMMODATION_RE = /\bfor\s+\d+\s+night/i;
@@ -100,7 +102,7 @@ Deno.serve(async (req) => {
         if (lines.length === 0) continue;
         billsRead++;
         for (const l of lines) {
-          const amount = Number(l.Amount ?? l.Total ?? 0);
+          const amount = Number(l.Amount ?? l.Total ?? 0) / (1 + VAT_RATE);
           if (!(amount > 0)) continue; // negatives are payments
           const desc = String(l.Comments ?? l.Description ?? "").trim();
           if (!desc || ACCOMMODATION_RE.test(desc)) continue;
