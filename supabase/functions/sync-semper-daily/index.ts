@@ -55,18 +55,31 @@ function admin() {
 }
 
 async function isAuthorised(req: Request): Promise<boolean> {
-  const auth = req.headers.get("Authorization") ?? "";
-  const token = auth.replace(/^Bearer\s+/i, "");
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
   if (!token) return false;
+
+  // Service-role key (used by the scheduled cron job): exact secret match.
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (serviceKey && token === serviceKey) return true;
+
+  // Otherwise require a cryptographically verified user JWT with the admin role.
   try {
-    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-    if (payload.role === "service_role") return true;
-    if (payload?.app_metadata?.app_role === "admin") return true;
+    const authClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } },
+    );
+    const { data, error } = await authClient.auth.getClaims(token);
+    if (error || !data?.claims?.sub) return false;
+    const claims = data.claims as Record<string, unknown>;
+    const appMetadata = (claims.app_metadata ?? {}) as Record<string, unknown>;
+    return appMetadata.app_role === "admin";
   } catch {
     return false;
   }
-  return false;
 }
+
 
 function semperHeaders() {
   return {
