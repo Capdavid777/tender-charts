@@ -48,7 +48,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             <Sparkles className="w-5 h-5 text-primary" />
             Extras captured from Semper
           </CardTitle>
-          <Badge variant="outline" className="text-[11px] font-medium">Partial estimate — not official</Badge>
+          <Badge variant="outline" className="text-[11px] font-medium">Partial estimate — excl. VAT, not official</Badge>
         </div>
       </CardHeader>
       <CardContent>{children}</CardContent>
@@ -103,7 +103,8 @@ export default function SemperExtrasPanel({ month }: { month: string | null }) {
         <Info className="w-4 h-4 mt-0.5 shrink-0" />
         <p>
           Estimated from the {data.billsRead} of {data.billsAttempted} reservation bills Semper made readable
-          ({formatPercent(coveragePct)} coverage) for this month. Accommodation charges are excluded. This is an
+          ({formatPercent(coveragePct)} coverage) for this month. All amounts are shown <strong>excluding VAT</strong> and
+          accommodation charges are excluded. This is an
           incomplete indicator only — your uploaded <strong>Additional Other Income</strong> figures remain the
           official record.
         </p>
@@ -118,7 +119,7 @@ export default function SemperExtrasPanel({ month }: { month: string | null }) {
               <TableRow>
                 <TableHead>Charge</TableHead>
                 <TableHead className="text-right">Lines</TableHead>
-                <TableHead className="text-right">Captured Revenue</TableHead>
+                <TableHead className="text-right">Captured Revenue (excl. VAT)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -132,7 +133,7 @@ export default function SemperExtrasPanel({ month }: { month: string | null }) {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell className="font-semibold">Captured total (partial)</TableCell>
+                <TableCell className="font-semibold">Captured total (partial, excl. VAT)</TableCell>
                 <TableCell />
                 <TableCell className="text-right font-semibold">{formatCurrency(data.total)}</TableCell>
               </TableRow>

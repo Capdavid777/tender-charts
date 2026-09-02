@@ -21,6 +21,8 @@ const ROOM_TYPE_MAP: Record<string, string> = {
 const LIVE_STATUSES = new Set(["in house", "active out", "checked out", "checked in", "confirmed"]);
 
 const MAX_RESERVATIONS_PER_RUN = 800;
+// South African VAT; Semper amounts are VAT-inclusive, all stored figures are ex-VAT.
+const VAT_RATE = 0.15;
 const LEASE_MINUTES = 20;
 
 interface SemperGuest { ID?: number }
@@ -208,6 +210,7 @@ Deno.serve(async (req) => {
 
       // Accommodation revenue: the reservation total spread evenly over its nights.
       // (PMSBill nightly lines exist only for a minority of reservations.)
+      // Semper returns VAT-inclusive amounts; the dashboard reports ex-VAT.
       let nights = 0;
       for (let d = start; d < end; d = addDays(d, 1)) nights++;
       let total = 0;
@@ -215,7 +218,7 @@ Deno.serve(async (req) => {
         const detail = await semperGet<{ AccommodationTotal?: number }>(
           `/OpenAPI/Reservations/PMSReservation?pVenueID=${venueId}&pReservationID=${r.ReservationID}`,
         );
-        total = Number(detail.AccommodationTotal ?? 0);
+        total = Number(detail.AccommodationTotal ?? 0) / (1 + VAT_RATE);
       } catch {
         detailErrors++;
       }
