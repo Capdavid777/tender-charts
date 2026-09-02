@@ -112,13 +112,30 @@ Deno.serve(async (req) => {
 
     const list = Array.isArray(inPeriod.body) ? (inPeriod.body as Record<string, unknown>[]) : [];
     const statuses = [...new Set(list.map((r) => String(r.Status)))];
-    const live = list.find((r) => ["Checked Out", "Checked In", "Confirmed"].includes(String(r.Status)));
-    let bill: unknown = null;
-    if (live) {
-      const guestId = ((live.Guests as Record<string, unknown>[]) ?? [])[0]?.ID ?? 0;
-      bill = await get(
-        `/OpenAPI/Reservations/PMSBill?pVenueID=${venueId}&pReservationID=${live.ReservationID}&pGuestID=${guestId}`,
+    const wanted = ["In House", "Active Out", "Checked Out"];
+    const picks: Record<string, unknown>[] = [];
+    for (const st of wanted) {
+      const found = list.filter((r) => String(r.Status) === st).slice(-2);
+      picks.push(...found);
+    }
+    const bills: unknown[] = [];
+    for (const r of picks) {
+      const guestId = ((r.Guests as Record<string, unknown>[]) ?? [])[0]?.ID ?? 0;
+      const withGuest = await get(
+        `/OpenAPI/Reservations/PMSBill?pVenueID=${venueId}&pReservationID=${r.ReservationID}&pGuestID=${guestId}`,
       );
+      const noGuest = await get(
+        `/OpenAPI/Reservations/PMSBill?pVenueID=${venueId}&pReservationID=${r.ReservationID}&pGuestID=0`,
+      );
+      bills.push({
+        reservationID: r.ReservationID,
+        status: r.Status,
+        checkIn: r.CheckInDate,
+        checkOut: r.CheckOutDate,
+        roomType: (r.RoomType as Record<string, unknown> | undefined)?.Name,
+        withGuest: JSON.stringify(withGuest).slice(0, 1200),
+        noGuest: JSON.stringify(noGuest).slice(0, 1200),
+      });
     }
 
     return new Response(
@@ -130,8 +147,7 @@ Deno.serve(async (req) => {
           roomTypes,
           reservationCount: list.length,
           statuses,
-          sampleReservation: live ?? list[0] ?? null,
-          bill,
+          bills,
         },
         null,
         2,
