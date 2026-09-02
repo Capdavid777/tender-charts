@@ -36,18 +36,18 @@ Deno.serve(async (req) => {
 
 
 
-
     if (!authorized && token) {
       const authClient = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_ANON_KEY")!,
-        { global: { headers: { Authorization: authHeader } } },
+        { global: { headers: { Authorization: `Bearer ${token}` } } },
       );
-      const { data: claimsData } = await authClient.auth.getClaims(token);
+      const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
       const claims = claimsData?.claims as Record<string, unknown> | undefined;
       const appMetadata = (claims?.app_metadata ?? {}) as Record<string, unknown>;
-      if (appMetadata.app_role === "admin") authorized = true;
+      if (!claimsError && claims?.sub && appMetadata.app_role === "admin") authorized = true;
     }
+
 
     if (!authorized) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
