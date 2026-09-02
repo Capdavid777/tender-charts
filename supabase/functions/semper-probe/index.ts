@@ -85,17 +85,7 @@ Deno.serve(async (req) => {
     const from = typeof body.from === "string" ? body.from : fmt(new Date(today.getTime() - 7 * 86400000));
     const to = typeof body.to === "string" ? body.to : fmt(today);
 
-    const bases = [
-      apiUrl.replace(/\/Help$/i, ""),
-      "https://iis-prod.semper-services.com/IntegrationsAPI",
-    ].filter((v, i, a) => v && a.indexOf(v) === i);
-
-    const candidates = [
-      `/OpenAPI/Reservations/PMSReservationsInPeriod?pVenueID=${venueId}&pStartDate=${from}&pEndDate=${to}`,
-      `/OpenAPI/Rooms/PMSRoomCount?pVenueID=${venueId}&pRoomTypeID=0`,
-      `/OpenAPI/Rooms/CRSTypes?pVenueID=${venueId}`,
-    ];
-
+    const base = "https://iis-prod.semper-services.com/IntegrationsAPI";
     const headers = {
       "Accept": "application/json",
       "Content-Type": "application/json",
@@ -104,40 +94,48 @@ Deno.serve(async (req) => {
       "x-channel": channelId,
     };
 
-    const results: ProbeResult[] = [];
-    for (const base of bases) {
-    for (const path of candidates) {
-      const url = `${base}${path}`;
+    async function get(path: string): Promise<{ status: number; body: unknown }> {
+      const res = await fetch(`${base}${path}`, { method: "GET", headers });
+      const text = await res.text();
       try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 12000);
-        const res = await fetch(url, { method: "GET", headers, signal: controller.signal });
-        clearTimeout(timer);
-        const text = await res.text();
-        results.push({
-          path: path.split("?")[0],
-          url: url.split("?")[0],
-          status: res.status,
-          ok: res.ok,
-          contentType: res.headers.get("content-type"),
-          sample: text.slice(0, 2500),
-        });
-      } catch (e) {
-        results.push({
-          path: path.split("?")[0],
-          url: url.split("?")[0],
-          status: null,
-          ok: false,
-          contentType: null,
-          sample: "",
-          error: e instanceof Error ? e.message : String(e),
-        });
+        return { status: res.status, body: JSON.parse(text) };
+      } catch {
+        return { status: res.status, body: text.slice(0, 500) };
       }
     }
+
+    const roomCount = await get(`/OpenAPI/Rooms/PMSRoomCount?pVenueID=${venueId}&pRoomTypeID=0`);
+    const roomTypes = await get(`/OpenAPI/Rooms/CRSTypes?pVenueID=${venueId}`);
+    const inPeriod = await get(
+      `/OpenAPI/Reservations/PMSReservationsInPeriod?pVenueID=${venueId}&pStartDate=${from}&pEndDate=${to}`,
+    );
+
+    const list = Array.isArray(inPeriod.body) ? (inPeriod.body as Record<string, unknown>[]) : [];
+    const statuses = [...new Set(list.map((r) => String(r.Status)))];
+    const live = list.find((r) => ["Checked Out", "Checked In", "Confirmed"].includes(String(r.Status)));
+    let bill: unknown = null;
+    if (live) {
+      const guestId = ((live.Guests as Record<string, unknown>[]) ?? [])[0]?.ID ?? 0;
+      bill = await get(
+        `/OpenAPI/Reservations/PMSBill?pVenueID=${venueId}&pReservationID=${live.ReservationID}&pGuestID=${guestId}`,
+      );
     }
 
     return new Response(
-      JSON.stringify({ from, to, bases, venueId, results }, null, 2),
+      JSON.stringify(
+        {
+          from,
+          to,
+          roomCount,
+          roomTypes,
+          reservationCount: list.length,
+          statuses,
+          sampleReservation: live ?? list[0] ?? null,
+          bill,
+        },
+        null,
+        2,
+      ),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
