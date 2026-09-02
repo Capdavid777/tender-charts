@@ -85,39 +85,29 @@ Deno.serve(async (req) => {
     const from = typeof body.from === "string" ? body.from : fmt(new Date(today.getTime() - 7 * 86400000));
     const to = typeof body.to === "string" ? body.to : fmt(today);
 
-    const q = `pVenueID=${venueId}&pChannelID=${channelId}&pDateFrom=${from}&pDateTo=${to}&pDateArrival=${from}&pDateDeparture=${to}&pStartDate=${from}&pEndDate=${to}`;
+    const bases = [
+      apiUrl.replace(/\/Help$/i, ""),
+      "https://iis-prod.semper-services.com/IntegrationsAPI",
+    ].filter((v, i, a) => v && a.indexOf(v) === i);
 
-    // Candidate reporting endpoints. Semper's Integrations API is not publicly
-    // documented, so we try the plausible report/list shapes and report back
-    // which ones this venue's licence actually answers.
     const candidates = [
-      `/OpenAPI/Reservations/Reservations?${q}`,
-      `/OpenAPI/Reservations/GetReservations?${q}`,
-      `/OpenAPI/Reservations/List?${q}`,
-      `/OpenAPI/Reservations/InHouse?pVenueID=${venueId}`,
-      `/OpenAPI/Reservations/Arrivals?${q}`,
-      `/OpenAPI/Reservations/Departures?${q}`,
-      `/OpenAPI/Reports/Occupancy?${q}`,
-      `/OpenAPI/Reports/Revenue?${q}`,
-      `/OpenAPI/Reports/DailyRevenue?${q}`,
-      `/OpenAPI/Reports/ManagerReport?${q}`,
-      `/OpenAPI/Reports/Reports?pVenueID=${venueId}`,
-      `/OpenAPI/Statistics/Occupancy?${q}`,
-      `/OpenAPI/rooms/AllRooms?pVenueID=${venueId}`,
-      `/OpenAPI/Rooms/RoomTypes?pVenueID=${venueId}`,
+      `/OpenAPI/Reservations/PMSReservationsInPeriod?pVenueID=${venueId}&pStartDate=${from}&pEndDate=${to}`,
+      `/OpenAPI/Rooms/PMSRoomCount?pVenueID=${venueId}&pRoomTypeID=0`,
+      `/OpenAPI/Rooms/CRSTypes?pVenueID=${venueId}`,
     ];
 
     const headers = {
       "Accept": "application/json",
       "Content-Type": "application/json",
-      "X-API-Key": xApiKey,
-      "X-Token": xToken,
-      "X-Channel": channelId,
+      "x-api-key": xApiKey,
+      "x-token": xToken,
+      "x-channel": channelId,
     };
 
     const results: ProbeResult[] = [];
+    for (const base of bases) {
     for (const path of candidates) {
-      const url = `${apiUrl}${path}`;
+      const url = `${base}${path}`;
       try {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 12000);
@@ -144,9 +134,10 @@ Deno.serve(async (req) => {
         });
       }
     }
+    }
 
     return new Response(
-      JSON.stringify({ from, to, apiUrl, venueId, results }, null, 2),
+      JSON.stringify({ from, to, bases, venueId, results }, null, 2),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
