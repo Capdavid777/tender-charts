@@ -104,11 +104,65 @@ Deno.serve(async (req) => {
       }
     }
 
-    const out: Record<string, unknown> = {};
-    out.reservation23848 = await get(`/OpenAPI/Reservations/PMSReservation?pVenueID=${venueId}&pReservationID=23848`);
-    out.reservation23440 = await get(`/OpenAPI/Reservations/PMSReservation?pVenueID=${venueId}&pReservationID=23440`);
-    out.checkedOut = await get(`/OpenAPI/Reservations/PMSCheckedOut?pVenueID=${venueId}&pFromDate=2026-08-28`);
-    out.bill23848_guest0 = await get(`/OpenAPI/Reservations/PMSBill?pVenueID=${venueId}&pReservationID=23848&pGuestID=17396`);
+    // ---- Extras discovery: what non-accommodation bill lines does Semper expose?
+    const out: Record<string, unknown> = { from, to };
+
+    const resResp = await get(
+      `/OpenAPI/Reservations/PMSReservationsInPeriod?pVenueID=${venueId}&pStartDate=${from}&pEndDate=${to}`,
+    );
+    const reservations = Array.isArray(resResp.body) ? resResp.body as Record<string, unknown>[] : [];
+    out.reservationCount = reservations.length;
+
+    const live = reservations.filter((r) =>
+      ["in house", "active out", "checked out", "checked in", "confirmed"].includes(
+        String(r.Status ?? "").toLowerCase(),
+      )
+    );
+    out.liveCount = live.length;
+
+    // Aggregate every bill line we can read, grouped by product description.
+    const lineTotals: Record<string, { count: number; total: number; productIds: number[] }> = {};
+    let billsRead = 0;
+    let billErrors = 0;
+    let sampleBill: unknown = null;
+
+    for (const r of live.slice(0, 60)) {
+      const guests = Array.isArray(r.Guests) ? r.Guests as Record<string, unknown>[] : [];
+      const guestId = guests[0]?.ID ?? 0;
+      try {
+        const bill = await get(
+          `/OpenAPI/Reservations/PMSBill?pVenueID=${venueId}&pReservationID=${r.ReservationID}&pGuestID=${guestId}`,
+        );
+        const lines = Array.isArray(bill.body)
+          ? bill.body as Record<string, unknown>[]
+          : Array.isArray((bill.body as Record<string, unknown>)?.Items)
+          ? (bill.body as Record<string, unknown>).Items as Record<string, unknown>[]
+          : [];
+        if (lines.length === 0) continue;
+        billsRead++;
+        if (!sampleBill) sampleBill = bill.body;
+        for (const l of lines) {
+          const desc = String(l.Description ?? l.ProductName ?? "(no description)").trim();
+          const amount = Number(l.Amount ?? l.Total ?? 0);
+          if (!(amount > 0)) continue;
+          const key = desc.replace(/\d+/g, "#").slice(0, 80);
+          const entry = lineTotals[key] ?? { count: 0, total: 0, productIds: [] };
+          entry.count++;
+          entry.total += amount;
+          const pid = Number(l.ProductID ?? 0);
+          if (pid && !entry.productIds.includes(pid)) entry.productIds.push(pid);
+          lineTotals[key] = entry;
+        }
+      } catch {
+        billErrors++;
+      }
+    }
+
+    out.billsRead = billsRead;
+    out.billErrors = billErrors;
+    out.lineTotals = lineTotals;
+    out.sampleBill = sampleBill;
+
 
     return new Response(JSON.stringify(out, null, 2).slice(0, 12000),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } });
