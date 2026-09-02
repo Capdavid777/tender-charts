@@ -159,6 +159,15 @@ Deno.serve(async (req) => {
       `/OpenAPI/Reservations/PMSReservationsInPeriod?pVenueID=${venueId}&pStartDate=${from}&pEndDate=${to}`,
     );
 
+    const nameCounts: Record<string, number> = {};
+    const statusCounts: Record<string, number> = {};
+    for (const r of reservations) {
+      const n = r.RoomType?.Name ?? "(none)";
+      nameCounts[n] = (nameCounts[n] ?? 0) + 1;
+      statusCounts[String(r.Status)] = (statusCounts[String(r.Status)] ?? 0) + 1;
+    }
+    const emptyBills: Record<string, unknown>[] = [];
+
     const live = reservations
       .filter((r) => LIVE_STATUSES.has(String(r.Status).toLowerCase()))
       .filter((r) => {
@@ -209,6 +218,17 @@ Deno.serve(async (req) => {
         } catch {
           billErrors++;
         }
+      }
+
+      if (items.length === 0 && emptyBills.length < 8) {
+        emptyBills.push({
+          id: r.ReservationID,
+          status: r.Status,
+          type: r.RoomType?.Name,
+          checkIn: r.CheckInDate,
+          checkOut: r.CheckOutDate,
+          guestIds,
+        });
       }
 
       for (const it of items) {
@@ -303,6 +323,10 @@ Deno.serve(async (req) => {
         reservationsConsidered: live.length,
         billErrors,
         skippedManualDates: [...manualDates].length,
+        nameCounts,
+        statusCounts,
+        emptyBillCount: emptyBills.length,
+        emptyBills,
         daily: dailyRecords,
         roomTypes: roomTypeRecords,
       });
