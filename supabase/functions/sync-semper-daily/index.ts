@@ -242,7 +242,8 @@ Deno.serve(async (req) => {
       .lte("date", to);
     const manualDates = new Set((manualRows ?? []).map((r) => r.date as string));
 
-    const writable = allDates.filter((d) => !manualDates.has(d));
+    // A dry run reports every date so its figures can be reconciled against manual uploads.
+    const writable = dryRun ? allDates : allDates.filter((d) => !manualDates.has(d));
 
     const dailyRecords = writable.map((d) => {
       const b = buckets.get(d)!;
