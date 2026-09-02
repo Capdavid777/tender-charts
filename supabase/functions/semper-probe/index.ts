@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
         billsRead++;
         if (!sampleBill) sampleBill = bill.body;
         for (const l of lines) {
-          const desc = String(l.Description ?? l.ProductName ?? "(no description)").trim();
+          const desc = String(l.Comments ?? l.Description ?? "(none)").trim();
           const amount = Number(l.Amount ?? l.Total ?? 0);
           if (!(amount > 0)) continue;
           const key = desc.replace(/\d+/g, "#").slice(0, 80);
