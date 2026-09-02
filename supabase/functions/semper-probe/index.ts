@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
           status: res.status,
           ok: res.ok,
           contentType: res.headers.get("content-type"),
-          sample: text.slice(0, 600),
+          sample: text.slice(0, 2500),
         });
       } catch (e) {
         results.push({
