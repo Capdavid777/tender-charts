@@ -55,13 +55,19 @@ function admin() {
 }
 
 async function isAuthorised(req: Request): Promise<boolean> {
+  // Scheduled cron job: shared secret header.
+  const cronSecret = Deno.env.get("SEMPER_SYNC_SECRET") ?? "";
+  const provided = req.headers.get("x-sync-secret") ?? "";
+  if (cronSecret && provided && provided === cronSecret) return true;
+
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
   if (!token) return false;
 
-  // Service-role key (used by the scheduled cron job): exact secret match.
+  // Service-role key: exact secret match.
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   if (serviceKey && token === serviceKey) return true;
+
 
   // Otherwise require a cryptographically verified user JWT with the admin role.
   try {
