@@ -545,8 +545,11 @@ export default function Upload() {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Upload Data</h2>
           <p className="text-muted-foreground">Import revenue data from your Excel spreadsheet</p>
+        </div>
 
         <DataSyncStatus />
+
+
 
 
 
