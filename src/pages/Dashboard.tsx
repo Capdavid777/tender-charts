@@ -22,7 +22,6 @@ import AnalysisSummary from '@/components/dashboard/AnalysisSummary';
 import DailyDataTable from '@/components/dashboard/DailyDataTable';
 import MonthProjectionSummary from '@/components/dashboard/MonthProjectionSummary';
 import OtherIncomeSummary, { OtherIncomeItem } from '@/components/dashboard/OtherIncomeSummary';
-import SemperExtrasPanel from '@/components/dashboard/SemperExtrasPanel';
 import PerfPanel from '@/components/dashboard/PerfPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartSkeleton, TableSkeleton, FilterBarSkeleton, KPICardSkeleton } from '@/components/ui/skeleton-variants';
@@ -688,14 +687,7 @@ export default function Dashboard() {
               <OtherIncomeSummary items={otherIncomeItems} loading={loading} error={error} onRetry={fetchData} />
             </LazySection>
 
-            {/* Partial extras estimated from Semper bills — clearly separate from official Other Income */}
-            <LazySection
-              estimatedHeight={280}
-              warmPriority={0}
-              fallback={<ChartSkeleton bars={6} height={160} titleWidth="w-56" />}
-            >
-              <SemperExtrasPanel month={selectedMonth} />
-            </LazySection>
+
 
             {/* Month-End Projection Summary — deferred until near viewport */}
             <LazySection

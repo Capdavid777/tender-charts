@@ -19,7 +19,6 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 import EmailDomainStatus from '@/components/upload/EmailDomainStatus';
-import DataSyncStatus from '@/components/upload/DataSyncStatus';
 
 
 // Safe error message mapping — never expose raw DB errors to users
@@ -549,7 +548,6 @@ export default function Upload() {
           <p className="text-muted-foreground">Import revenue data from your Excel spreadsheet</p>
         </div>
 
-        <DataSyncStatus />
 
 
 
