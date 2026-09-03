@@ -19,6 +19,8 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 import EmailDomainStatus from '@/components/upload/EmailDomainStatus';
+import DataSyncStatus from '@/components/upload/DataSyncStatus';
+
 
 // Safe error message mapping — never expose raw DB errors to users
 const getSafeErrorMessage = (error: unknown): string => {
@@ -546,6 +548,12 @@ export default function Upload() {
           <h2 className="text-2xl font-bold text-foreground">Upload Data</h2>
           <p className="text-muted-foreground">Import revenue data from your Excel spreadsheet</p>
         </div>
+
+        <DataSyncStatus />
+
+
+
+
 
         {/* Success State */}
         {state.status === 'success' && (
