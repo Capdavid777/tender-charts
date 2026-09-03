@@ -19,6 +19,8 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 import EmailDomainStatus from '@/components/upload/EmailDomainStatus';
+import DataSyncStatus from '@/components/upload/DataSyncStatus';
+
 
 // Safe error message mapping — never expose raw DB errors to users
 const getSafeErrorMessage = (error: unknown): string => {
