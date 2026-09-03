@@ -22,7 +22,6 @@ import AnalysisSummary from '@/components/dashboard/AnalysisSummary';
 import DailyDataTable from '@/components/dashboard/DailyDataTable';
 import MonthProjectionSummary from '@/components/dashboard/MonthProjectionSummary';
 import OtherIncomeSummary, { OtherIncomeItem } from '@/components/dashboard/OtherIncomeSummary';
-import SemperExtrasPanel from '@/components/dashboard/SemperExtrasPanel';
 import PerfPanel from '@/components/dashboard/PerfPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartSkeleton, TableSkeleton, FilterBarSkeleton, KPICardSkeleton } from '@/components/ui/skeleton-variants';
