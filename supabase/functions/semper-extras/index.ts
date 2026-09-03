@@ -7,6 +7,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const SEMPER_BASE = "https://iis-prod.semper-services.com/IntegrationsAPI";
 const LIVE_STATUSES = new Set(["in house", "active out", "checked out", "checked in", "confirmed"]);
 const MAX_BILLS = 250;
+// Bounded parallelism + a wall-clock budget keep the panel responsive.
+const CONCURRENCY = 8;
+const TIME_BUDGET_MS = 20_000;
 // Semper bill lines are VAT-inclusive; the dashboard reports ex-VAT figures.
 const VAT_RATE = 0.15;
 
@@ -137,6 +140,7 @@ Deno.serve(async (req) => {
       billsAttempted,
       billsRead,
       coverage: billsAttempted > 0 ? billsRead / billsAttempted : 0,
+      truncated,
       total: Number(items.reduce((s, i) => s + i.revenue, 0).toFixed(2)),
       items,
     });
