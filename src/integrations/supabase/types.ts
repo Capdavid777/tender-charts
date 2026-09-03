@@ -418,54 +418,6 @@ export type Database = {
         }
         Relationships: []
       }
-      sync_runs: {
-        Row: {
-          created_at: string
-          dates_skipped: number
-          error_message: string | null
-          finished_at: string | null
-          id: string
-          lease_expires_at: string | null
-          rows_written: number
-          source: string
-          started_at: string
-          status: string
-          updated_at: string
-          window_end: string | null
-          window_start: string | null
-        }
-        Insert: {
-          created_at?: string
-          dates_skipped?: number
-          error_message?: string | null
-          finished_at?: string | null
-          id?: string
-          lease_expires_at?: string | null
-          rows_written?: number
-          source?: string
-          started_at?: string
-          status?: string
-          updated_at?: string
-          window_end?: string | null
-          window_start?: string | null
-        }
-        Update: {
-          created_at?: string
-          dates_skipped?: number
-          error_message?: string | null
-          finished_at?: string | null
-          id?: string
-          lease_expires_at?: string | null
-          rows_written?: number
-          source?: string
-          started_at?: string
-          status?: string
-          updated_at?: string
-          window_end?: string | null
-          window_start?: string | null
-        }
-        Relationships: []
-      }
       website_analytics_reports: {
         Row: {
           bookings_by_country: Json
