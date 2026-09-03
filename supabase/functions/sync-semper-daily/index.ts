@@ -375,7 +375,7 @@ Deno.serve(async (req) => {
       .from("sync_runs")
       .update({
         status: "success",
-        rows_written: dailyRecords.length + roomTypeRecords.length,
+        rows_written: dailyRecords.length + roomTypeWritten,
         dates_skipped: manualDates.size,
         finished_at: new Date().toISOString(),
         lease_expires_at: null,
