@@ -15,7 +15,7 @@ type IdleDeadline = { timeRemaining: () => number; didTimeout: boolean };
 
 const requestIdle: (cb: (d: IdleDeadline) => void, opts?: { timeout: number }) => number =
   typeof window !== 'undefined' && 'requestIdleCallback' in window
-    ? (window as unknown as { requestIdleCallback: typeof requestIdle }).requestIdleCallback
+    ? (window as unknown as { requestIdleCallback: typeof requestIdle }).requestIdleCallback.bind(window)
     : (cb) =>
         window.setTimeout(() => cb({ timeRemaining: () => 8, didTimeout: true }), 200);
 

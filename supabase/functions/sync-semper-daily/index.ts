@@ -345,18 +345,37 @@ Deno.serve(async (req) => {
       if (insErr) throw insErr;
     }
 
+    // Manual uploads own their room-type rows: never overwrite them.
+    const monthStarts = [...new Set(roomTypeRecords.map((r) => r.date as string))];
+    const manualTypeKeys = new Set<string>();
+    if (monthStarts.length > 0) {
+      const { data: manualTypeRows } = await db
+        .from("daily_revenue")
+        .select("date, room_type_id, source")
+        .not("room_type_id", "is", null)
+        .in("date", monthStarts);
+      for (const r of manualTypeRows ?? []) {
+        if ((r.source ?? "manual") !== "semper") {
+          manualTypeKeys.add(`${r.date}|${r.room_type_id}`);
+        }
+      }
+    }
+
+    let roomTypeWritten = 0;
     for (const rec of roomTypeRecords) {
+      if (manualTypeKeys.has(`${rec.date}|${rec.room_type_id}`)) continue;
       const { error: upErr } = await db
         .from("daily_revenue")
         .upsert(rec, { onConflict: "date,room_type_id" });
       if (upErr) throw upErr;
+      roomTypeWritten++;
     }
 
     await db
       .from("sync_runs")
       .update({
         status: "success",
-        rows_written: dailyRecords.length + roomTypeRecords.length,
+        rows_written: dailyRecords.length + roomTypeWritten,
         dates_skipped: manualDates.size,
         finished_at: new Date().toISOString(),
         lease_expires_at: null,

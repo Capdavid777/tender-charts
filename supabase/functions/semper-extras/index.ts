@@ -7,6 +7,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const SEMPER_BASE = "https://iis-prod.semper-services.com/IntegrationsAPI";
 const LIVE_STATUSES = new Set(["in house", "active out", "checked out", "checked in", "confirmed"]);
 const MAX_BILLS = 250;
+// Bounded parallelism + a wall-clock budget keep the panel responsive.
+const CONCURRENCY = 8;
+const TIME_BUDGET_MS = 20_000;
 // Semper bill lines are VAT-inclusive; the dashboard reports ex-VAT figures.
 const VAT_RATE = 0.15;
 
@@ -86,34 +89,44 @@ Deno.serve(async (req) => {
     let billsRead = 0;
     let billsAttempted = 0;
 
-    for (const r of live.slice(0, MAX_BILLS)) {
-      billsAttempted++;
-      const guests = Array.isArray(r.Guests) ? r.Guests as Record<string, unknown>[] : [];
-      const guestId = guests[0]?.ID ?? 0;
-      try {
-        const bill = await semperGet(
-          `/OpenAPI/Reservations/PMSBill?pVenueID=${venueId}&pReservationID=${r.ReservationID}&pGuestID=${guestId}`,
-        );
-        const lines = Array.isArray(bill)
-          ? bill as Record<string, unknown>[]
-          : Array.isArray((bill as Record<string, unknown> | null)?.Items)
-          ? (bill as Record<string, unknown>).Items as Record<string, unknown>[]
-          : [];
-        if (lines.length === 0) continue;
-        billsRead++;
-        for (const l of lines) {
-          const amount = Number(l.Amount ?? l.Total ?? 0) / (1 + VAT_RATE);
-          if (!(amount > 0)) continue; // negatives are payments
-          const desc = String(l.Comments ?? l.Description ?? "").trim();
-          if (!desc || ACCOMMODATION_RE.test(desc)) continue;
-          const label = desc.replace(/\s*\d[\d.,/-]*\s*/g, " ").replace(/\s+/g, " ").trim() || "Other";
-          const entry = totals.get(label) ?? { revenue: 0, count: 0 };
-          entry.revenue += amount;
-          entry.count++;
-          totals.set(label, entry);
-        }
-      } catch { /* unreadable bill — counted as uncovered */ }
-    }
+    const queue = live.slice(0, MAX_BILLS);
+    const deadline = Date.now() + TIME_BUDGET_MS;
+    let cursor = 0;
+
+    const worker = async () => {
+      while (cursor < queue.length && Date.now() < deadline) {
+        const r = queue[cursor++];
+        billsAttempted++;
+        const guests = Array.isArray(r.Guests) ? r.Guests as Record<string, unknown>[] : [];
+        const guestId = guests[0]?.ID ?? 0;
+        try {
+          const bill = await semperGet(
+            `/OpenAPI/Reservations/PMSBill?pVenueID=${venueId}&pReservationID=${r.ReservationID}&pGuestID=${guestId}`,
+          );
+          const lines = Array.isArray(bill)
+            ? bill as Record<string, unknown>[]
+            : Array.isArray((bill as Record<string, unknown> | null)?.Items)
+            ? (bill as Record<string, unknown>).Items as Record<string, unknown>[]
+            : [];
+          if (lines.length === 0) continue;
+          billsRead++;
+          for (const l of lines) {
+            const amount = Number(l.Amount ?? l.Total ?? 0) / (1 + VAT_RATE);
+            if (!(amount > 0)) continue; // negatives are payments
+            const desc = String(l.Comments ?? l.Description ?? "").trim();
+            if (!desc || ACCOMMODATION_RE.test(desc)) continue;
+            const label = desc.replace(/\s*\d[\d.,/-]*\s*/g, " ").replace(/\s+/g, " ").trim() || "Other";
+            const entry = totals.get(label) ?? { revenue: 0, count: 0 };
+            entry.revenue += amount;
+            entry.count++;
+            totals.set(label, entry);
+          }
+        } catch { /* unreadable bill — counted as uncovered */ }
+      }
+    };
+
+    await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+    const truncated = cursor < queue.length || live.length > MAX_BILLS;
 
     const items = [...totals.entries()]
       .map(([product_type, v]) => ({ product_type, revenue: Number(v.revenue.toFixed(2)), count: v.count }))
@@ -127,6 +140,7 @@ Deno.serve(async (req) => {
       billsAttempted,
       billsRead,
       coverage: billsAttempted > 0 ? billsRead / billsAttempted : 0,
+      truncated,
       total: Number(items.reduce((s, i) => s + i.revenue, 0).toFixed(2)),
       items,
     });
