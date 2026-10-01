@@ -43,7 +43,8 @@ interface Report {
 const COUNTRY_NAMES: Record<string, string> = {
   ZA: 'South Africa', CN: 'China', US: 'United States', BW: 'Botswana',
   GB: 'United Kingdom', MZ: 'Mozambique', NL: 'Netherlands', NA: 'Namibia',
-  ZM: 'Zambia', Unknown: 'Unknown',
+  ZM: 'Zambia', DE: 'Germany', BG: 'Bulgaria', ZW: 'Zimbabwe', GH: 'Ghana',
+  BR: 'Brazil', RU: 'Russia', Unknown: 'Unknown',
 };
 
 const monthLabel = (iso: string) =>
