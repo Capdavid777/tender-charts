@@ -171,7 +171,7 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-clip">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-card shadow-sm">
         <div className="container mx-auto px-4">
@@ -201,7 +201,7 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
             </div>
 
             {/* Navigation */}
-            <nav className="hidden md:flex items-center self-stretch">
+            <nav className="hidden xl:flex items-center self-stretch min-w-0">
               <NavTabs
                 items={visibleNavItems}
                 activeHref={location.pathname}
@@ -212,14 +212,14 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
 
 
             {/* Right side */}
-            <div className="flex items-center gap-2 lg:gap-4 min-w-0">
+            <div className="flex items-center gap-2 min-w-0 shrink">
               {lastUpdated && (
-              <div className="hidden md:flex items-center gap-1.5 text-xs lg:text-sm text-muted-foreground whitespace-nowrap">
+              <div className="hidden lg:flex items-center gap-1.5 text-xs lg:text-sm text-muted-foreground whitespace-nowrap">
                   <Clock className="w-4 h-4 shrink-0" />
                   <span><span className="hidden lg:inline">Updated: </span>{lastUpdated}</span>
                 </div>
               )}
-              <div className="hidden xl:flex items-center gap-2">
+              <div className="hidden 2xl:flex items-center gap-2">
                 <span className="text-[10px] text-muted-foreground/60 font-mono">v{APP_VERSION}</span>
                 <Button
                   variant="ghost"
@@ -245,14 +245,14 @@ export default function DashboardLayout({ children, lastUpdated }: DashboardLayo
                 className="gap-2"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Logout</span>
+                <span className="hidden lg:inline">Logout</span>
               </Button>
             </div>
           </div>
         </div>
 
         {/* Mobile navigation */}
-        <div className="md:hidden border-t">
+        <div className="xl:hidden border-t">
           <div className="container mx-auto px-4">
             <nav className="py-2 overflow-x-auto">
               <NavTabs
