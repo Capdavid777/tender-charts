@@ -128,6 +128,10 @@ Deno.serve(async (req) => {
       if (staffMatch) role = "viewer";
     }
 
+    // Never accept the historical default passwords from early setup history
+    const BLOCKED_DEFAULT_PASSWORDS = ["admin123", "staff2026"];
+    if (BLOCKED_DEFAULT_PASSWORDS.includes(password)) role = null;
+
     if (!role) {
       return new Response(
         JSON.stringify({ authenticated: false }),
