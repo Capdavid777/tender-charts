@@ -44,7 +44,8 @@ const COUNTRY_NAMES: Record<string, string> = {
   ZA: 'South Africa', CN: 'China', US: 'United States', BW: 'Botswana',
   GB: 'United Kingdom', MZ: 'Mozambique', NL: 'Netherlands', NA: 'Namibia',
   ZM: 'Zambia', DE: 'Germany', BG: 'Bulgaria', ZW: 'Zimbabwe', GH: 'Ghana',
-  BR: 'Brazil', RU: 'Russia', Unknown: 'Unknown',
+  BR: 'Brazil', RU: 'Russia', HK: 'Hong Kong', SG: 'Singapore', SE: 'Sweden',
+  IE: 'Ireland', CA: 'Canada', Unknown: 'Unknown',
 };
 
 const monthLabel = (iso: string) =>
