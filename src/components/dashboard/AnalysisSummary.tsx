@@ -14,7 +14,7 @@ export default function AnalysisSummary() {
   const [year, month] = selectedMonth.split('-').map(Number);
 
   const { data: analysis, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ['monthly-analysis', selectedMonth],
+    queryKey: ['monthly-analysis-summary', selectedMonth],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('monthly_analyses')
