@@ -73,6 +73,7 @@ export default function Analysis() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monthly-analysis'] });
+      queryClient.invalidateQueries({ queryKey: ['monthly-analysis-summary'] });
       setEditing(false);
       toast.success('Analysis saved');
     },

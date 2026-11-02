@@ -57,7 +57,7 @@ const persister = createSyncStoragePersister({
 });
 
 // Bump when query shapes change to invalidate old persisted data.
-const CACHE_BUSTER = "v2";
+const CACHE_BUSTER = "v3";
 
 // Lazy-load the command palette so it doesn't block initial render.
 const CommandPalette = lazy(() => import("./components/CommandPalette"));
