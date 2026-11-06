@@ -69,7 +69,7 @@ export default function KPICard({
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold text-foreground tabular-nums">{animatedValue}</p>
             {subtitle && (
-              <p className="text-sm text-muted-foreground truncate">{subtitle}</p>
+              <p className="text-sm text-muted-foreground break-words">{subtitle}</p>
             )}
             {secondarySubtitle && (
               <p className={cn('text-sm font-medium', secondarySubtitleClassName || 'text-muted-foreground')}>{secondarySubtitle}</p>
